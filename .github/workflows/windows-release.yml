@@ -1,0 +1,95 @@
+name: Bootstrap and build Windows release
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Bootstrap source bundle
+        shell: pwsh
+        run: |
+          if (Test-Path 'NexusLauncher_source_bundle.zip') {
+            Write-Host '[Nexus] Extracting source bundle...'
+            Expand-Archive -Path 'NexusLauncher_source_bundle.zip' -DestinationPath '.' -Force
+            Remove-Item 'NexusLauncher_source_bundle.zip' -Force
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add -A
+            if (-not (git diff --cached --quiet)) {
+              git commit -m 'Unpack Nexus Launcher source [skip ci]'
+              git push origin HEAD:main
+            }
+          }
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install frontend dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: TypeScript check
+        run: npm run lint
+
+      - name: Build React frontend
+        run: npm run build
+
+      - name: Install Python build dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-build.txt
+
+      - name: Backend tests
+        run: python -m pytest -q
+
+      - name: Build NexusLauncher.exe
+        run: python -m PyInstaller --noconfirm --clean --distpath build/release --workpath build/pyinstaller NexusLauncher.spec
+
+      - name: Smoke-check executable
+        shell: pwsh
+        run: |
+          if (!(Test-Path 'build/release/NexusLauncher.exe')) { throw 'NexusLauncher.exe missing' }
+          $size = (Get-Item 'build/release/NexusLauncher.exe').Length
+          if ($size -lt 5MB) { throw "Executable is suspiciously small: $size bytes" }
+          Write-Host "NexusLauncher.exe size: $([Math]::Round($size / 1MB, 2)) MB"
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NexusLauncher-Windows
+          path: build/release/NexusLauncher.exe
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish/update beta release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = 'v0.9.0-beta.1'
+          $target = (git rev-parse HEAD).Trim()
+          if (-not (gh release view $tag 2>$null)) {
+            gh release create $tag build/release/NexusLauncher.exe --target $target --title 'Nexus Launcher v0.9.0 Beta 1' --prerelease --notes 'Windows beta build of Nexus Launcher. React + Tailwind interface, pywebview/WebView2 shell, local SQLite library, Steam/Epic/GOG scan, SteamGridDB media pipeline, Steam trailers/screenshots/achievements, session tracking, controller navigation, modern Nexus Spatial SFX and launch animation.'
+          } else {
+            gh release upload $tag build/release/NexusLauncher.exe --clobber
+          }
