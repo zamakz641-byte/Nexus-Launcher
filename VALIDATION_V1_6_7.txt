@@ -1,0 +1,10 @@
+Nexus Launcher v1.6.7 validation
+================================
+
+Python compileall: OK
+Pytest: 50 passed
+TypeScript/TSX syntax parse: 29 files / 0 diagnostic
+Inline boot JavaScript syntax (node --check): OK
+Personal PS5 .nxsfx validation: OK (10 required cues)
+
+Note: full npm build was not executed in this offline container because node_modules is intentionally not bundled in the source archive. Windows LANCER_NEXUS.bat installs/uses the normal frontend dependencies as before.

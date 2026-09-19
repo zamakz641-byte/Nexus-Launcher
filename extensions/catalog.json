@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "catalog": "Nexus Launcher official extension catalog",
+  "repository": "https://github.com/zamakz641-byte/Nexus-Launcher",
+  "policy": "Only redistributable assets are listed here. Proprietary console audio is never bundled.",
+  "soundpacks": [
+    {
+      "id": "nexus-console",
+      "name": "Nexus Console",
+      "builtin": true,
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "nexus-glass",
+      "name": "Nexus Glass",
+      "builtin": true,
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "nexus-aether",
+      "name": "Nexus Aether",
+      "builtin": true,
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "nexus-pulse",
+      "name": "Nexus Pulse",
+      "builtin": true,
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "nexus-arcade",
+      "name": "Nexus Arcade",
+      "builtin": true,
+      "license": "CC0-1.0"
+    }
+  ]
+}

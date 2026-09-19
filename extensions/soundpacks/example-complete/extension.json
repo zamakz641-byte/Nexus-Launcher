@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "id": "author.example-pack",
+  "name": "Example Complete Pack",
+  "author": "Your Name",
+  "version": "1.0.0",
+  "type": "soundpack",
+  "license": "Your redistribution license",
+  "description": "Template only. Add the referenced audio files, then zip it as .nxsfx.",
+  "cues": {
+    "focus": { "file": "focus.wav", "gain": 0.25 },
+    "confirm": { "file": "confirm.wav", "gain": 0.4 },
+    "back": { "file": "back.wav", "gain": 0.35 },
+    "launch": [
+      { "file": "launch.wav", "gain": 0.5 },
+      { "file": "launch_tail.wav", "gain": 0.25, "delayMs": 350 }
+    ],
+    "success": { "file": "success.wav", "gain": 0.4 },
+    "toggle": { "file": "toggle.wav", "gain": 0.3 },
+    "hover": { "file": "hover.wav", "gain": 0.15 },
+    "wake": { "file": "wake.wav", "gain": 0.3 },
+    "sleep": { "file": "sleep.wav", "gain": 0.3 },
+    "startup": { "file": "startup.wav", "gain": 0.45 }
+  }
+}

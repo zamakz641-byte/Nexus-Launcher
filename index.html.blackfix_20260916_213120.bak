@@ -1,0 +1,667 @@
+<!doctype html>
+<html lang="fr" class="dark nexus-boot-live" data-nexus-boot="pending">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#02070d" />
+    <title>Nexus Launcher</title>
+
+    <!--
+      Nexus boot shell is intentionally independent from React. The app is laid
+      out behind it but cannot become visible until React + native bridge +
+      critical media + a stable render have all explicitly signalled readiness.
+    -->
+    <style>
+      html, body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #02070d;
+      }
+
+      body { color: #eef3f7; }
+
+      #root {
+        position: fixed;
+        inset: 0;
+        opacity: 0;
+        visibility: hidden;
+        background: #02070d;
+        transform: translateZ(0) scale(1.003);
+        transition:
+          opacity 420ms cubic-bezier(.16,1,.3,1),
+          transform 620ms cubic-bezier(.16,1,.3,1),
+          visibility 0s linear 420ms;
+      }
+
+      html.nexus-app-underlay #root,
+      html.nexus-app-visible #root {
+        opacity: 1;
+        visibility: visible;
+        transform: translateZ(0) scale(1);
+        transition-delay: 0s;
+      }
+
+      #nexus-boot {
+        position: fixed;
+        inset: 0;
+        z-index: 2147483000;
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+        isolation: isolate;
+        background:
+          radial-gradient(circle at 50% 46%, rgba(58, 174, 229, .105), transparent 22%),
+          radial-gradient(circle at 50% 56%, rgba(228, 193, 104, .048), transparent 31%),
+          linear-gradient(180deg, #02070d 0%, #030a12 52%, #02070d 100%);
+        color: #eef3f7;
+        opacity: 1;
+        visibility: visible;
+        transition: opacity 640ms cubic-bezier(.16,1,.3,1), visibility 640ms linear;
+        font-family: "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+        user-select: none;
+        pointer-events: none;
+        contain: strict;
+      }
+
+      #nexus-boot.nexus-boot-exit {
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      #nexus-boot.nexus-boot-failed {
+        pointer-events: auto;
+      }
+
+      .nexus-boot-vignette {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at center, transparent 28%, rgba(0,0,0,.16) 63%, rgba(0,0,0,.48) 100%);
+        opacity: .72;
+      }
+
+      .nexus-boot-grid {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: min(1120px, 82vw);
+        height: min(680px, 74vh);
+        transform: translate(-50%, -50%) perspective(800px) rotateX(66deg) translateY(42%);
+        transform-origin: center;
+        background-image:
+          linear-gradient(rgba(116, 209, 255, .035) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(116, 209, 255, .035) 1px, transparent 1px);
+        background-size: 52px 52px;
+        mask-image: radial-gradient(circle at 50% 40%, black 0%, transparent 64%);
+        opacity: 0;
+      }
+
+      .nexus-boot-halo,
+      .nexus-boot-ring-a,
+      .nexus-boot-ring-b,
+      .nexus-boot-ring-c {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        border-radius: 999px;
+        transform: translate(-50%, -50%) scale(.76);
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+
+      .nexus-boot-halo {
+        width: 640px;
+        height: 640px;
+        border: 1px solid rgba(90, 202, 255, .035);
+        box-shadow: inset 0 0 80px rgba(56, 189, 248, .02);
+      }
+
+      .nexus-boot-ring-a {
+        width: 338px;
+        height: 338px;
+        border: 1px solid rgba(104, 211, 255, .12);
+      }
+
+      .nexus-boot-ring-b {
+        width: 264px;
+        height: 264px;
+        border: 1px solid rgba(241, 211, 131, .075);
+      }
+
+      .nexus-boot-ring-c {
+        width: 420px;
+        height: 420px;
+        border: 1px dashed rgba(118, 214, 255, .06);
+      }
+
+      .nexus-boot-ribbons,
+      .nexus-boot-particles {
+        position: absolute;
+        inset: 0;
+      }
+
+      .nexus-boot-ribbons i {
+        --angle: 0deg;
+        --delay: 0ms;
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: min(760px, 72vw);
+        height: 1px;
+        opacity: 0;
+        transform: translate(-50%, -50%) rotate(var(--angle)) scaleX(.03);
+        transform-origin: center;
+        background: linear-gradient(90deg, transparent 4%, rgba(96, 205, 255, .15) 28%, rgba(144, 224, 255, .72) 49%, rgba(238, 207, 124, .26) 65%, transparent 96%);
+        will-change: transform, opacity;
+      }
+
+      .nexus-boot-ribbons i:nth-child(1) { --angle: -17deg; --delay: 140ms; }
+      .nexus-boot-ribbons i:nth-child(2) { --angle: 10deg; --delay: 250ms; }
+      .nexus-boot-ribbons i:nth-child(3) { --angle: -4deg; --delay: 360ms; }
+      .nexus-boot-ribbons i:nth-child(4) { --angle: 20deg; --delay: 470ms; }
+      .nexus-boot-ribbons i:nth-child(5) { --angle: -27deg; --delay: 610ms; }
+
+      .nexus-boot-particles b {
+        --x: 0px;
+        --y: 0px;
+        --d: 0ms;
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 2px;
+        height: 2px;
+        border-radius: 999px;
+        background: rgba(132, 218, 255, .9);
+        box-shadow: 0 0 12px rgba(90, 202, 255, .5);
+        opacity: 0;
+        transform: translate(var(--x), var(--y)) scale(.2);
+      }
+
+      .nexus-boot-particles b:nth-child(1) { --x:-176px; --y:-42px; --d:180ms; }
+      .nexus-boot-particles b:nth-child(2) { --x:142px; --y:-88px; --d:230ms; }
+      .nexus-boot-particles b:nth-child(3) { --x:-98px; --y:116px; --d:310ms; }
+      .nexus-boot-particles b:nth-child(4) { --x:204px; --y:64px; --d:390ms; }
+      .nexus-boot-particles b:nth-child(5) { --x:-232px; --y:78px; --d:450ms; }
+      .nexus-boot-particles b:nth-child(6) { --x:86px; --y:148px; --d:520ms; }
+      .nexus-boot-particles b:nth-child(7) { --x:246px; --y:-20px; --d:610ms; }
+      .nexus-boot-particles b:nth-child(8) { --x:-58px; --y:-156px; --d:690ms; }
+
+      .nexus-boot-center {
+        position: relative;
+        z-index: 3;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        opacity: .02;
+        transform: translateY(11px) scale(.92);
+        will-change: transform, opacity;
+      }
+
+      .nexus-boot-mark-wrap {
+        position: relative;
+        display: grid;
+        width: 78px;
+        height: 78px;
+        place-items: center;
+      }
+
+      .nexus-boot-mark-wrap::before,
+      .nexus-boot-mark-wrap::after {
+        content: '';
+        position: absolute;
+        inset: -16px;
+        border-radius: 24px;
+        border: 1px solid rgba(105, 211, 255, .07);
+        opacity: 0;
+        transform: rotate(45deg) scale(.72);
+      }
+
+      .nexus-boot-mark-wrap::after {
+        inset: -31px;
+        border-color: rgba(237, 208, 129, .045);
+      }
+
+      .nexus-boot-logo {
+        width: 74px;
+        height: 74px;
+        object-fit: contain;
+        mix-blend-mode: screen;
+        filter: drop-shadow(0 0 22px rgba(76, 196, 255, .13));
+      }
+
+      .nexus-boot-wordmark {
+        margin-top: 18px;
+        padding-left: .46em;
+        color: rgba(246, 250, 253, .98);
+        font-size: 19px;
+        line-height: 1;
+        font-weight: 900;
+        letter-spacing: .46em;
+      }
+
+      .nexus-boot-tagline {
+        margin-top: 9px;
+        padding-left: .34em;
+        color: rgba(91, 205, 255, .73);
+        font-size: 7px;
+        line-height: 1;
+        font-weight: 900;
+        letter-spacing: .34em;
+      }
+
+      .nexus-boot-horizon {
+        position: absolute;
+        left: 50%;
+        top: calc(50% + 103px);
+        width: min(390px, 46vw);
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(88, 205, 255, .9), rgba(243, 210, 121, .48), transparent);
+        opacity: 0;
+        transform: translateX(-50%) scaleX(.03);
+      }
+
+      .nexus-boot-progress {
+        position: absolute;
+        z-index: 4;
+        left: 50%;
+        bottom: 7.4vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        transform: translateX(-50%) translateY(7px);
+        opacity: 0;
+        transition: opacity 260ms ease, transform 260ms ease;
+        white-space: nowrap;
+      }
+
+      .nexus-boot-progress.is-visible {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+
+      .nexus-boot-status {
+        color: rgba(185, 207, 222, .62);
+        font-size: 8px;
+        font-weight: 700;
+        letter-spacing: .22em;
+        text-transform: uppercase;
+      }
+
+      .nexus-boot-dots {
+        display: flex;
+        gap: 7px;
+        margin-top: 11px;
+      }
+
+      .nexus-boot-dots i {
+        width: 3px;
+        height: 3px;
+        border-radius: 999px;
+        background: rgba(114, 210, 255, .34);
+        animation: nexusBootDot 1.2s ease-in-out infinite;
+      }
+      .nexus-boot-dots i:nth-child(2) { animation-delay: 130ms; }
+      .nexus-boot-dots i:nth-child(3) { animation-delay: 260ms; }
+
+      .nexus-boot-recovery {
+        display: none;
+        margin-top: 16px;
+        gap: 8px;
+      }
+
+      #nexus-boot.nexus-boot-failed .nexus-boot-recovery {
+        display: flex;
+      }
+
+      .nexus-boot-recovery button {
+        appearance: none;
+        border: 1px solid rgba(255,255,255,.10);
+        border-radius: 999px;
+        background: rgba(255,255,255,.05);
+        color: rgba(238, 246, 250, .8);
+        padding: 8px 13px;
+        font: 700 9px/1 "Segoe UI Variable", "Segoe UI", sans-serif;
+        cursor: pointer;
+      }
+
+      html.nexus-boot-live .nexus-boot-grid {
+        animation: nexusBootGrid 2500ms cubic-bezier(.16,1,.3,1) 120ms forwards;
+      }
+      html.nexus-boot-live .nexus-boot-center {
+        animation: nexusBootCenter 980ms cubic-bezier(.16,1,.3,1) 90ms forwards;
+      }
+      html.nexus-boot-live .nexus-boot-ring-a {
+        animation: nexusBootRingA 1900ms cubic-bezier(.16,1,.3,1) 80ms forwards;
+      }
+      html.nexus-boot-live .nexus-boot-ring-b {
+        animation: nexusBootRingB 2200ms cubic-bezier(.16,1,.3,1) 180ms forwards;
+      }
+      html.nexus-boot-live .nexus-boot-ring-c {
+        animation: nexusBootRingC 3200ms cubic-bezier(.16,1,.3,1) 240ms forwards;
+      }
+      html.nexus-boot-live .nexus-boot-halo {
+        animation: nexusBootHalo 2500ms cubic-bezier(.16,1,.3,1) 60ms forwards;
+      }
+      html.nexus-boot-live .nexus-boot-ribbons i {
+        animation: nexusBootRibbon 1450ms cubic-bezier(.16,.9,.2,1) var(--delay) both;
+      }
+      html.nexus-boot-live .nexus-boot-particles b {
+        animation: nexusBootParticle 1650ms cubic-bezier(.16,.9,.2,1) var(--d) both;
+      }
+      html.nexus-boot-live .nexus-boot-mark-wrap::before {
+        animation: nexusBootMark 1450ms cubic-bezier(.16,1,.3,1) 180ms forwards;
+      }
+      html.nexus-boot-live .nexus-boot-mark-wrap::after {
+        animation: nexusBootMark 1750ms cubic-bezier(.16,1,.3,1) 320ms forwards;
+      }
+      html.nexus-boot-live .nexus-boot-horizon {
+        animation: nexusBootHorizon 1600ms cubic-bezier(.16,.9,.2,1) 420ms forwards;
+      }
+
+      html.nexus-boot-handoff .nexus-boot-center {
+        animation: nexusBootCenterHandoff 760ms cubic-bezier(.16,1,.3,1) both;
+      }
+      html.nexus-boot-handoff .nexus-boot-ring-a,
+      html.nexus-boot-handoff .nexus-boot-ring-b,
+      html.nexus-boot-handoff .nexus-boot-ring-c,
+      html.nexus-boot-handoff .nexus-boot-halo {
+        transition: opacity 520ms ease, transform 760ms cubic-bezier(.16,1,.3,1);
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(1.13);
+      }
+
+      @keyframes nexusBootGrid {
+        0% { opacity: 0; transform: translate(-50%, -50%) perspective(800px) rotateX(66deg) translateY(47%) scale(.94); }
+        40% { opacity: .26; }
+        100% { opacity: .16; transform: translate(-50%, -50%) perspective(800px) rotateX(66deg) translateY(42%) scale(1); }
+      }
+      @keyframes nexusBootCenter {
+        0% { opacity: .02; transform: translateY(11px) scale(.92); }
+        56% { opacity: 1; }
+        100% { opacity: 1; transform: translateY(0) scale(1); }
+      }
+      @keyframes nexusBootCenterHandoff {
+        0% { opacity: 1; transform: translateY(0) scale(1); }
+        100% { opacity: 0; transform: translateY(-5px) scale(1.045); }
+      }
+      @keyframes nexusBootRingA {
+        0% { opacity: 0; transform: translate(-50%, -50%) scale(.70) rotate(-18deg); }
+        35% { opacity: .56; }
+        100% { opacity: .22; transform: translate(-50%, -50%) scale(1) rotate(14deg); }
+      }
+      @keyframes nexusBootRingB {
+        0% { opacity: 0; transform: translate(-50%, -50%) scale(.78) rotate(20deg); }
+        42% { opacity: .38; }
+        100% { opacity: .13; transform: translate(-50%, -50%) scale(1.06) rotate(-22deg); }
+      }
+      @keyframes nexusBootRingC {
+        0% { opacity: 0; transform: translate(-50%, -50%) scale(.74) rotate(-26deg); }
+        38% { opacity: .28; }
+        100% { opacity: .10; transform: translate(-50%, -50%) scale(1.10) rotate(36deg); }
+      }
+      @keyframes nexusBootHalo {
+        0% { opacity: 0; transform: translate(-50%, -50%) scale(.74); }
+        46% { opacity: .30; }
+        100% { opacity: .13; transform: translate(-50%, -50%) scale(1); }
+      }
+      @keyframes nexusBootRibbon {
+        0% { opacity: 0; transform: translate(-50%, -50%) rotate(var(--angle)) scaleX(.03); }
+        28% { opacity: .72; }
+        65% { opacity: .22; transform: translate(-50%, -50%) rotate(var(--angle)) scaleX(1); }
+        100% { opacity: 0; transform: translate(-50%, -50%) rotate(var(--angle)) scaleX(.36); }
+      }
+      @keyframes nexusBootParticle {
+        0% { opacity: 0; transform: translate(calc(var(--x) * .35), calc(var(--y) * .35)) scale(.15); }
+        40% { opacity: .86; }
+        72% { opacity: .25; transform: translate(var(--x), var(--y)) scale(1); }
+        100% { opacity: 0; transform: translate(calc(var(--x) * 1.12), calc(var(--y) * 1.12)) scale(.22); }
+      }
+      @keyframes nexusBootMark {
+        0% { opacity: 0; transform: rotate(45deg) scale(.68); }
+        48% { opacity: .26; }
+        100% { opacity: .08; transform: rotate(45deg) scale(1); }
+      }
+      @keyframes nexusBootHorizon {
+        0% { opacity: 0; transform: translateX(-50%) scaleX(.03); }
+        30% { opacity: .84; }
+        100% { opacity: .34; transform: translateX(-50%) scaleX(1); }
+      }
+      @keyframes nexusBootDot {
+        0%, 100% { opacity: .22; transform: scale(.75); }
+        50% { opacity: .92; transform: scale(1.2); }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        #root { transition-duration: 1ms !important; }
+        #nexus-boot { transition-duration: 1ms !important; }
+        #nexus-boot * { animation-duration: 1ms !important; animation-delay: 0ms !important; transition-duration: 1ms !important; }
+      }
+    </style>
+
+    <script>
+      (() => {
+        const bootStartedAt = performance.now();
+        const MINIMUM_VISIBLE_MS = 4600;
+        const POST_READY_SETTLE_MS = 760;
+        const UNDERLAY_PAINT_MS = 560;
+        const EXIT_MS = 660;
+
+        let appReady = false;
+        let finished = false;
+        let failed = false;
+        let readyAt = 0;
+        let animateExit = true;
+        let revealTimer = 0;
+        let underlayTimer = 0;
+        let exitTimer = 0;
+
+        const bootNode = () => document.getElementById('nexus-boot');
+        const progressNode = () => document.getElementById('nexus-boot-progress');
+        const statusNode = () => document.getElementById('nexus-boot-status');
+
+        const setStatus = (text, visible = true) => {
+          const progress = progressNode();
+          const status = statusNode();
+          if (status && typeof text === 'string' && text.trim()) status.textContent = text;
+          if (progress) progress.classList.toggle('is-visible', Boolean(visible));
+        };
+
+        const clearTimers = () => {
+          for (const id of [revealTimer, underlayTimer, exitTimer]) {
+            if (id) window.clearTimeout(id);
+          }
+          revealTimer = underlayTimer = exitTimer = 0;
+        };
+
+        window.__nexusBootAudioStarted = false;
+        const bootAudioElements = new Set();
+
+        const bootAssetUrl = (base, file) => {
+          const safeBase = String(base || '/sfx/kenney/');
+          const prefix = safeBase.endsWith('/') ? safeBase : `${safeBase}/`;
+          return `${prefix}${String(file || '').replace(/^\/+/, '')}`;
+        };
+
+        const playRawBootAudio = async () => {
+          try {
+            const response = await fetch('/__nexus_startup_sound__.json', { cache: 'no-store' });
+            if (!response.ok) return;
+            const payload = await response.json();
+            const pack = payload && payload.pack ? payload.pack : {};
+            if (!payload?.enabled || !pack?.startup || !pack?.assetBase) return;
+            const master = Math.max(0, Math.min(1, Number(payload.volume ?? 0.62)));
+            const items = Array.isArray(pack.startup) ? pack.startup : [pack.startup];
+            if (!items.length || master <= 0) return;
+
+            const playOne = (item) => {
+              if (!item || !item.file || finished || failed) return;
+              const audio = new Audio(bootAssetUrl(pack.assetBase, item.file));
+              audio.preload = 'auto';
+              audio.volume = Math.max(0, Math.min(1, master * Number(item.gain ?? 1)));
+              audio.playbackRate = Math.max(0.5, Math.min(2, Number(item.rate ?? 1)));
+              bootAudioElements.add(audio);
+              const cleanup = () => bootAudioElements.delete(audio);
+              audio.addEventListener('ended', cleanup, { once: true });
+              audio.addEventListener('error', cleanup, { once: true });
+              void audio.play().then(() => {
+                window.__nexusBootAudioStarted = true;
+              }).catch(cleanup);
+            };
+
+            for (const item of items) {
+              const delay = Math.max(0, Math.min(5000, Number(item?.delayMs ?? 0)));
+              if (delay) window.setTimeout(() => playOne(item), delay);
+              else playOne(item);
+            }
+          } catch {
+            // Boot audio is decorative. React will retry the cue later if this
+            // early WebView2 playback is unavailable.
+          }
+        };
+
+        const removeBoot = () => {
+          const boot = bootNode();
+          if (boot) boot.remove();
+          document.documentElement.classList.remove('nexus-boot-handoff', 'nexus-app-underlay');
+          document.documentElement.classList.add('nexus-app-visible');
+          document.documentElement.dataset.nexusBoot = 'complete';
+          finished = true;
+        };
+
+        const beginHandoff = () => {
+          if (finished || failed || !appReady) return;
+          document.documentElement.dataset.nexusBoot = 'handoff';
+          document.documentElement.classList.add('nexus-app-underlay');
+          setStatus('Nexus est prêt', true);
+
+          // Let the complete React surface paint underneath the still-opaque
+          // splash. Only after that stable paint do we animate the splash away.
+          underlayTimer = window.setTimeout(() => {
+            if (finished || failed) return;
+            document.documentElement.classList.add('nexus-boot-handoff');
+            const boot = bootNode();
+            if (!boot) {
+              removeBoot();
+              return;
+            }
+            if (!animateExit) {
+              removeBoot();
+              return;
+            }
+            boot.classList.add('nexus-boot-exit');
+            exitTimer = window.setTimeout(removeBoot, EXIT_MS + 80);
+          }, UNDERLAY_PAINT_MS);
+        };
+
+        const scheduleHandoff = () => {
+          if (finished || failed || !appReady) return;
+          if (revealTimer) window.clearTimeout(revealTimer);
+          const elapsed = performance.now() - bootStartedAt;
+          const sinceReady = readyAt ? performance.now() - readyAt : 0;
+          const waitForMinimum = Math.max(0, MINIMUM_VISIBLE_MS - elapsed);
+          const waitForSettle = Math.max(0, POST_READY_SETTLE_MS - sinceReady);
+          revealTimer = window.setTimeout(beginHandoff, Math.max(waitForMinimum, waitForSettle));
+        };
+
+        window.__nexusBootStatus = (text) => setStatus(String(text || ''), true);
+
+        window.__nexusBootReady = (options = {}) => {
+          if (finished || failed) return;
+          appReady = true;
+          readyAt = performance.now();
+          animateExit = options.animate !== false;
+          if (options.status) setStatus(String(options.status), true);
+          else setStatus('Préparation finale…', true);
+          scheduleHandoff();
+        };
+
+        window.__nexusBootFail = (message) => {
+          if (finished) return;
+          failed = true;
+          clearTimers();
+          for (const audio of bootAudioElements) {
+            try { audio.pause(); audio.currentTime = 0; } catch {}
+          }
+          bootAudioElements.clear();
+          document.documentElement.dataset.nexusBoot = 'failed';
+          const boot = bootNode();
+          if (boot) boot.classList.add('nexus-boot-failed');
+          setStatus(message ? `Démarrage interrompu · ${String(message)}` : 'Démarrage interrompu', true);
+        };
+
+        window.__nexusBootForceReveal = () => {
+          failed = false;
+          appReady = true;
+          readyAt = performance.now() - POST_READY_SETTLE_MS;
+          animateExit = false;
+          beginHandoff();
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+          setStatus('Initialisation du moteur local…', true);
+        }, { once: true });
+
+        // Start the selected sound pack while the raw HTML boot shell is visible.
+        // A tiny delay lets the first visual frame land before the audio sting.
+        window.setTimeout(() => { void playRawBootAudio(); }, 180);
+
+        window.setTimeout(() => {
+          if (!appReady && !failed && !finished) setStatus('Connexion au moteur Nexus…', true);
+        }, 1800);
+        window.setTimeout(() => {
+          if (!appReady && !failed && !finished) setStatus('Chargement de la bibliothèque…', true);
+        }, 4200);
+        window.setTimeout(() => {
+          if (!appReady && !failed && !finished) setStatus('Finalisation de l’interface…', true);
+        }, 7600);
+        window.setTimeout(() => {
+          if (!appReady && !failed && !finished) setStatus('Le premier démarrage prend un peu plus de temps…', true);
+        }, 12000);
+
+        window.addEventListener('error', (event) => {
+          if (finished || failed) return;
+          const message = event && event.message ? String(event.message) : 'Erreur du moteur graphique';
+          if (message.includes('ResizeObserver loop')) return;
+          window.__nexusBootFail?.(message);
+        });
+        window.addEventListener('unhandledrejection', (event) => {
+          if (finished || failed) return;
+          const reason = event && event.reason;
+          const message = reason instanceof Error ? reason.message : String(reason || 'Erreur de démarrage');
+          window.__nexusBootFail?.(message);
+        });
+      })();
+    </script>
+  </head>
+  <body class="bg-[#02070d] text-[#eef3f7] select-none antialiased overflow-hidden">
+    <div id="nexus-boot" role="presentation" aria-live="polite">
+      <div class="nexus-boot-vignette"></div>
+      <div class="nexus-boot-grid"></div>
+      <div class="nexus-boot-halo"></div>
+      <div class="nexus-boot-ring-a"></div>
+      <div class="nexus-boot-ring-b"></div>
+      <div class="nexus-boot-ring-c"></div>
+      <div class="nexus-boot-ribbons"><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="nexus-boot-particles"><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b></div>
+      <div class="nexus-boot-center">
+        <div class="nexus-boot-mark-wrap"><img class="nexus-boot-logo" src="/branding/nexus.png" alt="" draggable="false" /></div>
+        <div class="nexus-boot-wordmark">NEXUS</div>
+        <div class="nexus-boot-tagline">PLAY YOUR WORLD</div>
+      </div>
+      <div class="nexus-boot-horizon"></div>
+      <div id="nexus-boot-progress" class="nexus-boot-progress">
+        <div id="nexus-boot-status" class="nexus-boot-status">Initialisation du moteur local…</div>
+        <div class="nexus-boot-dots"><i></i><i></i><i></i></div>
+        <div class="nexus-boot-recovery">
+          <button type="button" onclick="location.reload()">Réessayer</button>
+          <button type="button" onclick="window.__nexusBootForceReveal && window.__nexusBootForceReveal()">Afficher le diagnostic</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

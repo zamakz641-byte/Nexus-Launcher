@@ -1,0 +1,9 @@
+NEXUS LAUNCHER v1.6.5 - VALIDATION
+==================================
+Python tests: 44/44 PASS
+Python compileall: PASS
+Bundled UI PNG: 54/54 PASS
+Bundled controller PNG: 16/16 PASS
+Offline repair test: PASS (Database.png + ps/l1.png deleted then rebuilt locally)
+Remote dependency in runtime icon verifier: NONE
+Boot synchronization: inherited unchanged from v1.6.4

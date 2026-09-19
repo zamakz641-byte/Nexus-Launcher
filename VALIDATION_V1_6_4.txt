@@ -1,0 +1,29 @@
+NEXUS LAUNCHER v1.6.4 - VALIDATION
+=================================
+
+Validation effectuee avant creation de l'archive:
+
+- Tests Python: 42/42 OK
+- Python compileall: OK
+- Syntaxe TypeScript/TSX: 30 fichiers transcompiles sans erreur syntaxique
+- Smoke test backend isole: bootstrap OK, version 1.6.4, structure de donnees valide
+- Test Chromium reel du contrat de startup (HTML final, module React simule): OK
+  * ready rapide a ~450 ms: handoff termine vers ~5.77 s
+  * ready lent a ~6.9 s: handoff termine vers ~9.05 s
+  * backend en echec: startup reste visible avec Recovery
+  * aucun intervalle ou startup ET application sont simultanement invisibles
+  * l'application est peinte sous le startup avant le fondu final
+- Protection contre les ruptures detectees:
+  * snapshot HTTP ne contourne plus le bridge pywebview
+  * React attend polices + medias critiques + deux frames stables
+  * echec natif ne force plus ready=true
+  * stale game-started ne peut plus activer nexus-sleep pendant le boot
+  * ErrorBoundary peut forcer Recovery
+  * classe temporaire nexus-app-underlay retiree a la fin du handoff
+  * cleanup serveur local/SQLite garanti par finally
+  * lifecycle WebView journalise: before_show / loaded / shown / closing
+
+Limite de cet environnement:
+- L'environnement de validation est Linux. Le runtime Edge WebView2 Windows natif ne peut pas
+  etre execute ici. Le frontend, le contrat de handoff, le backend Python et les invariants de
+  lifecycle sont testes ici; la couche WebView2 Windows doit encore etre confirmee sur le PC cible.

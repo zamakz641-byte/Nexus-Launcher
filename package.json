@@ -1,0 +1,30 @@
+{
+  "name": "nexus-game-launcher",
+  "private": true,
+  "version": "1.7.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port=5173 --host=127.0.0.1",
+    "build": "vite build",
+    "preview": "vite preview --host=127.0.0.1",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fontsource-variable/geist": "^5.2.8",
+    "@remotion/player": "^4.0.526",
+    "gsap": "^3.15.0",
+    "react": "19.0.1",
+    "react-dom": "19.0.1",
+    "remotion": "^4.0.526"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "4.1.14",
+    "@types/node": "22.14.0",
+    "@types/react": "19.0.12",
+    "@types/react-dom": "19.0.4",
+    "@vitejs/plugin-react": "5.0.4",
+    "tailwindcss": "4.1.14",
+    "typescript": "5.8.2",
+    "vite": "6.2.3"
+  }
+}

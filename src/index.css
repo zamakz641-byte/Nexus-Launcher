@@ -1,0 +1,616 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Segoe UI Variable', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background-color: #02070d;
+    color: #eef3f7;
+    user-select: none;
+    -webkit-user-select: none;
+    overscroll-behavior: none;
+  }
+
+  .font-serif {
+    font-family: Georgia, 'Times New Roman', serif;
+  }
+
+  h1, h2, h3 {
+    font-family: 'Segoe UI Variable Display', 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif;
+  }
+
+  /* Custom subtle scrollbars */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.25);
+  }
+}
+
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@layer components {
+  .nexus-glass-card {
+    border: 1px solid rgba(255,255,255,.072);
+    border-radius: 1.15rem;
+    background: linear-gradient(145deg, rgba(8,19,30,.965), rgba(3,10,17,.95));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.03), 0 18px 48px rgba(0,0,0,.24);
+  }
+}
+
+.activity-level-0 { background: rgba(255,255,255,.035); }
+.activity-level-1 { background: rgba(12,74,110,.62); }
+.activity-level-2 { background: rgba(3,105,161,.78); }
+.activity-level-3 { background: rgba(14,165,233,.8); }
+.activity-level-4 { background: rgb(103 232 249); box-shadow: 0 0 8px rgba(34,211,238,.45); }
+
+/* Original Nexus launch sequence. Intentionally uses only transform/opacity/filter so it stays GPU-friendly. */
+.nexus-launch { animation: nexusLaunchEnter .28s cubic-bezier(.2,.8,.2,1) both; }
+.nexus-launch-bg { opacity: .34; animation: nexusHeroDrift 3.2s cubic-bezier(.16,.75,.3,1) both; }
+.nexus-launch-bloom { animation: nexusBloom 2.2s .18s cubic-bezier(.2,.7,.2,1) both; }
+.nexus-launch-scan { transform: scaleX(0); opacity: 0; animation: nexusScan 1.6s .22s cubic-bezier(.16,.85,.28,1) both; }
+.nexus-launch-mark { opacity: 0; transform: scale(.78); animation: nexusMark .82s .34s cubic-bezier(.16,1,.3,1) forwards; }
+.nexus-launch-orbit { opacity: 0; transform: translateY(-50%) scale(.72) rotate(0deg); animation: nexusOrbit 1.8s .48s cubic-bezier(.16,.82,.2,1) forwards; }
+.nexus-launch-orbit-2 { animation-delay: .6s; animation-duration: 1.55s; animation-direction: reverse; }
+.nexus-launch-game { opacity: 0; transform: translateY(12px) scale(.97); animation: nexusGameLogo .62s 1.02s cubic-bezier(.16,1,.3,1) forwards; }
+.nexus-launch-status { opacity: 0; transform: translateY(6px); animation: nexusStatus .45s 1.28s ease-out forwards; }
+.nexus-launch-cancel { opacity: 0; animation: nexusStatus .4s .55s ease-out forwards; }
+
+@keyframes nexusLaunchEnter { from { opacity: 0; } to { opacity: 1; } }
+@keyframes nexusHeroDrift { 0% { transform: scale(1.04); opacity: .05; } 35% { opacity: .34; } 100% { transform: scale(1.015); opacity: .28; } }
+@keyframes nexusBloom { 0% { opacity: 0; transform: translate(-50%,-50%) scale(.3); } 45% { opacity: .14; } 100% { opacity: .035; transform: translate(-50%,-50%) scale(1.4); } }
+@keyframes nexusScan { 0% { transform: scaleX(0); opacity: 0; } 25% { opacity: .9; } 60% { transform: scaleX(.52); opacity: .48; } 100% { transform: scaleX(.16); opacity: 0; } }
+@keyframes nexusMark { 0% { opacity: 0; transform: scale(.72); } 65% { opacity: 1; transform: scale(1.035); } 100% { opacity: .96; transform: scale(1); } }
+@keyframes nexusOrbit { 0% { opacity: 0; transform: translateY(-50%) scale(.7) rotate(-24deg); } 36% { opacity: .42; } 100% { opacity: .08; transform: translateY(-50%) scale(1.22) rotate(62deg); } }
+@keyframes nexusGameLogo { to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes nexusStatus { to { opacity: 1; transform: translateY(0); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .nexus-launch *, .nexus-launch-bg { animation-duration: .001ms !important; animation-delay: 0ms !important; }
+}
+
+/* Console-grade launch motion: layered light ribbons, no raster video, no continuous JS loop. */
+.nexus-launch-veil {
+  opacity: 0;
+  background: radial-gradient(ellipse at 50% 44%, rgba(255,255,255,.075), transparent 22%),
+              linear-gradient(115deg, transparent 27%, rgba(255,255,255,.025) 48%, transparent 66%);
+  animation: nexusVeil 1.85s .16s cubic-bezier(.18,.8,.2,1) both;
+}
+.nexus-launch-core {
+  opacity: 0;
+  transform: translateY(-50%) scaleX(.06);
+  animation: nexusCore 1.32s .48s cubic-bezier(.16,.92,.2,1) both;
+}
+.nexus-launch-ribbons span {
+  position: absolute;
+  left: 50%;
+  top: 44%;
+  width: min(66vw, 980px);
+  height: 1px;
+  transform-origin: center;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+.nexus-launch-ribbons span:nth-child(1) { --nexus-ribbon-angle: -14deg; transform: translate(-50%,-50%) rotate(var(--nexus-ribbon-angle)) scaleX(.08); animation: nexusRibbon 1.35s .18s cubic-bezier(.16,.9,.25,1) both; }
+.nexus-launch-ribbons span:nth-child(2) { --nexus-ribbon-angle: 9deg; transform: translate(-50%,-50%) rotate(var(--nexus-ribbon-angle)) scaleX(.08); animation: nexusRibbon 1.45s .26s cubic-bezier(.16,.9,.25,1) both; }
+.nexus-launch-ribbons span:nth-child(3) { --nexus-ribbon-angle: -3deg; transform: translate(-50%,-50%) rotate(var(--nexus-ribbon-angle)) scaleX(.08); animation: nexusRibbon 1.18s .36s cubic-bezier(.16,.9,.25,1) both; }
+.nexus-launch-ribbons span:nth-child(4) { --nexus-ribbon-angle: 18deg; transform: translate(-50%,-50%) rotate(var(--nexus-ribbon-angle)) scaleX(.08); animation: nexusRibbon 1.25s .42s cubic-bezier(.16,.9,.25,1) both; }
+.nexus-launch-ribbons span:nth-child(5) { --nexus-ribbon-angle: -22deg; transform: translate(-50%,-50%) rotate(var(--nexus-ribbon-angle)) scaleX(.08); animation: nexusRibbon 1.45s .50s cubic-bezier(.16,.9,.25,1) both; }
+.nexus-launch-ribbons span:nth-child(6) { --nexus-ribbon-angle: 4deg; transform: translate(-50%,-50%) rotate(var(--nexus-ribbon-angle)) scaleX(.08); animation: nexusRibbon 1.10s .58s cubic-bezier(.16,.9,.25,1) both; }
+
+@keyframes nexusVeil {
+  0% { opacity: 0; transform: scale(1.04); }
+  45% { opacity: .9; }
+  100% { opacity: .28; transform: scale(1); }
+}
+@keyframes nexusCore {
+  0% { opacity: 0; transform: translateY(-50%) scaleX(.03); }
+  38% { opacity: .78; }
+  72% { opacity: .34; transform: translateY(-50%) scaleX(1); }
+  100% { opacity: 0; transform: translateY(-50%) scaleX(.36); }
+}
+@keyframes nexusRibbon {
+  0% { opacity: 0; transform: translate(-50%,-50%) rotate(var(--nexus-ribbon-angle)) scaleX(.05); }
+  28% { opacity: .54; }
+  62% { opacity: .22; transform: translate(-50%,-50%) rotate(var(--nexus-ribbon-angle, 0deg)) scaleX(1); }
+  100% { opacity: 0; transform: translate(-50%,-50%) rotate(var(--nexus-ribbon-angle)) scaleX(.32); }
+}
+
+
+/* Mega patch: one-shot console launch sequence. Transform/opacity only. */
+.nexus-launch::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(circle at 50% 44%, rgba(255,255,255,.16), transparent 9%, rgba(255,255,255,.02) 24%, transparent 46%);
+  mix-blend-mode: screen;
+  animation: nexusFinalPulse 2.15s .18s cubic-bezier(.16,.85,.2,1) both;
+}
+.nexus-launch-horizon {
+  opacity: 0;
+  transform: translateX(-50%) scaleX(.02);
+  animation: nexusHorizon 1.55s .34s cubic-bezier(.16,.9,.2,1) both;
+}
+.nexus-launch-particles i {
+  --p: 0;
+  position: absolute;
+  left: calc(50% + (var(--p) - 9) * 2.9%);
+  top: calc(44% + ((var(--p) % 5) - 2) * 3.5%);
+  width: 2px;
+  height: 2px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 66%, white);
+  box-shadow: 0 0 9px color-mix(in srgb, var(--accent) 48%, transparent);
+  opacity: 0;
+  transform: translate(calc((var(--p) - 9) * 22px), calc(((var(--p) % 4) - 2) * 18px)) scale(.2);
+  animation: nexusParticle 1.25s calc(.26s + (var(--p) * .025s)) cubic-bezier(.14,.9,.2,1) both;
+}
+.nexus-launch-status-copy { position: relative; display: inline-grid; min-width: 170px; place-items: center; }
+.nexus-launch-status-copy b { grid-area: 1/1; opacity: 0; font: inherit; }
+.nexus-launch-status-copy b:nth-child(1) { animation: nexusStatusWord .5s 1.26s ease both; }
+.nexus-launch-status-copy b:nth-child(2) { animation: nexusStatusWord .48s 1.62s ease both; }
+.nexus-launch-status-copy b:nth-child(3) { animation: nexusStatusLast .52s 1.96s ease both; }
+
+@keyframes nexusParticle {
+  0% { opacity: 0; }
+  38% { opacity: .78; }
+  72% { opacity: .24; transform: translate(0,0) scale(1); }
+  100% { opacity: 0; transform: translate(0,0) scale(.2); }
+}
+@keyframes nexusHorizon {
+  0% { opacity: 0; width: 1px; }
+  28% { opacity: .85; width: min(82vw,1200px); }
+  68% { opacity: .22; width: min(92vw,1450px); }
+  100% { opacity: 0; width: min(34vw,520px); }
+}
+@keyframes nexusFinalPulse {
+  0%, 24% { opacity: 0; transform: scale(.72); }
+  48% { opacity: .9; }
+  72% { opacity: .14; transform: scale(1.06); }
+  100% { opacity: 0; transform: scale(1.22); }
+}
+@keyframes nexusStatusWord {
+  0% { opacity: 0; transform: translateY(4px); }
+  28%, 62% { opacity: .72; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-3px); }
+}
+@keyframes nexusStatusLast {
+  0% { opacity: 0; transform: translateY(4px); }
+  100% { opacity: .72; transform: translateY(0); }
+}
+
+/* When a game is running the renderer is hidden, but explicitly stop any
+   decorative work before WebView2 gets throttled by Windows. */
+html.nexus-sleep *, html.nexus-sleep *::before, html.nexus-sleep *::after {
+  animation-play-state: paused !important;
+  transition: none !important;
+}
+
+/* Controller spatial-navigation focus. Mouse users keep the clean UI, while
+   gamepad focus gets a clear console-like ring everywhere, including modals. */
+.nexus-controller-focus {
+  outline: 2px solid rgba(125, 211, 252, .92) !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.10), 0 0 28px rgba(56,189,248,.24) !important;
+  z-index: 5;
+}
+[data-controller-game-card="true"].nexus-controller-focus {
+  transform: translateY(-4px) scale(1.012);
+  border-color: rgba(125,211,252,.72) !important;
+}
+input.nexus-controller-focus,
+select.nexus-controller-focus,
+textarea.nexus-controller-focus {
+  outline-offset: 1px !important;
+}
+
+
+/* v1.4 renderer stability + performance pass. */
+.nexus-hero-surface { contain: paint; background: #02070d; }
+.nexus-hero-image-enter { animation: nexusHeroImageEnter .26s ease-out both; transform: translateZ(0) scale(1.001); backface-visibility: hidden; }
+.nexus-hero-breathe { animation-name: nexusHeroImageEnter, nexusHeroBreathe; animation-duration: .26s, 18s; animation-delay: 0s, .26s; animation-timing-function: ease-out, ease-in-out; animation-iteration-count: 1, infinite; animation-direction: normal, alternate; animation-fill-mode: both; }
+@keyframes nexusHeroImageEnter { from { opacity: 0; } to { opacity: 1; } }
+@keyframes nexusHeroBreathe { from { transform: translateZ(0) scale(1.001); } to { transform: translateZ(0) scale(1.018); } }
+.nexus-view-surface { contain: layout paint style; animation: nexusViewIn .22s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes nexusViewIn { from { opacity: .72; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+#nexus-game-rail { contain: layout paint; }
+#nexus-game-rail img, #nexus-library-view img, #nexus-achievements-view img { backface-visibility: hidden; }
+
+/* Full-screen backdrop blur is expensive in WebView2 and can trigger visible
+   compositor stalls on large 1080p/1440p surfaces. Keep the glass look with
+   opaque/translucent fills instead of re-blurring every frame. */
+.nexus-no-heavy-blur { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+
+html.nexus-sleep #nexus-root { visibility: hidden; }
+
+@media (prefers-reduced-motion: reduce) {
+  .nexus-hero-breathe { animation: none !important; }
+  .nexus-hero-image-enter { animation-duration: .001ms !important; }
+}
+
+/* Startup is now rendered in index.html before React so the launcher can never
+   flash before the console-style boot sequence. */
+.nexus-png-icon { object-fit: contain; flex: none; user-select: none; pointer-events: none; }
+.nexus-view-surface { will-change: transform, opacity; }
+
+
+/* UI polish pass: premium console shell, deliberately compositor-light. */
+.nexus-shell {
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 78% 8%, color-mix(in srgb, var(--nexus-accent) 7%, transparent), transparent 30%),
+    linear-gradient(135deg, #02070d 0%, #030a12 48%, #02070d 100%);
+}
+.nexus-shell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: .32;
+  background-image:
+    linear-gradient(rgba(255,255,255,.012) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.009) 1px, transparent 1px);
+  background-size: 52px 52px;
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,.9), transparent 76%);
+}
+button, [role='button'] {
+  -webkit-tap-highlight-color: transparent;
+}
+.nexus-game-card::before,
+.nexus-library-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: 0;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--nexus-accent) 30%, transparent);
+  transition: opacity .18s ease;
+}
+.nexus-game-card:hover::before,
+.nexus-library-card:hover::before,
+.nexus-game-card.nexus-controller-focus::before,
+.nexus-library-card.nexus-controller-focus::before {
+  opacity: 1;
+}
+.nexus-dashboard-card {
+  position: relative;
+  overflow: hidden;
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+.nexus-dashboard-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--nexus-accent) 18%, rgba(255,255,255,.07));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 22px 52px rgba(0,0,0,.29);
+}
+#nexus-sidebar,
+#nexus-topbar,
+#nexus-console-footer {
+  transform: translateZ(0);
+}
+#nexus-topbar button:focus-visible,
+#nexus-sidebar button:focus-visible,
+#nexus-home-view button:focus-visible,
+#nexus-library-view [role='button']:focus-visible {
+  outline: 1px solid color-mix(in srgb, var(--nexus-accent) 78%, white);
+  outline-offset: 2px;
+}
+.nexus-toolbar:focus-within {
+  border-color: color-mix(in srgb, var(--nexus-accent) 22%, rgba(255,255,255,.07));
+}
+@media (max-width: 1180px) {
+  #nexus-sidebar { width: 188px; }
+  #nexus-console-footer { left: 204px; }
+  #nexus-hero-banner { height: 530px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nexus-dashboard-card,
+  .nexus-game-card,
+  .nexus-library-card { transition: none !important; }
+}
+
+/* Accent-theme bindings: UI chrome follows Settings, while game art keeps its own palette. */
+.nexus-game-card[data-selected="true"] {
+  border-color: color-mix(in srgb, var(--nexus-accent) 64%, white) !important;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--nexus-accent) 18%, transparent),
+    0 22px 46px rgba(0,0,0,.48) !important;
+}
+.nexus-selected-underline {
+  background: color-mix(in srgb, var(--nexus-accent) 72%, white);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--nexus-accent) 58%, transparent);
+}
+.nexus-controller-focus {
+  outline-color: color-mix(in srgb, var(--nexus-accent) 74%, white) !important;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.1),
+    0 0 28px color-mix(in srgb, var(--nexus-accent) 24%, transparent) !important;
+}
+
+/* Premium console footer dock. */
+.nexus-control-dock {
+  min-height: 46px;
+  padding: 5px;
+  border: 1px solid rgba(255,255,255,.065);
+  border-radius: 17px;
+  background: linear-gradient(180deg, rgba(7,16,25,.94), rgba(3,10,17,.96));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035), 0 18px 46px rgba(0,0,0,.34);
+}
+.nexus-footer-actions { display: flex; align-items: center; gap: 4px; }
+.nexus-footer-zone {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 0 11px;
+  border: 1px solid rgba(255,255,255,.045);
+  border-radius: 12px;
+  background: rgba(255,255,255,.018);
+  color: rgba(173,190,204,.78);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: .01em;
+}
+.nexus-footer-primary {
+  border-color: color-mix(in srgb, var(--nexus-accent) 24%, rgba(255,255,255,.05));
+  background: color-mix(in srgb, var(--nexus-accent) 9%, rgba(5,14,22,.92));
+  color: color-mix(in srgb, var(--nexus-accent) 62%, white);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035), 0 0 18px color-mix(in srgb, var(--nexus-accent) 7%, transparent);
+}
+.nexus-footer-nav { padding-left: 9px; }
+.nexus-footer-hint-icon { opacity: .9; }
+.nexus-footer-copy { color: #91a3b3; }
+.nexus-footer-center {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 175px;
+  justify-content: center;
+  color: #8294a4;
+  font-size: 7.5px;
+  font-weight: 800;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+.nexus-footer-pulse {
+  width: 5px; height: 5px; border-radius: 99px;
+  background: var(--nexus-accent);
+  box-shadow: 0 0 11px color-mix(in srgb, var(--nexus-accent) 74%, transparent);
+}
+.nexus-footer-divider { width: 1px; height: 12px; background: rgba(255,255,255,.08); }
+.nexus-footer-view { color: #d7e2ea; }
+.nexus-footer-device { color: #6e8294; font-size: 7px; }
+
+/* Nexus brand mark: crisp at sidebar scale, quietly alive instead of blinking. */
+.nexus-brand-mark::before {
+  content: '';
+  position: absolute;
+  inset: -35% 52% -35% -70%;
+  transform: translateX(-120%) rotate(18deg);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.18), transparent);
+  opacity: 0;
+}
+#nexus-brand:hover .nexus-brand-mark::before {
+  animation: nexusBrandSweep .72s cubic-bezier(.16,1,.3,1) both;
+}
+#nexus-brand:hover .nexus-brand-mark {
+  border-color: color-mix(in srgb, var(--nexus-accent) 34%, rgba(255,255,255,.08));
+  box-shadow: 0 12px 32px rgba(0,0,0,.3), 0 0 22px color-mix(in srgb, var(--nexus-accent) 12%, transparent);
+}
+.nexus-brand-copy { transition: transform .22s cubic-bezier(.16,1,.3,1); }
+#nexus-brand:hover .nexus-brand-copy { transform: translateX(2px); }
+@keyframes nexusBrandSweep {
+  0% { opacity: 0; transform: translateX(-120%) rotate(18deg); }
+  32% { opacity: .9; }
+  100% { opacity: 0; transform: translateX(315%) rotate(18deg); }
+}
+
+/* WebView2-safe footer positioning inside the main shell. */
+#nexus-console-footer {
+  left: 218px !important;
+  right: 1.5rem !important;
+  z-index: 90 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+@media (max-width: 1180px) {
+  #nexus-console-footer { left: 204px !important; }
+}
+
+/* Nexus V2 art direction - console-first home */
+.nexus-v2-home { background:#02070d; padding-bottom:40px; }
+.nexus-v2-continue { margin-top:-96px; padding:0 42px; }
+.nexus-v2-for-you { padding:30px 42px 0; }
+.nexus-v2-section-head { display:flex; align-items:end; justify-content:space-between; margin:0 0 14px; }
+.nexus-v2-section-head h2 { font-size:18px; font-weight:800; letter-spacing:-.02em; color:#f5f8fb; }
+.nexus-v2-section-head span { font-size:9px; font-weight:800; letter-spacing:.04em; color:#73d9ff; }
+.nexus-v2-feature-grid { display:grid; grid-template-columns:1.25fr 1fr 1fr; gap:14px; }
+.nexus-v2-feature { position:relative; height:205px; overflow:hidden; border-radius:18px; border:1px solid rgba(255,255,255,.075); background:#07111b; text-align:left; transition:.22s ease; }
+.nexus-v2-feature:hover,.nexus-v2-feature.nexus-controller-focus { transform:translateY(-5px) scale(1.01); border-color:rgba(100,218,255,.52); box-shadow:0 0 0 1px rgba(80,205,255,.12),0 20px 55px rgba(0,0,0,.46),0 0 35px rgba(33,190,255,.10); }
+.nexus-v2-feature img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.nexus-v2-feature-shade { position:absolute; inset:0; background:linear-gradient(90deg,rgba(1,7,12,.92),rgba(2,8,14,.3) 68%,rgba(2,8,14,.08)),linear-gradient(0deg,rgba(1,6,10,.76),transparent 65%); }
+.nexus-v2-feature-copy { position:absolute; z-index:2; left:20px; right:18px; bottom:18px; display:flex; flex-direction:column; align-items:flex-start; }
+.nexus-v2-feature-copy small { color:#63d7ff; font-size:7px; font-weight:900; letter-spacing:.16em; }
+.nexus-v2-feature-copy strong { margin-top:5px; color:white; font-size:19px; line-height:1.05; }
+.nexus-v2-feature-copy span { margin-top:6px; color:#9aabb8; font-size:9px; }
+
+/* V2 shell: the old PC sidebar/footer architecture is gone. */
+.nexus-v2-topnav { position:absolute; z-index:80; top:0; left:0; right:0; height:86px; display:flex; align-items:center; padding:0 42px; gap:28px; background:linear-gradient(180deg,rgba(1,7,13,.88),rgba(1,7,13,.36),transparent); }
+.nexus-v2-brand { width:46px; height:46px; display:grid; place-items:center; margin-right:6px; }
+.nexus-v2-topnav nav { display:flex; align-items:center; gap:30px; height:100%; }
+.nexus-v2-topnav nav button { position:relative; height:100%; color:#81909e; font-size:12px; font-weight:650; transition:.18s ease; }
+.nexus-v2-topnav nav button:hover,.nexus-v2-topnav nav button.active { color:#f7fbff; }
+.nexus-v2-topnav nav button.active::after { content:''; position:absolute; left:0; right:0; bottom:21px; height:2px; border-radius:9px; background:#22d3ee; box-shadow:0 0 14px rgba(34,211,238,.6); }
+.nexus-v2-actions { margin-left:auto; display:flex; align-items:center; gap:17px; color:#a7b6c5; }
+.nexus-v2-actions button { width:34px; height:34px; display:grid; place-items:center; border-radius:50%; opacity:.86; }
+.nexus-v2-actions button:hover { background:rgba(255,255,255,.06); color:white; }
+.nexus-v2-actions b { font-size:11px; color:#dce7ef; font-weight:700; min-width:54px; }
+.nexus-v2-avatar { width:29px; height:29px; display:grid; place-items:center; border-radius:50%; border:1px solid rgba(255,255,255,.24); background:linear-gradient(145deg,#122638,#050b12); color:#7edcff; font-size:10px; font-weight:900; }
+#nexus-hero-banner { height:590px; padding-top:76px; }
+#nexus-hero-banner > .relative.z-10 { padding-left:42px; padding-bottom:122px; }
+#nexus-hero-banner h1 { font-size:43px; letter-spacing:.08em; font-weight:500; text-transform:uppercase; }
+#btn-hero-launch { background:#f7fbff !important; color:#07101a !important; box-shadow:0 8px 30px rgba(255,255,255,.14) !important; border-radius:22px !important; }
+#btn-hero-details { border-radius:22px !important; background:rgba(7,17,27,.64) !important; }
+#btn-hero-favorite { border-radius:50% !important; }
+.nexus-v2-continue { margin-top:-108px; }
+#nexus-v2-scroll { scroll-behavior:smooth; scrollbar-width:none; }
+#nexus-v2-scroll::-webkit-scrollbar { display:none; }
+#nexus-game-rail { background:transparent !important; }
+.nexus-v2-continue #nexus-game-rail { padding-top:0; }
+@media (max-width:1100px){.nexus-v2-topnav{padding:0 24px}.nexus-v2-topnav nav{gap:18px}.nexus-v2-actions{gap:9px}.nexus-v2-feature-grid{grid-template-columns:1fr 1fr}.nexus-v2-feature:last-child{display:none}}
+
+/* Nexus 1.7 — cinematic shell, measured for 16:9 desktop and WebView2. */
+:root {
+  --nexus-bg: #02070d;
+  --nexus-surface: rgba(7, 17, 27, .84);
+  --nexus-stroke: rgba(159, 211, 242, .13);
+  --nexus-cyan: #66ddff;
+  --nexus-gold: #d7ad49;
+  --nexus-text: #f4f8fb;
+  --nexus-muted: #9babb9;
+  --motion-fast: 180ms;
+  --motion-normal: 420ms;
+}
+
+html, body, button, input, select, textarea { font-family: 'Geist Variable', 'Segoe UI Variable', sans-serif; }
+button, [role='button'] { cursor: pointer; touch-action: manipulation; }
+button:focus-visible, [role='button']:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--nexus-accent) 72%, white);
+  outline-offset: 3px;
+}
+
+.nexus-view-transition { position: relative; overflow-x: hidden; }
+.nexus-v2-home { background: var(--nexus-bg); padding-bottom: 48px; }
+.nexus-v2-topnav {
+  height: 88px;
+  padding: 0 clamp(24px, 3.3vw, 56px);
+  gap: clamp(24px, 3vw, 56px);
+  background: linear-gradient(180deg, rgba(1, 6, 11, .95) 0%, rgba(1, 7, 13, .6) 58%, transparent 100%);
+}
+.nexus-v2-brand { width: auto; min-width: 176px; height: 56px; display: flex; gap: 13px; margin: 0; text-align: left; }
+.nexus-v2-brand-mark { width: 45px; height: 45px; }
+.nexus-v2-wordmark { display: flex; flex-direction: column; line-height: 1; color: var(--nexus-text); }
+.nexus-v2-wordmark b { font-size: 16px; font-weight: 620; letter-spacing: .36em; }
+.nexus-v2-wordmark small { margin-top: 6px; color: #89a2b7; font-size: 7px; font-weight: 700; letter-spacing: .5em; }
+.nexus-v2-topnav nav { gap: clamp(18px, 2.2vw, 36px); }
+.nexus-v2-topnav nav button { min-width: 44px; padding: 0 2px; font-size: 12px; font-weight: 520; }
+.nexus-v2-topnav nav button.active::after { bottom: 19px; background: var(--nexus-cyan); }
+.nexus-v2-actions button { width: 44px; height: 44px; transition: background-color var(--motion-fast), color var(--motion-fast), transform var(--motion-fast); }
+.nexus-v2-actions button:active { transform: scale(.96); }
+
+#nexus-hero-banner { height: min(70vh, 700px); min-height: 590px; padding: 0; }
+.nexus-hero-base { background: radial-gradient(circle at 70% 28%, rgba(73, 191, 255, .16), transparent 30%), #02070d; }
+.nexus-hero-vignette {
+  background:
+    linear-gradient(90deg, rgba(1, 6, 11, .99) 0%, rgba(1, 7, 13, .82) 31%, rgba(1, 7, 13, .14) 68%, rgba(1, 7, 13, .22) 100%),
+    linear-gradient(0deg, #02070d 0%, rgba(2, 7, 13, .55) 18%, transparent 52%),
+    radial-gradient(circle at 65% 35%, transparent 0%, rgba(2, 7, 13, .14) 38%, rgba(2, 7, 13, .52) 100%);
+}
+.nexus-hero-accent { opacity: .34; background: radial-gradient(circle at 70% 34%, color-mix(in srgb, var(--hero-accent) 34%, transparent), transparent 25%); }
+.nexus-hero-content { padding: 92px clamp(28px, 5vw, 84px) 112px; }
+.nexus-hero-copy { width: min(46vw, 700px); }
+.nexus-hero-kicker { margin-bottom: 14px; color: rgba(202, 218, 231, .72); font-size: 9px; font-weight: 700; letter-spacing: .48em; }
+#nexus-hero-banner h1 { margin: 0; max-width: 100%; color: white; font-size: clamp(42px, 4.2vw, 72px); font-weight: 430; line-height: .96; letter-spacing: .14em; text-wrap: balance; text-shadow: 0 18px 54px rgba(0,0,0,.88); }
+.nexus-hero-eyebrow { margin-top: 18px; font-size: 10px; font-weight: 760; letter-spacing: .4em; }
+.nexus-hero-copy > p { max-width: 540px; margin: 18px 0 24px; color: #bdc9d3; font-size: 15px; line-height: 1.65; text-shadow: 0 4px 18px rgba(0,0,0,.8); }
+#btn-hero-launch, #btn-hero-details, #btn-hero-favorite { height: 50px; border-radius: 999px !important; transition: transform var(--motion-fast) cubic-bezier(.16,1,.3,1), background-color var(--motion-fast), border-color var(--motion-fast), box-shadow var(--motion-fast); }
+#btn-hero-launch { display: flex; min-width: 188px; align-items: center; justify-content: center; gap: 10px; padding: 0 28px; border: 1px solid rgba(255,255,255,.6); background: #f8fbfd !important; color: #07101a !important; font-size: 12px; font-weight: 760; box-shadow: 0 14px 38px rgba(0,0,0,.3), 0 0 28px rgba(174,229,255,.12) !important; }
+#btn-hero-details { display: flex; align-items: center; gap: 9px; padding: 0 22px; border: 1px solid rgba(255,255,255,.14); background: rgba(6,15,24,.76) !important; color: #e5edf3; font-size: 11px; font-weight: 620; }
+#btn-hero-favorite { width: 50px; }
+#btn-hero-launch:hover, #btn-hero-details:hover, #btn-hero-favorite:hover { transform: translateY(-2px); }
+#btn-hero-launch:active, #btn-hero-details:active, #btn-hero-favorite:active { transform: scale(.97); }
+.nexus-hero-quote { right: 5vw; bottom: 156px; max-width: 260px; text-align: right; }
+.nexus-hero-quote p { color: rgba(231,239,245,.86); font-size: 13px; font-weight: 500; letter-spacing: .28em; line-height: 1.8; text-transform: uppercase; }
+.nexus-hero-quote span { display: inline-block; width: 42px; height: 2px; margin-top: 13px; background: var(--nexus-gold); }
+
+.nexus-v2-continue { margin-top: -92px; padding: 0 clamp(28px, 4vw, 68px); }
+.nexus-v2-for-you { padding: 32px clamp(28px, 4vw, 68px) 0; }
+.nexus-v2-section-head { margin-bottom: 13px; }
+.nexus-v2-section-head h2 { font-size: 20px; font-weight: 580; letter-spacing: -.025em; }
+.nexus-v2-section-head button, .nexus-v2-section-head span { min-height: 32px; color: #8edfff; font-size: 10px; font-weight: 650; }
+.nexus-rail-pips { position: absolute; right: 0; top: -44px; }
+.nexus-game-card { isolation: isolate; }
+.nexus-game-card > img { filter: saturate(.9) contrast(1.04); }
+.nexus-game-card[data-selected='true'] { border-color: #8ce6ff !important; box-shadow: 0 0 0 1px rgba(102,221,255,.18), 0 0 32px rgba(32,193,255,.18), 0 24px 46px rgba(0,0,0,.44) !important; }
+.nexus-v2-feature-grid { grid-template-columns: 1.25fr 1fr 1fr; grid-auto-flow: dense; gap: 16px; }
+.nexus-v2-feature { height: 220px; border-radius: 14px; transition: transform 500ms cubic-bezier(.16,1,.3,1), border-color 220ms, box-shadow 220ms; }
+.nexus-v2-feature:hover, .nexus-v2-feature.nexus-controller-focus { transform: translateY(-4px); }
+.nexus-v2-feature img { transition: transform 700ms cubic-bezier(.16,1,.3,1), filter 300ms; }
+.nexus-v2-feature:hover img { transform: scale(1.045); filter: saturate(1.08); }
+.nexus-v2-feature-copy { left: 22px; bottom: 20px; }
+.nexus-v2-feature-copy small { color: #83e4ff; font-size: 8px; }
+.nexus-v2-feature-copy strong { font-size: 21px; font-weight: 580; }
+.nexus-v2-feature-copy span { color: #bcc9d2; font-size: 10px; }
+
+.nexus-empty-library { min-height: 100vh; display: grid; place-content: center; justify-items: center; gap: 18px; padding: 32px; text-align: center; background: radial-gradient(circle at 50% 36%, rgba(55,187,248,.12), transparent 24%), #02070d; }
+.nexus-empty-library img { width: 108px; }
+.nexus-empty-library h1 { max-width: 720px; font-size: clamp(36px,5vw,64px); line-height: 1; }
+.nexus-empty-library p { max-width: 560px; color: var(--nexus-muted); }
+.nexus-empty-library button { min-height: 48px; border-radius: 999px; padding: 0 24px; background: white; color: #07101a; font-weight: 720; }
+
+.nexus-remotion-stage { overflow: hidden; color: white; font-family: 'Geist Variable', sans-serif; }
+.nexus-remotion-bg { width: 100%; height: 100%; object-fit: cover; }
+.nexus-remotion-shade { background: radial-gradient(circle at 50% 46%, transparent 0%, rgba(1,4,8,.35) 34%, #010409 84%), linear-gradient(0deg, rgba(1,4,8,.8), transparent 50%, rgba(1,4,8,.65)); }
+.nexus-remotion-gate { position: absolute; left: 50%; top: 43%; width: 360px; height: 360px; border: 2px solid; border-radius: 50%; }
+.nexus-remotion-axis { position: absolute; left: 50%; top: 43%; width: min(82vw, 1380px); height: 2px; transform-origin: center; box-shadow: 0 0 35px rgba(148,229,255,.7); }
+.nexus-remotion-center { position: absolute; left: 50%; top: 43%; display: grid; width: 190px; height: 190px; place-items: center; }
+.nexus-remotion-mark { width: 168px; height: 168px; filter: drop-shadow(0 0 34px rgba(102,221,255,.58)); }
+.nexus-remotion-copy { position: absolute; left: 50%; top: 68%; display: flex; flex-direction: column; align-items: center; text-align: center; }
+.nexus-remotion-copy > span { color: #8edfff; font-size: 13px; font-weight: 720; letter-spacing: .5em; }
+.nexus-remotion-copy h1 { margin: 20px 0 10px; font-size: 72px; font-weight: 420; letter-spacing: .17em; text-transform: uppercase; }
+.nexus-remotion-copy img { max-width: 540px; max-height: 120px; margin: 18px 0; object-fit: contain; }
+.nexus-remotion-copy p { margin: 0; color: #a8b8c6; font-size: 17px; letter-spacing: .08em; }
+.nexus-remotion-progress { position: absolute; left: 50%; bottom: 48px; width: min(520px, 42vw); height: 2px; transform: translateX(-50%); overflow: hidden; background: rgba(255,255,255,.12); }
+.nexus-remotion-progress i { display: block; width: 100%; height: 100%; transform-origin: left; }
+.nexus-launch-cancel { position: absolute; z-index: 5; right: 32px; bottom: 30px; display: flex; min-height: 44px; align-items: center; gap: 8px; border: 1px solid rgba(255,255,255,.14); border-radius: 999px; background: rgba(1,5,9,.76); padding: 0 16px; color: rgba(255,255,255,.78); font-size: 11px; }
+.nexus-launch-reduced { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; }
+.nexus-launch-reduced > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .36; }
+.nexus-launch-reduced > div { position: relative; }
+.nexus-launch-reduced span { color: #8edfff; font-size: 10px; letter-spacing: .44em; }
+.nexus-launch-reduced h1 { margin-top: 18px; font-size: 48px; font-weight: 440; letter-spacing: .14em; text-transform: uppercase; }
+
+@media (max-width: 1160px) {
+  .nexus-v2-wordmark { display: none; }
+  .nexus-v2-brand { min-width: 48px; }
+  .nexus-v2-actions b { display: none; }
+  .nexus-hero-copy { width: min(58vw, 620px); }
+  .nexus-v2-feature-grid { grid-template-columns: 1fr 1fr; }
+  .nexus-v2-feature:last-child { display: none; }
+}
+
+@media (max-width: 820px) {
+  .nexus-v2-topnav { gap: 12px; padding: 0 18px; }
+  .nexus-v2-topnav nav { flex: 1; justify-content: space-evenly; gap: 4px; }
+  .nexus-v2-topnav nav button { font-size: 10px; }
+  .nexus-v2-actions { display: none; }
+  #nexus-hero-banner { min-height: 560px; }
+  .nexus-hero-copy { width: 86vw; }
+  .nexus-hero-quote { display: none !important; }
+  .nexus-v2-feature-grid { grid-template-columns: 1fr; }
+  .nexus-v2-feature { height: 190px; }
+  .nexus-v2-feature:nth-child(n+3) { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; }
+  .nexus-hero-breathe, .nexus-v2-feature img, .nexus-game-card, .nexus-view-transition { animation: none !important; transition-duration: .01ms !important; transform: none !important; filter: none !important; }
+}

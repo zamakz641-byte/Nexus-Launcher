@@ -1,0 +1,6 @@
+Kenney Interface Sounds
+
+Source: https://kenney.nl/assets/interface-sounds
+Mirror used by Nexus: https://github.com/Calinou/kenney-interface-sounds
+License: Creative Commons CC0 1.0 Universal (public domain dedication).
+The audio files are redistributed unmodified.

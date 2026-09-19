@@ -1,0 +1,21 @@
+NEXUS LAUNCHER v1.6.3 - VALIDATION
+=================================
+
+Validation effectuee dans l'environnement de build avant creation de l'archive:
+
+- Tests Python: 36/36 OK
+- Python compileall: OK
+- Syntaxe TypeScript/TSX: 29 fichiers transcompiles sans erreur syntaxique
+- Test navigateur Chromium/Xvfb du startup: OK
+  * backend rapide: startup visible avant l'app
+  * backend lent: startup reste visible, app reste cachee
+  * startup desactivee: reveal direct apres ready
+  * backend bloque: message d'initialisation visible, pas d'ecran noir
+- Test de handoff image par image logique: aucun intervalle ou startup ET app sont simultanement invisibles
+  * ready a 180 ms: OK
+  * ready a 3500 ms: OK
+
+Limite de l'environnement de build:
+- La couche Windows WebView2/EdgeChromium native ne peut pas etre lancee ici sous Linux.
+  Le chemin Windows est donc valide par tests Python, contrat DOM et navigateur Chromium,
+  puis doit etre confirme une fois sur le PC Windows cible.

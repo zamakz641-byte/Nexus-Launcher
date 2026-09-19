@@ -1,0 +1,42 @@
+<svg width="1400" height="420" viewBox="0 0 1400 420" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1400" y2="420" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#02060A"/>
+      <stop offset="0.55" stop-color="#06121C"/>
+      <stop offset="1" stop-color="#020508"/>
+    </linearGradient>
+    <radialGradient id="gold" cx="0" cy="0" r="1" gradientTransform="translate(1010 90) rotate(126) scale(440 650)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F6D36A" stop-opacity="0.24"/>
+      <stop offset="1" stop-color="#F6D36A" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="cyan" cx="0" cy="0" r="1" gradientTransform="translate(250 350) rotate(-35) scale(450 520)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#38BDF8" stop-opacity="0.17"/>
+      <stop offset="1" stop-color="#38BDF8" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="10" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="1400" height="420" rx="32" fill="url(#bg)"/>
+  <rect width="1400" height="420" rx="32" fill="url(#gold)"/>
+  <rect width="1400" height="420" rx="32" fill="url(#cyan)"/>
+  <path d="M0 330C235 240 380 370 598 292C832 208 1040 244 1400 130" stroke="white" stroke-opacity="0.035"/>
+  <path d="M0 352C260 270 405 386 624 310C854 230 1110 256 1400 164" stroke="#F6D36A" stroke-opacity="0.08"/>
+  <g transform="translate(124 93)" filter="url(#glow)">
+    <path d="M86 4 158 46v96l-72 42-72-42V46L86 4Z" stroke="white" stroke-opacity="0.9" stroke-width="4" fill="#07111B" fill-opacity="0.75"/>
+    <path d="M46 124V63l40 36 40-36v61L86 88l-40 36Z" stroke="#F6D36A" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="86" cy="94" r="6" fill="white"/>
+  </g>
+  <text x="340" y="164" fill="white" font-size="76" font-family="Segoe UI, Arial, sans-serif" font-weight="800" letter-spacing="16">NEXUS</text>
+  <text x="344" y="213" fill="#A7B3C2" font-size="18" font-family="Segoe UI, Arial, sans-serif" font-weight="600" letter-spacing="6">PC GAME LAUNCHER</text>
+  <text x="344" y="278" fill="#D5DEE8" font-size="24" font-family="Segoe UI, Arial, sans-serif">Ta bibliothèque. Tes médias. Tes sessions. Une interface console.</text>
+  <g transform="translate(344 315)">
+    <rect width="170" height="42" rx="21" fill="white" fill-opacity="0.055" stroke="white" stroke-opacity="0.08"/>
+    <text x="25" y="27" fill="#F6D36A" font-size="14" font-family="Segoe UI, Arial, sans-serif" font-weight="700">PYWEBVIEW · WEBVIEW2</text>
+    <rect x="187" width="150" height="42" rx="21" fill="white" fill-opacity="0.055" stroke="white" stroke-opacity="0.08"/>
+    <text x="214" y="27" fill="#7DD3FC" font-size="14" font-family="Segoe UI, Arial, sans-serif" font-weight="700">REACT · TAILWIND</text>
+    <rect x="354" width="145" height="42" rx="21" fill="white" fill-opacity="0.055" stroke="white" stroke-opacity="0.08"/>
+    <text x="383" y="27" fill="#A7F3D0" font-size="14" font-family="Segoe UI, Arial, sans-serif" font-weight="700">LOW IMPACT MODE</text>
+  </g>
+</svg>

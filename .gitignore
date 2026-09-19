@@ -1,0 +1,29 @@
+# Frontend
+node_modules/
+dist/
+
+# Python / build
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+.venv-*/
+build/
+*.spec.bak
+
+# Local config / secrets
+.env
+.env.*
+!.env.example
+*.sqlite3
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs / temporary media
+*.log
+*.part
+coverage/
