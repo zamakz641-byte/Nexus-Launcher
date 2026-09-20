@@ -56,10 +56,10 @@ Run-Git fetch origin $Branch
 Run-Git checkout -B $Branch
 
 # Stage first so the local Nexus tree is the source of truth.
-Run-Git add -A
+Run-Git add --all
 & git diff --cached --quiet
 if ($LASTEXITCODE -ne 0) {
-    Run-Git commit -m "Nexus Launcher v1.6.4 boot-stability full source"
+    Run-Git commit -m "Nexus Launcher 1.7 source update"
 }
 
 # fetch above guarantees origin/main exists when the remote repository is healthy.
