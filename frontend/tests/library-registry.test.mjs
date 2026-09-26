@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { EventEmitter } from "node:events";
-import { mkdtemp, mkdir, readFile, stat, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, realpath, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { LibraryRegistry, titleFromExecutable } from "../electron/libraryRegistry.mjs";
@@ -74,7 +74,7 @@ test("missing source does not erase another source", async () => {
   const second = join(profile, "two");
   await mkdir(first); await mkdir(second);
   const registry = new LibraryRegistry(profile, async (root) => {
-    if (root === first) throw new Error("Source indisponible");
+    if (root === await realpath(first)) throw new Error("Source indisponible");
     return { games: [{ id: "local-okay", title: "Okay", folderPath: join(root, "Okay") }] };
   });
   await registry.load();
@@ -108,7 +108,7 @@ test("launch only resolves scanned game IDs and explicitly registered executable
   await registry.load();
   await assert.rejects(registry.authorizedExecutable(exe), /non autorisé/);
   const snapshot = await registry.addExecutable(exe);
-  assert.equal(await registry.authorizedExecutable(snapshot.manualGames[0].id), exe);
+  assert.equal(await registry.authorizedExecutable(snapshot.manualGames[0].id), await realpath(exe));
   await writeFile(exe, "changed after scan");
   await assert.rejects(registry.authorizedExecutable(snapshot.manualGames[0].id), /modifié/);
 });
@@ -127,7 +127,7 @@ test("changing a scanned game's executable cannot escape its registered folder",
   const id = snapshot.games[0].id;
   await assert.rejects(registry.setExecutable(id, outside), /hors du dossier/);
   await registry.setExecutable(id, safe);
-  assert.equal(await registry.authorizedExecutable(id), safe);
+  assert.equal(await registry.authorizedExecutable(id), await realpath(safe));
 });
 
 test("manual artwork accepts only a real supported image and persists its override", async () => {

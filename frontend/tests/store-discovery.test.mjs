@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, stat, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, realpath, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { discoverStoreGames } from "../electron/storeDiscovery.mjs";
@@ -34,10 +34,12 @@ test("Steam libraries and Epic manifests discover installed games outside the de
   await registry.syncAutoSources(discovery.games);
   const snapshot = await registry.scan();
   assert.equal(snapshot.games.length, 3);
-  assert.equal(snapshot.games.find((game) => game.folderPath === epicGame)?.title, "Epic Example");
-  const removed = snapshot.roots.find((root) => root.path === firstGame);
+  const actualEpicGame = await realpath(epicGame);
+  const actualFirstGame = await realpath(firstGame);
+  assert.equal(snapshot.games.find((game) => game.folderPath === actualEpicGame)?.title, "Epic Example");
+  const removed = snapshot.roots.find((root) => root.path === actualFirstGame);
   await registry.remove(removed.id);
   await registry.syncAutoSources(discovery.games);
-  assert.equal(registry.snapshot().roots.some((root) => root.path === firstGame), false);
+  assert.equal(registry.snapshot().roots.some((root) => root.path === actualFirstGame), false);
   assert.equal((await stat(firstGame)).isDirectory(), true);
 });
