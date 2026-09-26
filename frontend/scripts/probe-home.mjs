@@ -1,0 +1,13 @@
+import { chromium } from "playwright-core";
+const browser = await chromium.launch({ executablePath: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe", headless: true, args:["--disable-gpu"] });
+const page = await browser.newPage({ viewport:{ width:1920, height:1080 } });
+page.on("console", m => console.log("console", m.type(), m.text()));
+page.on("pageerror", e => console.log("pageerror", e.message));
+await page.addInitScript(() => localStorage.setItem("nexus.onboarding.complete.v1", "true"));
+await page.goto("http://127.0.0.1:4173/", { waitUntil:"domcontentloaded" });
+await page.waitForTimeout(5000);
+console.log("url", page.url());
+console.log("headings", await page.locator("h1,h2").allTextContents());
+console.log("body", (await page.locator("body").innerText()).slice(0,1600));
+await page.screenshot({ path:"artifacts/qa/app/probe-home.png" });
+await browser.close();

@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="frontend/public/assets/brand/nexus-mark.png" alt="Nexus Launcher" width="88" />
+<img src="public/assets/brand/nexus-mark.png" alt="Nexus Launcher" width="88" />
 
 # Nexus Launcher
 
@@ -9,7 +9,7 @@
 
 [English](#english) · [Français](#français) · [Download V1.0](https://github.com/zamakz641-byte/Nexus-Launcher/releases/tag/v1.0.0)
 
-<img src="frontend/docs/screenshots/home.png" alt="Nexus Launcher home screen" width="100%" />
+<img src="docs/screenshots/home.png" alt="Nexus Launcher home screen" width="100%" />
 
 </div>
 
@@ -25,7 +25,7 @@ Nexus Launcher is a Windows desktop app for browsing and launching games from a 
 - **Made for the couch:** keyboard and controller navigation, a cinematic home screen, and the restrained “Minimal · tactile” sound set.
 - **Playtime:** tracks sessions launched through Nexus. Earlier time played in Steam or Epic is not imported.
 
-<table><tr><td width="50%"><img src="frontend/docs/screenshots/library.png" alt="Landscape game library" /></td><td width="50%"><img src="frontend/docs/screenshots/settings.png" alt="Library settings and game sources" /></td></tr></table>
+<table><tr><td width="50%"><img src="docs/screenshots/library.png" alt="Landscape game library" /></td><td width="50%"><img src="docs/screenshots/settings.png" alt="Library settings and game sources" /></td></tr></table>
 
 ### Download and install
 
@@ -56,11 +56,9 @@ npm run dist:win
 
 The app code lives in `frontend/src` and `frontend/electron`. Local settings and game registrations stay in the user's application data directory. Do not commit `.env.local` or API keys.
 
-The earlier Python/pywebview edition remains in the repository root for historical reference. V1.0 downloads and development use the Electron project in `frontend/`.
-
 ### Audio credit
 
-“Minimal · tactile” interface cues use selections from **Universal UI Soundpack** by **Nathan Gibson**, licensed under **CC BY 4.0**. The attribution and license are bundled in [`frontend/public/audio/nathan-gibson/LICENSE.txt`](frontend/public/audio/nathan-gibson/LICENSE.txt).
+“Minimal · tactile” interface cues use selections from **Universal UI Soundpack** by **Nathan Gibson**, licensed under **CC BY 4.0**. The attribution and license are bundled in [`public/audio/nathan-gibson/LICENSE.txt`](public/audio/nathan-gibson/LICENSE.txt).
 
 ---
 
@@ -87,7 +85,4 @@ Les exécutables V1.0 ne sont pas signés ; Windows peut afficher un avertisseme
 ### Développement
 
 Les commandes de construction et de test figurent dans la section [Build from source](#build-from-source). Conservez les clés API dans l’application ou dans un environnement local, jamais dans le dépôt.
-
-L’ancienne édition Python/pywebview reste à la racine du dépôt comme référence historique. La V1.0 publiée se trouve dans `frontend/`.
-
 

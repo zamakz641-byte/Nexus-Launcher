@@ -1,0 +1,21 @@
+const { contextBridge, ipcRenderer } = require("electron");
+
+contextBridge.exposeInMainWorld("nexusDesktop", Object.freeze({
+  chooseLibraryFolder: () => ipcRenderer.invoke("nexus:choose-library"),
+  addGameFolder: () => ipcRenderer.invoke("nexus:add-game-folder"),
+  scanLibrary: (sourceId, force = false) => ipcRenderer.invoke("nexus:library-scan", sourceId, force),
+  listLibrary: () => ipcRenderer.invoke("nexus:library-list"),
+  onLibraryChanged: (callback) => { const listener = (_event, payload) => callback(payload); ipcRenderer.on("nexus:library-changed", listener); return () => ipcRenderer.removeListener("nexus:library-changed", listener); },
+  addGameExecutable: () => ipcRenderer.invoke("nexus:add-executable"),
+  removeLibraryEntry: (id) => ipcRenderer.invoke("nexus:library-remove", id),
+  setGameTitle: (id, title) => ipcRenderer.invoke("nexus:game-title", id, title),
+  chooseGameExecutable: (id) => ipcRenderer.invoke("nexus:game-executable", id),
+  chooseGameArtwork: (id, role) => ipcRenderer.invoke("nexus:game-artwork", id, role),
+  getSteamGridStatus: () => ipcRenderer.invoke("nexus:steamgrid-status"),
+  saveSteamGridKey: (value) => ipcRenderer.invoke("nexus:steamgrid-save", value),
+  clearSteamGridKey: () => ipcRenderer.invoke("nexus:steamgrid-clear"),
+  searchCatalog: (query) => ipcRenderer.invoke("nexus:catalog-search", query),
+  system: () => ipcRenderer.invoke("nexus:system-info"),
+  launchGame: (gameId) => ipcRenderer.invoke("nexus:launch-game", gameId),
+  platform: process.platform,
+}));

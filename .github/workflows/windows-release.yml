@@ -1,8 +1,8 @@
-name: Build Windows release
+name: Nexus Launcher V1.0 Windows release
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -11,71 +11,58 @@ permissions:
 jobs:
   windows:
     runs-on: windows-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: frontend
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-          cache: 'pip'
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Fetch redistributable PNG UI assets
-        run: python scripts/fetch_ui_assets.py
+      - name: Check types and tests
+        run: |
+          npm run typecheck
+          npm test
 
-      - name: Fetch redistributable UI SFX
-        run: python scripts/fetch_sfx.py
+      - name: Build Windows executables
+        run: npm run dist:win
 
-      - name: Install frontend dependencies
-        run: npm install --no-audit --no-fund
-
-      - name: TypeScript check
-        run: npm run lint
-
-      - name: Build React frontend
-        run: npm run build
-
-      - name: Install Python build dependencies
-        run: python -m pip install --upgrade pip && pip install -r requirements-build.txt
-
-      - name: Backend tests
-        run: python -m pytest -q
-
-      - name: Build NexusLauncher.exe
-        run: python -m PyInstaller --noconfirm --clean --distpath build/release --workpath build/pyinstaller NexusLauncher.spec
-
-      - name: Smoke-check executable
+      - name: Verify release files
         shell: pwsh
         run: |
-          if (!(Test-Path 'build/release/NexusLauncher.exe')) { throw 'NexusLauncher.exe missing' }
-          $size = (Get-Item 'build/release/NexusLauncher.exe').Length
-          if ($size -lt 5MB) { throw "Executable is suspiciously small: $size bytes" }
-          Write-Host "NexusLauncher.exe size: $([Math]::Round($size / 1MB, 2)) MB"
+          $setup = 'release/Nexus-Launcher-Setup-1.0.0-x64.exe'
+          $portable = 'release/Nexus-Launcher-Portable-1.0.0-x64.exe'
+          foreach ($path in @($setup, $portable)) {
+            if (!(Test-Path $path)) { throw "Missing executable: $path" }
+            if ((Get-Item $path).Length -lt 20MB) { throw "Executable is unexpectedly small: $path" }
+          }
+          Get-FileHash $setup, $portable -Algorithm SHA256 | ForEach-Object { "$($_.Hash)  $(Split-Path $_.Path -Leaf)" } | Set-Content release/SHA256SUMS.txt
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NexusLauncher-Windows
-          path: build/release/NexusLauncher.exe
+          name: Nexus-Launcher-V1.0-Windows-x64
+          path: |
+            frontend/release/Nexus-Launcher-Setup-1.0.0-x64.exe
+            frontend/release/Nexus-Launcher-Portable-1.0.0-x64.exe
+            frontend/release/SHA256SUMS.txt
           if-no-files-found: error
-          retention-days: 30
 
-      - name: Publish/update beta release
+      - name: Publish GitHub release
+        if: github.ref == 'refs/heads/main'
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $tag = 'v1.7.0'
-          if (-not (gh release view $tag 2>$null)) {
-            gh release create $tag build/release/NexusLauncher.exe --target $env:GITHUB_SHA --title 'Nexus Launcher 1.7' --notes 'Nexus Launcher 1.7. Cinematic home, GSAP navigation transitions, Remotion launch sequence, reduced-motion mode, controller navigation, local-first library, Steam/Epic/GOG import and low-impact game mode.'
-          } else {
-            gh release upload $tag build/release/NexusLauncher.exe --clobber
-          }
+          gh release create v1.0.0 release/Nexus-Launcher-Setup-1.0.0-x64.exe release/Nexus-Launcher-Portable-1.0.0-x64.exe release/SHA256SUMS.txt --target $env:GITHUB_SHA --title 'Nexus Launcher V1.0' --notes-file RELEASE_NOTES.md --latest
