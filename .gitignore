@@ -1,8 +1,12 @@
 # Frontend
 node_modules/
+.npm-cache/
 dist/
 frontend/release/
 frontend/.nexus-cache/
+releases/*/*.exe
+releases/*/*.msi
+releases/*/SHA256SUMS.txt
 
 # Python / build
 __pycache__/

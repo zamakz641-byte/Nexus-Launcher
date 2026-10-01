@@ -7,9 +7,9 @@ import { extname, basename, dirname, join, resolve, sep } from "node:path";
 import { spawn } from "node:child_process";
 import { userInfo } from "node:os";
 import { createHash } from "node:crypto";
-import { LibraryRegistry } from "./electron/libraryRegistry.mjs";
-import { discoverStoreGames } from "./electron/storeDiscovery.mjs";
-import { pickWindowsGamePath } from "./electron/windowsPicker.mjs";
+import { LibraryRegistry } from "./backend/libraryRegistry.mjs";
+import { discoverStoreGames } from "./backend/storeDiscovery.mjs";
+import { pickWindowsGamePath } from "./backend/windowsPicker.mjs";
 
 let runtimeConfig = { libraryRoot: process.env.NEXUS_GAMES_ROOT || "F:\\Games", steamGridDbApiKey: process.env.STEAMGRIDDB_API_KEY || "" };
 const ignoredFolder = /^(redist|_commonredist|support|installer|installers|rdr2 updated setup files)$/i;

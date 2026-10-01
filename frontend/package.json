@@ -6,7 +6,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "main": "electron/main.mjs",
+  "main": "backend/main.mjs",
   "scripts": {
     "dev": "vite",
     "typecheck": "tsc --noEmit",
@@ -66,7 +66,7 @@
     "asar": true,
     "files": [
       "dist/client/**/*",
-      "electron/**/*",
+      "backend/**/*",
       "vite.config.mjs",
       "package.json"
     ],

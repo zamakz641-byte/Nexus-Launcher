@@ -54,7 +54,7 @@ To build the Windows executables locally:
 npm run dist:win
 ```
 
-The app code lives in `frontend/src` and `frontend/electron`. Local settings and game registrations stay in the user's application data directory. Do not commit `.env.local` or API keys.
+The app code lives in `src/` (React UI) and `backend/` (Electron and local services). Local settings and game registrations stay in the user's application data directory. Do not commit `.env.local` or API keys.
 
 ### Audio credit
 
@@ -85,4 +85,3 @@ Les exécutables V1.0 ne sont pas signés ; Windows peut afficher un avertisseme
 ### Développement
 
 Les commandes de construction et de test figurent dans la section [Build from source](#build-from-source). Conservez les clés API dans l’application ou dans un environnement local, jamais dans le dépôt.
-

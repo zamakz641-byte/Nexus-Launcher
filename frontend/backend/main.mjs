@@ -273,7 +273,7 @@ async function createWindow() {
       nodeIntegration: false,
       sandbox: true,
       backgroundThrottling: false,
-      preload: join(app.getAppPath(), "electron", "preload.cjs"),
+      preload: join(app.getAppPath(), "backend", "preload.cjs"),
     },
   });
 

@@ -2,11 +2,12 @@ import { _electron as electron } from "playwright-core";
 import { resolve } from "node:path";
 
 const root = resolve(import.meta.dirname, "..");
+const { ELECTRON_RUN_AS_NODE: _runAsNode, ...electronEnv } = process.env;
 const app = await electron.launch({
   executablePath: resolve(root, "node_modules/electron/dist/electron.exe"),
   args: [root],
   cwd: root,
-  env: { ...process.env, ELECTRON_DISABLE_SECURITY_WARNINGS: "false" },
+  env: { ...electronEnv, ELECTRON_DISABLE_SECURITY_WARNINGS: "false" },
 });
 try {
   const window = await app.firstWindow();

@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import { mkdtemp, mkdir, realpath, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { discoverStoreGames } from "../electron/storeDiscovery.mjs";
-import { LibraryRegistry } from "../electron/libraryRegistry.mjs";
+import { discoverStoreGames } from "../backend/storeDiscovery.mjs";
+import { LibraryRegistry } from "../backend/libraryRegistry.mjs";
 
 test("Steam libraries and Epic manifests discover installed games outside the default root", async () => {
   const profile = await mkdtemp(join(tmpdir(), "nexus-stores-"));

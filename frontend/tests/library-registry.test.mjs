@@ -4,7 +4,7 @@ import { EventEmitter } from "node:events";
 import { mkdtemp, mkdir, readFile, realpath, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { LibraryRegistry, titleFromExecutable } from "../electron/libraryRegistry.mjs";
+import { LibraryRegistry, titleFromExecutable } from "../backend/libraryRegistry.mjs";
 
 test("manual executable proposes a title, refreshes metadata after correction, and persists Nexus playtime", async () => {
   const profile = await mkdtemp(join(tmpdir(), "nexus-registry-"));

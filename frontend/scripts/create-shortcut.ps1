@@ -1,4 +1,5 @@
-$exe = "D:\manhwa studio\Nexus\frontend\release\win-unpacked\Nexus Launcher.exe"
+$exe = Join-Path (Split-Path -Parent $PSScriptRoot) 'release\win-unpacked\Nexus Launcher.exe'
+if (-not (Test-Path -LiteralPath $exe -PathType Leaf)) { throw "Packaged app not found: $exe" }
 $desktop = [Environment]::GetFolderPath("Desktop")
 $shortcutPath = Join-Path $desktop "Nexus Launcher.lnk"
 $shell = New-Object -ComObject WScript.Shell

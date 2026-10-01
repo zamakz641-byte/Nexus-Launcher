@@ -54,9 +54,9 @@ To build the Windows executables locally:
 npm run dist:win
 ```
 
-The app code lives in `frontend/src` and `frontend/electron`. Local settings and game registrations stay in the user's application data directory. Do not commit `.env.local` or API keys.
+The current app lives in `frontend/`: React UI in `frontend/src`, desktop services in `frontend/backend`, tests in `frontend/tests`, and release builds in `frontend/release` (ignored by Git). Local settings and game registrations stay in the user's application data directory. Do not commit `.env.local` or API keys.
 
-The earlier Python/pywebview edition remains in the repository root for historical reference. V1.0 downloads and development use the Electron project in `frontend/`.
+The earlier Python/pywebview edition is preserved in [`archive/legacy-python-v1.7`](archive/legacy-python-v1.7). Published binaries live on the [GitHub Releases page](https://github.com/zamakz641-byte/Nexus-Launcher/releases); see [`releases/README.md`](releases/README.md) for the local release layout.
 
 ### Audio credit
 
@@ -88,6 +88,6 @@ Les exécutables V1.0 ne sont pas signés ; Windows peut afficher un avertisseme
 
 Les commandes de construction et de test figurent dans la section [Build from source](#build-from-source). Conservez les clés API dans l’application ou dans un environnement local, jamais dans le dépôt.
 
-L’ancienne édition Python/pywebview reste à la racine du dépôt comme référence historique. La V1.0 publiée se trouve dans `frontend/`.
+L’ancienne édition Python/pywebview est conservée dans [`archive/legacy-python-v1.7`](archive/legacy-python-v1.7). Le projet actif se trouve dans `frontend/` : interface dans `src/`, services de bureau dans `backend/`. Les exécutables publiés sont sur [GitHub Releases](https://github.com/zamakz641-byte/Nexus-Launcher/releases).
 
 
