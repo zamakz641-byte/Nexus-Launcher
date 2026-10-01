@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Nexus — Console Motion Preview</title>
+  <style>
+    :root { color-scheme: dark; font-family: Inter, "Segoe UI", Arial, sans-serif; --accent: #8fc9ff; --accent-soft: #143e64; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-width: 320px; min-height: 100vh; overflow: hidden; color: #f5f8ff; background: #020610; }
+    button { font: inherit; }
+    button:focus-visible { outline: 2px solid #bde3ff; outline-offset: 5px; }
+    .stage { position: fixed; inset: 0; overflow: hidden; }
+    .grain { position: absolute; inset: 0; z-index: 8; pointer-events: none; opacity: .17; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.24'/%3E%3C/svg%3E"); }
+    .topbar { position: fixed; z-index: 20; top: clamp(16px, 3.5vw, 42px); left: clamp(20px, 4vw, 64px); right: clamp(20px, 4vw, 64px); display: flex; justify-content: space-between; align-items: flex-start; pointer-events: none; }
+    .eyebrow { color: #a7bbcf; font-size: 10px; font-weight: 700; letter-spacing: .33em; text-transform: uppercase; }
+    .topbar strong { display: block; margin-top: 7px; font-size: 14px; font-weight: 650; letter-spacing: .23em; }
+    .tools { display: flex; gap: 10px; pointer-events: auto; }
+    .tool { padding: 11px 15px; color: #d8e7f7; background: rgba(11,23,40,.56); border: 1px solid rgba(196,223,255,.18); border-radius: 999px; cursor: pointer; backdrop-filter: blur(16px); font-size: 12px; }
+    .tool:hover { background: rgba(37,69,103,.7); }
+    .boot { position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; background: radial-gradient(ellipse 54% 52% at 50% 48%, #0a203c 0%, #050d19 50%, #01050d 100%); opacity: 1; visibility: visible; transition: opacity .62s cubic-bezier(.22,1,.36,1), visibility .62s; }
+    body:not([data-stage="boot"]) .boot { opacity: 0; visibility: hidden; pointer-events: none; }
+    .boot::before { content: ""; position: absolute; inset: 5%; border: 1px solid rgba(176,217,255,.09); border-radius: 26px; }
+    .boot__aura { position: absolute; width: min(65vw, 700px); aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, rgba(57,125,202,.26), rgba(22,76,151,.09) 39%, transparent 70%); filter: blur(20px); }
+    .orbit { position: absolute; width: min(53vw, 560px); aspect-ratio: 1; border: 1px solid rgba(140,205,255,.14); border-radius: 50%; box-shadow: 0 0 90px rgba(53,129,227,.06), inset 0 0 80px rgba(53,129,227,.04); }
+    .orbit::after { content: ""; position: absolute; top: 50%; left: -4px; width: 8px; height: 8px; border-radius: 50%; background: #b5e4ff; box-shadow: 0 0 20px #81cbff; }
+    .orbit--inner { width: min(40vw, 430px); border-color: rgba(140,205,255,.08); transform: rotate(62deg); }
+    .boot.animate .orbit { animation: orbit 8s linear infinite; }
+    .boot.animate .orbit--inner { animation-duration: 11s; animation-direction: reverse; }
+    .boot__core { position: relative; display: grid; justify-items: center; gap: 17px; transform: translateY(-1vh); }
+    .boot__mark { width: clamp(80px, 9vw, 120px); filter: drop-shadow(0 12px 34px rgba(64,172,255,.35)); }
+    .boot.animate .boot__mark { animation: mark-in 1.2s cubic-bezier(.16,1,.3,1) both; }
+    .boot__name { margin: 0; font-size: clamp(27px, 3vw, 42px); font-weight: 550; letter-spacing: .55em; text-indent: .55em; }
+    .boot.animate .boot__name { animation: rise-in .8s .48s both; }
+    .boot__rule { width: clamp(170px, 23vw, 320px); height: 1px; margin-top: 5px; background: linear-gradient(90deg, transparent, #a7dfff, transparent); box-shadow: 0 0 18px #55b8ff; transform-origin: center; }
+    .boot.animate .boot__rule { animation: rule-in 1s .6s both; }
+    .boot__sub { color: #9dbad4; font-size: 11px; letter-spacing: .42em; }
+    .boot.animate .boot__sub { animation: rise-in .8s .85s both; }
+    .enter { position: absolute; bottom: clamp(62px, 10vh, 105px); left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 13px; padding: 13px 18px; white-space: nowrap; color: #e6f3ff; background: rgba(11,30,53,.62); border: 1px solid rgba(168,220,255,.3); border-radius: 999px; box-shadow: 0 15px 45px rgba(0,0,0,.3); cursor: pointer; backdrop-filter: blur(20px); font-size: 13px; }
+    .boot.animate .enter { animation: enter-in .7s 1.25s both; }
+    .enter:hover { background: rgba(43,91,139,.72); }
+    kbd { display: inline-grid; min-width: 29px; height: 29px; place-items: center; padding: 0 5px; border: 1px solid rgba(211,238,255,.68); border-radius: 9px; color: white; font: 650 12px inherit; }
+    .home { position: absolute; inset: 0; z-index: 2; opacity: 0; transform: scale(1.035); pointer-events: none; transition: opacity .75s .16s ease, transform 1s .1s cubic-bezier(.22,1,.36,1); }
+    body[data-stage="home"] .home, body[data-stage="launch"] .home { opacity: 1; transform: scale(1); pointer-events: auto; }
+    .home__art { position: absolute; inset: 0; background-position: center; background-size: cover; opacity: .77; transition: opacity .2s, background-image .2s; }
+    .home__shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(2,6,15,.96) 0%, rgba(2,6,15,.67) 42%, rgba(2,6,15,.08) 78%), linear-gradient(0deg, #030814 0%, transparent 38%, rgba(3,8,20,.45) 100%); }
+    .home__top { position: absolute; top: clamp(105px, 14vh, 170px); left: clamp(28px, 7vw, 120px); color: #c9dced; font-size: 11px; font-weight: 700; letter-spacing: .32em; }
+    .home__top::before { content: ""; display: inline-block; width: 21px; height: 1px; margin: 0 14px 4px 0; background: var(--accent); }
+    .hero { position: absolute; top: 29%; left: clamp(28px, 7vw, 120px); width: min(52vw, 700px); }
+    .hero__series { color: var(--accent); font-size: 12px; font-weight: 730; letter-spacing: .36em; text-transform: uppercase; }
+    .hero h2 { max-width: 12ch; margin: 17px 0 20px; font-size: clamp(44px, 6.3vw, 108px); font-weight: 420; letter-spacing: -.06em; line-height: .9; text-transform: uppercase; text-wrap: balance; }
+    .hero p { max-width: 39ch; margin: 0 0 30px; color: rgba(230,239,252,.72); font-size: clamp(14px, 1.15vw, 17px); line-height: 1.6; }
+    .play { display: inline-flex; align-items: center; gap: 16px; padding: 15px 23px; color: #071321; background: #e6f3ff; border: 0; border-radius: 12px; box-shadow: 0 12px 35px rgba(0,0,0,.3); cursor: pointer; font-size: 14px; font-weight: 750; }
+    .play:hover { transform: translateY(-2px); background: #fff; }
+    .play svg { width: 15px; height: 15px; }
+    .rail { position: absolute; right: clamp(25px, 5vw, 75px); bottom: clamp(35px, 6vh, 70px); left: clamp(25px, 5vw, 75px); display: flex; justify-content: flex-end; align-items: flex-end; gap: 14px; }
+    .rail__hint { margin-right: auto; align-self: end; padding-bottom: 10px; color: rgba(231,242,255,.58); font-size: 11px; letter-spacing: .06em; }
+    .card { position: relative; width: clamp(120px, 14vw, 210px); height: clamp(105px, 10vw, 145px); flex: 0 0 auto; overflow: hidden; padding: 0; text-align: left; color: white; background: #11243c; border: 1px solid rgba(255,255,255,.16); border-radius: 14px; cursor: pointer; transition: transform .3s cubic-bezier(.22,1,.36,1), border-color .3s, box-shadow .3s; }
+    .card:hover, .card[aria-current="true"] { transform: translateY(-13px) scale(1.045); border-color: rgba(191,231,255,.92); box-shadow: 0 0 0 4px rgba(148,209,255,.09), 0 18px 50px rgba(0,0,0,.42); }
+    .card__image { position: absolute; inset: 0; background-position: center; background-size: cover; opacity: .75; }
+    .card::after { content: ""; position: absolute; inset: 0; background: linear-gradient(0deg, rgba(0,5,14,.94), transparent 72%); }
+    .card__title { position: absolute; z-index: 1; right: 11px; bottom: 11px; left: 11px; font-size: 12px; font-weight: 730; letter-spacing: .07em; text-transform: uppercase; }
+    .launch { position: absolute; inset: 0; z-index: 6; visibility: hidden; pointer-events: none; background: #020611; opacity: 0; transition: opacity .2s, visibility .2s; }
+    body[data-stage="launch"] .launch { visibility: visible; pointer-events: auto; opacity: 1; }
+    .launch__art { position: absolute; inset: 0; background-size: cover; background-position: center; clip-path: circle(0 at 50% 50%); filter: saturate(.75) brightness(.58); transition: clip-path .9s cubic-bezier(.22,1,.36,1); }
+    body[data-stage="launch"] .launch__art { clip-path: circle(85% at 50% 50%); }
+    .launch__shade { position: absolute; inset: 0; background: radial-gradient(circle at center, rgba(1,6,14,.05), rgba(1,6,14,.72) 74%), linear-gradient(0deg, rgba(1,6,14,.92), transparent 65%); }
+    .launch__frame { position: absolute; inset: clamp(25px, 5vw, 70px); border: 1px solid rgba(223,242,255,.24); border-radius: 24px; opacity: 0; transform: scale(.97); transition: opacity .5s .28s, transform .6s .28s; }
+    body[data-stage="launch"] .launch__frame { opacity: 1; transform: scale(1); }
+    .launch__center { position: absolute; top: 50%; left: 50%; width: min(80vw, 700px); transform: translate(-50%, -44%); text-align: center; opacity: 0; transition: opacity .5s .38s, transform .65s .38s; }
+    body[data-stage="launch"] .launch__center { opacity: 1; transform: translate(-50%, -50%); }
+    .launch__center img { width: 65px; filter: drop-shadow(0 0 30px rgba(165,221,255,.35)); }
+    .launch__center h2 { margin: 26px 0 19px; font-size: clamp(46px, 6vw, 90px); font-weight: 450; letter-spacing: -.05em; line-height: .94; text-transform: uppercase; }
+    .launch__status { color: #cde6fa; font-size: 12px; font-weight: 700; letter-spacing: .34em; text-transform: uppercase; }
+    .launch__line { width: min(270px, 50vw); height: 2px; margin: 29px auto 0; background: rgba(227,245,255,.24); overflow: hidden; }
+    .launch__line::after { content: ""; display: block; width: 42%; height: 100%; background: var(--accent); box-shadow: 0 0 20px var(--accent); animation: sweep 1.15s ease-in-out infinite alternate; }
+    .launch__actions { position: absolute; right: clamp(35px, 7vw, 110px); bottom: clamp(35px, 8vh, 100px); display: flex; align-items: center; gap: 17px; color: rgba(235,246,255,.68); font-size: 12px; }
+    .launch__actions button { padding: 12px 18px; color: white; background: rgba(8,20,36,.7); border: 1px solid rgba(190,226,255,.35); border-radius: 10px; cursor: pointer; }
+    .demo-note { position: fixed; z-index: 20; right: clamp(20px, 4vw, 64px); bottom: 19px; color: rgba(201,222,240,.43); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; pointer-events: none; }
+    @keyframes orbit { to { transform: rotate(360deg); } }
+    @keyframes mark-in { from { opacity: 0; transform: translateY(28px) scale(.72); filter: blur(15px); } to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); } }
+    @keyframes rise-in { from { opacity: 0; transform: translateY(17px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes rule-in { from { opacity: 0; transform: scaleX(0); } to { opacity: 1; transform: scaleX(1); } }
+    @keyframes enter-in { from { opacity: 0; transform: translate(-50%, 18px); } to { opacity: 1; transform: translate(-50%, 0); } }
+    @keyframes sweep { to { transform: translateX(165%); } }
+    .reduce-motion *, .reduce-motion *::before, .reduce-motion *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+    @media (max-width: 800px) { .topbar { align-items: center; } .topbar .eyebrow, .rail__hint { display: none; } .hero { top: 23%; width: calc(100vw - 56px); } .hero h2 { font-size: clamp(43px, 10vw, 70px); } .home__shade { background: linear-gradient(90deg, rgba(2,6,15,.92), rgba(2,6,15,.28)), linear-gradient(0deg,#030814,transparent 70%); } .rail { justify-content: center; gap: 8px; } .card { width: 29vw; height: 95px; } .card__title { font-size: 10px; } .tool { padding: 10px; font-size: 11px; } }
+    @media (max-width: 520px) { .tools { gap: 5px; } .topbar strong { font-size: 11px; } .tool { max-width: 80px; white-space: normal; } .hero { top: 21%; } .hero p { max-width: 25ch; font-size: 13px; } .card { width: 30vw; height: 85px; } .card__title { font-size: 8px; } .rail { bottom: 40px; } .enter { font-size: 11px; } }
+  </style>
+</head>
+<body data-stage="boot">
+  <div class="topbar"><div><span class="eyebrow">Motion study / 01</span><strong>NEXUS LAUNCHER</strong></div><div class="tools"><button class="tool" id="replay" type="button">Rejouer l’intro</button><button class="tool" id="motion" type="button" aria-pressed="false">Réduire les animations</button></div></div>
+  <section class="stage boot animate" id="boot" aria-label="Ouverture de Nexus">
+    <div class="boot__aura"></div><div class="orbit"></div><div class="orbit orbit--inner"></div>
+    <div class="boot__core"><img class="boot__mark" src="/assets/brand/nexus-mark.png" alt="" /><h1 class="boot__name">NEXUS</h1><div class="boot__rule"></div><span class="boot__sub">YOUR WORLD, READY</span></div>
+    <button class="enter" id="enter" type="button"><kbd>↵</kbd> Appuyer pour accéder à Nexus</button>
+  </section>
+  <section class="stage home" id="home" aria-label="Accueil de démonstration" inert>
+    <div class="home__art" id="home-art"></div><div class="home__shade"></div><div class="home__top">VOTRE BIBLIOTHÈQUE</div>
+    <div class="hero"><div class="hero__series" id="series"></div><h2 id="game-title"></h2><p id="game-description"></p><button class="play" id="play" type="button"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M5 2.5v15l12-7.5z"/></svg> Voir le lancement <kbd>↵</kbd></button></div>
+    <div class="rail"><div class="rail__hint">← → choisir un jeu · Entrée lancer · Échap revenir</div><div id="cards" style="display:flex;gap:14px"></div></div>
+  </section>
+  <section class="stage launch" id="launch" aria-label="Simulation du lancement" inert>
+    <div class="launch__art" id="launch-art"></div><div class="launch__shade"></div><div class="launch__frame"></div>
+    <div class="launch__center"><img src="/assets/brand/nexus-mark.png" alt="" /><h2 id="launch-title"></h2><span class="launch__status" id="launch-status">Préparation de la session</span><div class="launch__line"></div></div>
+    <div class="launch__actions"><span>Simulation · aucun jeu n’est démarré</span><button id="back" type="button">Retour à l’accueil · Échap</button></div>
+  </section>
+  <div class="grain"></div><div class="demo-note">Prototype interactif · clavier, souris ou manette</div>
+  <script>
+    const games = [
+      { title: "Ghost of Tsushima", series: "Édition Director’s Cut", description: "Entrez dans un monde qui s’ouvre autour du jeu choisi. L’image, la lumière et le mouvement répondent à votre sélection.", image: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/2215430/library_hero.jpg", accent: "#a9d9ff" },
+      { title: "Red Dead Redemption 2", series: "L’Ouest vous attend", description: "Parcourez votre collection comme un espace vivant. Chaque jeu apporte son propre ton sans ralentir la navigation.", image: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1174180/library_hero.jpg", accent: "#f1b879" },
+      { title: "Split Fiction", series: "Une aventure à deux", description: "Choisissez, confirmez et entrez dans votre prochaine aventure avec une transition courte et lisible.", image: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/2001120/library_hero.jpg", accent: "#c6a9ff" }
+    ];
+    const $ = (selector) => document.querySelector(selector);
+    const body = document.body;
+    const boot = $("#boot");
+    const home = $("#home");
+    const launchView = $("#launch");
+    let selected = 0;
+    let launchTimer = 0;
+    let gamepadPressed = false;
+    let gamepadMoveAt = 0;
+    function setStage(stage) {
+      body.dataset.stage = stage;
+      boot.inert = stage !== "boot";
+      home.inert = stage !== "home";
+      launchView.inert = stage !== "launch";
+    }
+    function enter() { setStage("home"); $("#play").focus({ preventScroll: true }); }
+    function replay() {
+      window.clearTimeout(launchTimer);
+      setStage("boot");
+      boot.classList.remove("animate");
+      void boot.offsetWidth;
+      boot.classList.add("animate");
+      $("#enter").focus({ preventScroll: true });
+    }
+    function select(index) {
+      selected = (index + games.length) % games.length;
+      const game = games[selected];
+      document.documentElement.style.setProperty("--accent", game.accent);
+      $("#home-art").style.backgroundImage = `url("${game.image}")`;
+      $("#series").textContent = game.series;
+      $("#game-title").textContent = game.title;
+      $("#game-description").textContent = game.description;
+      [...$("#cards").children].forEach((card, i) => card.setAttribute("aria-current", String(i === selected)));
+    }
+    function launch() {
+      const game = games[selected];
+      $("#launch-art").style.backgroundImage = `url("${game.image}")`;
+      $("#launch-title").textContent = game.title;
+      $("#launch-status").textContent = "Préparation de la session";
+      setStage("launch");
+      window.clearTimeout(launchTimer);
+      launchTimer = window.setTimeout(() => { $("#launch-status").textContent = "Prêt à jouer"; }, 1550);
+    }
+    function back() { window.clearTimeout(launchTimer); setStage("home"); $("#play").focus({ preventScroll: true }); }
+    $("#cards").replaceChildren(...games.map((game, index) => {
+      const card = document.createElement("button");
+      card.className = "card";
+      card.type = "button";
+      card.setAttribute("aria-label", `Sélectionner ${game.title}`);
+      card.innerHTML = `<span class="card__image"></span><span class="card__title"></span>`;
+      card.querySelector(".card__image").style.backgroundImage = `url("${game.image}")`;
+      card.querySelector(".card__title").textContent = game.title;
+      card.addEventListener("click", () => select(index));
+      return card;
+    }));
+    select(0);
+    $("#enter").addEventListener("click", enter);
+    $("#play").addEventListener("click", launch);
+    $("#back").addEventListener("click", back);
+    $("#replay").addEventListener("click", replay);
+    $("#motion").addEventListener("click", (event) => { const active = body.classList.toggle("reduce-motion"); event.currentTarget.setAttribute("aria-pressed", String(active)); event.currentTarget.textContent = active ? "Animations actives" : "Réduire les animations"; });
+    window.addEventListener("keydown", (event) => {
+      if (event.target instanceof Element && event.target.closest(".tools")) return;
+      const stage = body.dataset.stage;
+      if (["Enter", " ", "ArrowLeft", "ArrowRight", "Escape"].includes(event.key)) event.preventDefault();
+      if (event.key === "Escape") { if (stage === "launch") back(); else if (stage === "home") replay(); return; }
+      if (stage === "boot" && (event.key === "Enter" || event.key === " ")) enter();
+      else if (stage === "home") { if (event.key === "ArrowLeft") select(selected - 1); if (event.key === "ArrowRight") select(selected + 1); if (event.key === "Enter" || event.key === " ") launch(); }
+      else if (stage === "launch" && (event.key === "Enter" || event.key === " ")) back();
+    });
+    function pollGamepad() {
+      const pad = navigator.getGamepads?.()[0];
+      if (pad) {
+        const pressed = Boolean(pad.buttons[0]?.pressed);
+        if (pressed && !gamepadPressed) { if (body.dataset.stage === "boot") enter(); else if (body.dataset.stage === "home") launch(); else back(); }
+        gamepadPressed = pressed;
+        const axis = pad.axes[0] || 0;
+        const now = performance.now();
+        if (body.dataset.stage === "home" && Math.abs(axis) > .6 && now - gamepadMoveAt > 300) { select(selected + Math.sign(axis)); gamepadMoveAt = now; }
+        if (pad.buttons[1]?.pressed && body.dataset.stage === "launch") back();
+      }
+      requestAnimationFrame(pollGamepad);
+    }
+    requestAnimationFrame(pollGamepad);
+  </script>
+</body>
+</html>
