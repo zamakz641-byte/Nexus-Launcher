@@ -234,6 +234,26 @@
 .startup-sequence {
   isolation: isolate;
 }
+.startup-sequence__frame,
+.launch-sequence__frame {
+  position: absolute;
+  inset: clamp(1.5rem, 4vw, 4rem);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 1.5rem;
+  pointer-events: none;
+}
+.startup-sequence__frame::before,
+.launch-sequence__frame::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-focus) 45%, transparent), transparent 22%, transparent 78%, rgba(255,255,255,.2));
+  opacity: .42;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  padding: 1px;
+}
 .startup-sequence__halo {
   position: absolute;
   width: min(52vw, 46rem);
@@ -247,14 +267,22 @@
   z-index: 2;
   transform-origin: center;
 }
-.startup-sequence__logo .nexus-logo {
+.nexus-shell[data-route] .startup-sequence__logo .nexus-logo {
+  flex-direction: column;
   gap: 1.2rem;
   font-size: clamp(1.35rem, 1.8vw, 2rem);
   letter-spacing: .48em;
 }
-.startup-sequence__logo .nexus-logo img {
+.nexus-shell[data-route] .startup-sequence__logo .nexus-logo img {
   width: clamp(5rem, 7vw, 7rem);
   height: clamp(5rem, 7vw, 7rem);
+}
+.nexus-shell[data-route] .startup-sequence__logo .nexus-logo span {
+  position: static;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip: auto;
 }
 .startup-sequence__line {
   position: absolute;
@@ -264,6 +292,15 @@
   transform-origin: center;
   background: linear-gradient(90deg, transparent, rgba(255,255,255,.86), var(--color-focus), transparent);
   box-shadow: 0 0 18px color-mix(in srgb, var(--color-focus) 60%, transparent);
+}
+.startup-sequence__scan {
+  position: absolute;
+  top: calc(50% + 6.5rem);
+  width: min(15rem, 35vw);
+  height: 2px;
+  transform-origin: center;
+  background: var(--color-focus);
+  box-shadow: 0 0 22px color-mix(in srgb, var(--color-focus) 65%, transparent);
 }
 .startup-sequence__label {
   position: absolute;
@@ -293,6 +330,10 @@
     radial-gradient(circle at center, transparent 0%, rgba(2,5,8,.32) 42%, rgba(2,5,8,.86) 100%),
     linear-gradient(0deg, rgba(2,5,8,.94), transparent 54%);
 }
+.launch-sequence__frame {
+  z-index: 2;
+  border-color: rgba(255,255,255,.16);
+}
 .launch-sequence__content {
   position: relative;
   z-index: 3;
@@ -302,6 +343,12 @@
   min-width: min(32rem, 70vw);
   color: white;
   text-align: center;
+}
+.launch-sequence__content > small {
+  color: color-mix(in srgb, var(--color-focus) 70%, white);
+  font-size: .62rem;
+  font-weight: 700;
+  letter-spacing: .48em;
 }
 .launch-sequence__content > strong {
   max-width: 16ch;
@@ -331,6 +378,8 @@
   background: linear-gradient(90deg, var(--color-focus), rgba(255,255,255,.85));
   box-shadow: 0 0 18px color-mix(in srgb, var(--color-focus) 55%, transparent);
 }
+.launch-sequence[data-phase="error"] .launch-sequence__content > span { color: #ffaaa9; }
+.launch-sequence[data-phase="error"] .launch-sequence__frame { border-color: rgba(255,130,130,.3); }
 .route-stage {
   will-change: transform, opacity;
 }

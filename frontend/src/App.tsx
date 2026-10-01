@@ -85,11 +85,17 @@ export function App() {
   useEffect(() => {
     sfx.preload();
     if (!window.nexusDesktop) return;
+    let active = true;
     const soundTimer = window.setTimeout(() => sfx.play("startup"), 160);
-    const closeTimer = window.setTimeout(() => setStartupOpen(false), 1500);
+    const scan = initialScan.current?.then(() => undefined, () => undefined) ?? Promise.resolve();
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    void Promise.race([
+      Promise.all([sfx.delay(reducedMotion ? 250 : 1300), scan]),
+      sfx.delay(reducedMotion ? 1600 : 2600),
+    ]).then(() => { if (active) setStartupOpen(false); });
     return () => {
+      active = false;
       window.clearTimeout(soundTimer);
-      window.clearTimeout(closeTimer);
     };
   }, []);
 
@@ -155,15 +161,15 @@ export function App() {
     setLaunchingGame(game);
     try {
       sfx.play("launch");
-      await Promise.race([new Promise<void>((resolve) => { launchReady.current = resolve; }), sfx.delay(650)]);
+      await Promise.race([new Promise<void>((resolve) => { launchReady.current = resolve; }), sfx.delay(520)]);
       launchReady.current = null;
       setLaunchPhase("launching");
       await launcherClient.launchGame(game);
-      await sfx.delay(380);
+      await sfx.delay(320);
     } catch (error) {
       setLaunchPhase("error");
       setNotice(error instanceof Error ? error.message : t("home.launchError"));
-      await sfx.delay(1900);
+      await sfx.delay(1500);
     } finally {
       launchReady.current = null;
       setLaunchingGame(null);
