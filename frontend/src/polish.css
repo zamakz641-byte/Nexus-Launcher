@@ -233,85 +233,71 @@
 }
 .startup-sequence {
   isolation: isolate;
+  background: transparent;
 }
-.startup-sequence__frame,
-.launch-sequence__frame {
+.startup-sequence__panels {
   position: absolute;
-  inset: clamp(1.5rem, 4vw, 4rem);
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: 1.5rem;
-  pointer-events: none;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
-.startup-sequence__frame::before,
-.launch-sequence__frame::before {
-  content: "";
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  background: linear-gradient(135deg, color-mix(in srgb, var(--color-focus) 45%, transparent), transparent 22%, transparent 78%, rgba(255,255,255,.2));
-  opacity: .42;
-  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  mask-composite: exclude;
-  padding: 1px;
-}
-.startup-sequence__halo {
-  position: absolute;
-  width: min(52vw, 46rem);
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: radial-gradient(circle, color-mix(in srgb, var(--color-focus) 26%, transparent), transparent 68%);
-  filter: blur(28px);
-}
-.startup-sequence__logo {
+.startup-sequence__panel {
   position: relative;
-  z-index: 2;
-  transform-origin: center;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #0a0d13;
+  border-right: 1px solid rgba(255,255,255,.09);
 }
-.nexus-shell[data-route] .startup-sequence__logo .nexus-logo {
-  flex-direction: column;
-  gap: 1.2rem;
-  font-size: clamp(1.35rem, 1.8vw, 2rem);
-  letter-spacing: .48em;
+.startup-sequence__panel:nth-child(2) { background: #111721; }
+.startup-sequence__panel:nth-child(3) { background: linear-gradient(140deg, #254262, #111b29 72%); }
+.startup-sequence__panel:nth-child(4) { background: #101923; }
+.startup-sequence__panel:nth-child(5) { background: #07111c; }
+.startup-sequence__panel > span {
+  display: block;
+  color: #eef1ef;
+  font-family: Impact, "Arial Narrow", "Segoe UI", sans-serif;
+  font-size: clamp(5rem, 20vw, 23rem);
+  line-height: 1;
 }
-.nexus-shell[data-route] .startup-sequence__logo .nexus-logo img {
-  width: clamp(5rem, 7vw, 7rem);
-  height: clamp(5rem, 7vw, 7rem);
-}
-.nexus-shell[data-route] .startup-sequence__logo .nexus-logo span {
-  position: static;
-  width: auto;
-  height: auto;
-  overflow: visible;
-  clip: auto;
-}
-.startup-sequence__line {
+.startup-sequence__panel:nth-child(3) > span { color: #a8d2f5; }
+.startup-sequence__panel > small {
   position: absolute;
-  top: calc(50% + 5.8rem);
-  width: min(32rem, 42vw);
-  height: 1px;
-  transform-origin: center;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,.86), var(--color-focus), transparent);
-  box-shadow: 0 0 18px color-mix(in srgb, var(--color-focus) 60%, transparent);
-}
-.startup-sequence__scan {
-  position: absolute;
-  top: calc(50% + 6.5rem);
-  width: min(15rem, 35vw);
-  height: 2px;
-  transform-origin: center;
-  background: var(--color-focus);
-  box-shadow: 0 0 22px color-mix(in srgb, var(--color-focus) 65%, transparent);
-}
-.startup-sequence__label {
-  position: absolute;
-  top: calc(50% + 7.3rem);
-  color: rgba(255,255,255,.54);
-  font-size: .68rem;
+  bottom: 8%;
+  left: 10%;
+  color: rgba(222,235,247,.45);
+  font-size: .6rem;
   font-weight: 700;
-  letter-spacing: .58em;
+  letter-spacing: .2em;
+}
+.startup-sequence__meta {
+  position: absolute;
+  z-index: 2;
+  top: 15%;
+  left: clamp(1.5rem, 5vw, 5rem);
+  color: #dce8f2;
+  font-size: .62rem;
+  font-weight: 700;
+  letter-spacing: .32em;
+}
+.startup-sequence__meta strong {
+  display: block;
+  margin-top: .75rem;
+  color: white;
+  font-size: .88rem;
+  letter-spacing: .2em;
+}
+.startup-sequence__foot {
+  position: absolute;
+  z-index: 2;
+  bottom: 8%;
+  left: clamp(1.5rem, 5vw, 5rem);
+  color: #afbfcd;
+  font-size: .62rem;
+  letter-spacing: .18em;
 }
 .launch-sequence {
-  background: #020508;
+  background: #07090e;
 }
 .launch-sequence__backdrop,
 .launch-sequence__backdrop img,
@@ -323,63 +309,51 @@
 }
 .launch-sequence__backdrop img {
   object-fit: cover;
-  filter: saturate(.72) brightness(.52);
+  filter: saturate(.78) brightness(.58);
 }
 .launch-sequence__shade {
   background:
-    radial-gradient(circle at center, transparent 0%, rgba(2,5,8,.32) 42%, rgba(2,5,8,.86) 100%),
-    linear-gradient(0deg, rgba(2,5,8,.94), transparent 54%);
-}
-.launch-sequence__frame {
-  z-index: 2;
-  border-color: rgba(255,255,255,.16);
+    linear-gradient(90deg, rgba(1,6,14,.92), rgba(1,6,14,.15) 78%),
+    linear-gradient(0deg, rgba(1,6,14,.78), transparent 60%);
 }
 .launch-sequence__content {
   position: relative;
   z-index: 3;
   display: grid;
-  justify-items: center;
+  justify-self: start;
+  justify-items: start;
   gap: 1.15rem;
-  min-width: min(32rem, 70vw);
+  width: min(70vw, 58rem);
+  margin-left: clamp(2rem, 8vw, 9rem);
   color: white;
-  text-align: center;
+  text-align: left;
 }
 .launch-sequence__content > small {
   color: color-mix(in srgb, var(--color-focus) 70%, white);
-  font-size: .62rem;
+  font-size: .68rem;
   font-weight: 700;
-  letter-spacing: .48em;
+  letter-spacing: .33em;
 }
 .launch-sequence__content > strong {
-  max-width: 16ch;
+  max-width: 12ch;
   font-family: "Arial Narrow", "Segoe UI", sans-serif;
-  font-size: clamp(2.2rem, 4vw, 4.5rem);
-  font-weight: 340;
-  letter-spacing: .16em;
+  font-size: clamp(3.4rem, 8vw, 8rem);
+  font-weight: 550;
+  letter-spacing: -.07em;
+  line-height: .88;
   text-transform: uppercase;
-}
-.launch-sequence__logo {
-  max-width: min(27rem, 48vw);
-  max-height: 8rem;
-  object-fit: contain;
-  filter: drop-shadow(0 12px 30px rgba(0,0,0,.65));
 }
 .launch-sequence__content > span {
   margin-top: .4rem;
-  color: rgba(255,255,255,.62);
-  font-size: .72rem;
+  padding: .65rem .85rem;
+  color: rgba(255,255,255,.86);
+  background: rgba(1,6,14,.54);
+  border-left: 2px solid var(--color-focus);
+  font-size: .68rem;
   font-weight: 760;
-  letter-spacing: .45em;
-}
-.launch-sequence__content > i {
-  width: min(18rem, 44vw);
-  height: 2px;
-  transform-origin: left;
-  background: linear-gradient(90deg, var(--color-focus), rgba(255,255,255,.85));
-  box-shadow: 0 0 18px color-mix(in srgb, var(--color-focus) 55%, transparent);
+  letter-spacing: .2em;
 }
 .launch-sequence[data-phase="error"] .launch-sequence__content > span { color: #ffaaa9; }
-.launch-sequence[data-phase="error"] .launch-sequence__frame { border-color: rgba(255,130,130,.3); }
 .route-stage {
   will-change: transform, opacity;
 }

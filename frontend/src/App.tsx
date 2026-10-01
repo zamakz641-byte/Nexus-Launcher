@@ -161,7 +161,7 @@ export function App() {
     setLaunchingGame(game);
     try {
       sfx.play("launch");
-      await Promise.race([new Promise<void>((resolve) => { launchReady.current = resolve; }), sfx.delay(520)]);
+      await Promise.race([new Promise<void>((resolve) => { launchReady.current = resolve; }), sfx.delay(800)]);
       launchReady.current = null;
       setLaunchPhase("launching");
       await launcherClient.launchGame(game);
