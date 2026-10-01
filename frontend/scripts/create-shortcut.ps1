@@ -1,12 +1,14 @@
-$exe = Join-Path (Split-Path -Parent $PSScriptRoot) 'release\win-unpacked\Nexus Launcher.exe'
-if (-not (Test-Path -LiteralPath $exe -PathType Leaf)) { throw "Packaged app not found: $exe" }
+$repository = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+$launcher = Join-Path $repository 'LANCER_NEXUS.cmd'
+if (-not (Test-Path -LiteralPath $launcher -PathType Leaf)) { throw "Launcher not found: $launcher" }
+$icon = Join-Path (Split-Path -Parent $PSScriptRoot) 'public\assets\brand\nexus-mark.ico'
 $desktop = [Environment]::GetFolderPath("Desktop")
-$shortcutPath = Join-Path $desktop "Nexus Launcher.lnk"
+$shortcutPath = Join-Path $desktop "Nexus Launcher (Developpement).lnk"
 $shell = New-Object -ComObject WScript.Shell
 $shortcut = $shell.CreateShortcut($shortcutPath)
-$shortcut.TargetPath = $exe
-$shortcut.WorkingDirectory = Split-Path $exe
-$shortcut.IconLocation = "$exe,0"
-$shortcut.Description = "Nexus Launcher"
+$shortcut.TargetPath = $launcher
+$shortcut.WorkingDirectory = $repository
+$shortcut.IconLocation = "$icon,0"
+$shortcut.Description = "Lancer la version actuelle de Nexus Launcher"
 $shortcut.Save()
 Write-Output $shortcutPath

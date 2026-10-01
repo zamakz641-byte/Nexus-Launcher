@@ -39,6 +39,8 @@ The V1.0 binaries are not code signed; Windows may show a publisher warning. Nex
 
 Requires Node.js and npm on Windows.
 
+After `npm ci`, double-click [`LANCER_NEXUS.cmd`](LANCER_NEXUS.cmd) to build and open the current app. Run `frontend/scripts/create-shortcut.ps1` to add a desktop shortcut.
+
 ```powershell
 cd frontend
 npm ci
@@ -87,6 +89,8 @@ Les exécutables V1.0 ne sont pas signés ; Windows peut afficher un avertisseme
 ### Développement
 
 Les commandes de construction et de test figurent dans la section [Build from source](#build-from-source). Conservez les clés API dans l’application ou dans un environnement local, jamais dans le dépôt.
+
+Après `npm ci`, double-cliquez sur [`LANCER_NEXUS.cmd`](LANCER_NEXUS.cmd) pour construire et ouvrir la version actuelle. Le script `frontend/scripts/create-shortcut.ps1` crée un raccourci sur le Bureau.
 
 L’ancienne édition Python/pywebview est conservée dans [`archive/legacy-python-v1.7`](archive/legacy-python-v1.7). Le projet actif se trouve dans `frontend/` : interface dans `src/`, services de bureau dans `backend/`. Les exécutables publiés sont sur [GitHub Releases](https://github.com/zamakz641-byte/Nexus-Launcher/releases).
 
