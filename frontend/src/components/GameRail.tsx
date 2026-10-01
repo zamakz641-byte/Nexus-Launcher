@@ -84,7 +84,7 @@ export function GameRail({ games, selectedId, onSelect }: GameRailProps) {
                 style={{ "--tile-accent": getGameAccent(game.id) } as CSSProperties}
                 type="button"
               >
-                <img src={game.artwork} alt="" draggable="false" loading={Math.abs(games.indexOf(game) - selectedIndex) > 3 ? "lazy" : "eager"} onError={(event) => applyImageFallback(event, game.heroArtwork)} />
+                <img src={game.artwork} alt="" draggable="false" decoding="async" loading={Math.abs(index - selectedIndex) > 3 ? "lazy" : "eager"} onError={(event) => applyImageFallback(event, game.heroArtwork)} />
                 <span className="game-tile__glass" aria-hidden="true" />
                 <span className="game-tile__scrim" aria-hidden="true" />
                 <span className="game-tile__info">

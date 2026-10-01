@@ -110,6 +110,7 @@ export function useGamepadNavigation() {
 
   useEffect(() => {
     let frame = 0;
+    let idleTimer = 0;
     const active = new Set<string>();
     const lastActionAt = new Map<string, number>();
     let tabLockUntil = 0;
@@ -182,6 +183,7 @@ export function useGamepadNavigation() {
     };
 
     const poll = (timestamp: number) => {
+      frame = 0;
       const gamepad = navigator.getGamepads?.()[0];
       if (gamepad) {
         const intents: Array<[string, boolean, string, boolean]> = [
@@ -207,14 +209,27 @@ export function useGamepadNavigation() {
             lastActionAt.delete(name);
           }
         }
+        frame = requestAnimationFrame(poll);
+      } else {
+        active.clear();
+        lastActionAt.clear();
+        idleTimer = window.setTimeout(() => {
+          idleTimer = 0;
+          frame = requestAnimationFrame(poll);
+        }, 250);
       }
-
-      frame = requestAnimationFrame(poll);
     };
 
+    const onGamepadConnected = () => {
+      if (idleTimer) { window.clearTimeout(idleTimer); idleTimer = 0; }
+      if (!frame) frame = requestAnimationFrame(poll);
+    };
     frame = requestAnimationFrame(poll);
+    window.addEventListener("gamepadconnected", onGamepadConnected);
     return () => {
       cancelAnimationFrame(frame);
+      window.clearTimeout(idleTimer);
+      window.removeEventListener("gamepadconnected", onGamepadConnected);
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("pointerdown", onPointer);
     };

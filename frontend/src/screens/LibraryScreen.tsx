@@ -40,8 +40,6 @@ export function LibraryScreen() {
   const previewGame = (id: GameId) => {
     if (hoverTimer.current !== null) window.clearTimeout(hoverTimer.current);
     setActiveId(id);
-    const artwork = games.find((game) => game.id === id)?.heroArtwork;
-    if (artwork) { const image = new Image(); image.src = artwork; }
     hoverTimer.current = window.setTimeout(() => setPreviewGame(id), 180);
   };
   const endPreview = () => { if (hoverTimer.current !== null) window.clearTimeout(hoverTimer.current); hoverTimer.current = null; setPreviewGame(""); };
@@ -74,8 +72,8 @@ export function LibraryScreen() {
       {activeGame ? (
         <div className="library-stage">
           <motion.aside className="library-focus" key={activeGame.id} initial={{ opacity: 0, y: 7 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .22 }}>
-            <img className="library-focus__art library-focus__art--base" src={activeGame.artwork} alt="" onError={(event) => applyImageFallback(event)} />
-            {activeGame.heroArtwork ? <img className="library-focus__art library-focus__art--hero" src={activeGame.heroArtwork} alt="" onError={(event) => applyImageFallback(event, activeGame.artwork)} /> : null}
+            <img className="library-focus__art library-focus__art--base" src={activeGame.artwork} alt="" decoding="async" onError={(event) => applyImageFallback(event)} />
+            {activeGame.heroArtwork ? <img className="library-focus__art library-focus__art--hero" src={activeGame.heroArtwork} alt="" decoding="async" onError={(event) => applyImageFallback(event, activeGame.artwork)} /> : null}
             <span className="library-focus__wash" aria-hidden="true" />
             <div className="library-focus__content">
               <span className="library-focus__eyebrow">{activeGame.genre[locale]}</span>
@@ -102,7 +100,7 @@ export function LibraryScreen() {
                   onMouseLeave={endPreview}
                   type="button"
                 >
-                  <img src={game.artwork} alt="" onError={(event) => applyImageFallback(event, game.heroArtwork)} />
+                  <img src={game.artwork} alt="" loading="lazy" decoding="async" onError={(event) => applyImageFallback(event, game.heroArtwork)} />
                   <span className="library-entry__shade" />
                   <span className="library-entry__index">{String(index + 1).padStart(2, "0")}</span>
                   <span className="library-entry__copy"><strong>{game.title}</strong></span>

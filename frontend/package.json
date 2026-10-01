@@ -17,6 +17,7 @@
     "test:sites": "node --test tests/sites-worker.test.mjs",
     "qa:local": "node scripts/app-qa-local.mjs",
     "qa:focus": "node scripts/focus-qa.mjs",
+    "qa:performance": "node scripts/performance-qa.mjs",
     "desktop": "npm run build && electron .",
     "pack:win": "npm run build && electron-builder --win dir --x64",
     "dist:win": "npm run build && electron-builder --win nsis portable --x64"

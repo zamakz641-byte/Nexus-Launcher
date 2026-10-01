@@ -44,6 +44,8 @@ export function App() {
   const [launchPhase, setLaunchPhase] = useState<"enter" | "launching" | "error">("enter");
   const launchReady = useRef<(() => void) | null>(null);
   const launchLock = useRef(false);
+  const initialScan = useRef<ReturnType<typeof libraryClient.scan> | null>(null);
+  const initialSystemInfo = useRef<ReturnType<typeof libraryClient.system> | null>(null);
   const [startupOpen, setStartupOpen] = useState(() => Boolean(window.nexusDesktop));
   const [notice, setNotice] = useState<string | null>(null);
   const [onboardingOpen, setOnboardingOpen] = useState(() => localStorage.getItem("nexus.onboarding.complete.v1") !== "true");
@@ -53,8 +55,10 @@ export function App() {
   useEffect(() => {
     const controller = new AbortController();
     beginLibraryScan();
-    void libraryClient.system().then((info) => { if (!controller.signal.aborted) setSystemInfo(info); }).catch(() => undefined);
-    void libraryClient.scan(window.nexusDesktop ? undefined : localStorage.getItem("nexus.library.root.v1") || undefined).then((result) => {
+    initialSystemInfo.current ??= libraryClient.system();
+    void initialSystemInfo.current.then((info) => { if (!controller.signal.aborted) setSystemInfo(info); }).catch(() => undefined);
+    initialScan.current ??= libraryClient.scan(window.nexusDesktop ? undefined : localStorage.getItem("nexus.library.root.v1") || undefined);
+    void initialScan.current.then((result) => {
       if (!controller.signal.aborted) completeLibraryScan(result.games, result.root, result.roots, result.manualGames, result.scanErrors);
     }).catch((error: unknown) => {
       if (!controller.signal.aborted) failLibraryScan(error instanceof Error ? error.message : "settings.scanError");

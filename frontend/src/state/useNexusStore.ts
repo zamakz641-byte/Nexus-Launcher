@@ -43,8 +43,8 @@ export const useNexusStore = create<NexusState>((set) => ({
   libraryScanState: "idle",
   libraryScanMessage: "En attente de l’analyse locale",
   systemInfo: null,
-  setSelectedGame: (selectedGameId) => set({ selectedGameId }),
-  setPreviewGame: (previewGameId) => set({ previewGameId }),
+  setSelectedGame: (selectedGameId) => set((state) => state.selectedGameId === selectedGameId ? state : { selectedGameId }),
+  setPreviewGame: (previewGameId) => set((state) => state.previewGameId === previewGameId ? state : { previewGameId }),
   setLocale: (locale) => {
     localStorage.setItem("nexus.locale.v1", locale);
     set({ locale });
@@ -53,7 +53,7 @@ export const useNexusStore = create<NexusState>((set) => ({
     localStorage.setItem("nexus.theme.v1", theme);
     set({ theme });
   },
-  setInputMode: (inputMode) => set({ inputMode }),
+  setInputMode: (inputMode) => set((state) => state.inputMode === inputMode ? state : { inputMode }),
   beginLibraryScan: () => set({ libraryScanState: "scanning", libraryScanMessage: "Analyse de la bibliothèque locale…" }),
   completeLibraryScan: (discoveredGames, libraryRoot, libraryRoots = [], manualGames = [], libraryScanErrors = {}) => set((state) => ({ discoveredGames, libraryRoot, libraryRoots, manualGames, libraryScanErrors, selectedGameId: discoveredGames.some((game) => game.id === state.selectedGameId) ? state.selectedGameId : discoveredGames[0]?.id ?? "", libraryScanState: "ready", libraryScanMessage: `${discoveredGames.length} jeux locaux détectés` })),
   failLibraryScan: (libraryScanMessage) => set({ libraryScanState: "error", libraryScanMessage }),
