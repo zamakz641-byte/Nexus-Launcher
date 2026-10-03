@@ -4,4 +4,6 @@ The project owner supplied nexus-startup-fr-v1.mp4 on 2026-10-03, generated in G
 
 Electron plays the film locally, respecting the existing master/UI volume and mute settings. Playback completion reveals the library; keyboard/controller skip and a 12-second failure watchdog keep the shell reachable. Browser previews begin muted and offer an explicit sound button. No additional startup cue is played over the film.
 
-The English film has not been supplied yet. This French asset is the current version; the interface controls remain localized. Preview the integrated application at /?intro=1 or the replayable viewer at /prototypes/startup-film.html on the Vite server. The procedural glass study remains available separately at /prototypes/console-intro.html.
+The owner also supplied nexus-startup-en-v1.mp4 on 2026-10-03, with its English wordmark/signature treatment and embedded audio. Each language has a poster extracted from its film. Startup selects the local film and poster from the persisted Nexus interface language; the controls remain localized.
+
+Preview the current application sources at /?intro=1 or the replayable viewer at /prototypes/startup-film.html on the Vite server. The viewer embeds the actual application, with the development library profile. Installed executable releases are separate builds. The procedural glass study remains available separately at /prototypes/console-intro.html.

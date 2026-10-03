@@ -2,12 +2,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { useTranslation } from "react-i18next";
 import { sfx } from "../audio/sfx";
-
-const film = "/assets/startup/nexus-startup-fr-v1.mp4";
-const poster = "/assets/startup/nexus-startup-fr-v1-poster.jpg";
+import { useNexusStore } from "../state/useNexusStore";
 
 export function StartupSequence({ onComplete }: { onComplete: () => void }) {
   const reducedMotion = useReducedMotion();
+  const locale = useNexusStore((state) => state.locale);
+  const film = `/assets/startup/nexus-startup-${locale}-v1.mp4`;
+  const poster = `/assets/startup/nexus-startup-${locale}-v1-poster.jpg`;
   const video = useRef<HTMLVideoElement>(null);
   const finished = useRef(false);
   const [failed, setFailed] = useState(false);
@@ -39,7 +40,7 @@ export function StartupSequence({ onComplete }: { onComplete: () => void }) {
       void player.play().catch(() => { if (active) setFailed(true); });
     });
     return () => { active = false; player.pause(); };
-  }, [reducedMotion, failed, muted, preferences.masterVolume, preferences.uiVolume]);
+  }, [reducedMotion, failed, muted, film, preferences.masterVolume, preferences.uiVolume]);
 
   useEffect(() => {
     const key = (event: KeyboardEvent) => {
