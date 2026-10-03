@@ -16,6 +16,8 @@ export interface Game {
   metadata: string[];
   artwork: string;
   heroArtwork?: string;
+  artworkFallbacks?: string[];
+  heroArtworkFallbacks?: string[];
   logoArtwork?: string;
   metadataProvider?: string;
   installed: boolean;

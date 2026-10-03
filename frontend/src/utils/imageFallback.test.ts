@@ -14,3 +14,11 @@ it('retries original artwork after two failed alternatives and resets for anothe
   expect(image.getAttribute('src')).toBe('/second-hero.jpg');
   image.remove();
 });
+it('tries another provider before the brand image when cover and hero both fail', () => {
+  const image = document.createElement('img'); image.src = '/sgdb-cover';
+  const event = { currentTarget: image } as SyntheticEvent<HTMLImageElement>;
+  const alternatives = ['/sgdb-hero', '/steam-header'];
+  applyImageFallback(event, alternatives); expect(image.getAttribute('src')).toBe('/sgdb-hero');
+  applyImageFallback(event, alternatives); expect(image.getAttribute('src')).toBe('/steam-header');
+  applyImageFallback(event, alternatives); expect(image.getAttribute('src')).toBe('/assets/brand/nexus-mark.png');
+});

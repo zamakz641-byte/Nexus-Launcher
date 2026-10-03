@@ -12,6 +12,7 @@ interface LocalGameRecord {
   lastPlayedAt?: string;
   artworkUrl?: string;
   platform?: "Steam" | "Epic" | "Local";
+  storeId?: string;
   steamMetadata?: {
     appId: number;
     title?: string;
@@ -25,6 +26,8 @@ interface LocalGameRecord {
     trailerTitle?: string;
     artworkUrl?: string;
     heroArtworkUrl?: string;
+    artworkFallbackUrls?: string[];
+    heroFallbackUrls?: string[];
     logoUrl?: string;
     metadataProvider?: string;
   };
@@ -99,8 +102,12 @@ async function postLocal(path: string, body: Record<string, string>) {
   return response.json() as Promise<ScanPayload>;
 }
 
-function toGame(record: LocalGameRecord): Game {
+export function toGame(record: LocalGameRecord): Game {
   const steam = record.steamMetadata;
+  const appId = steam?.appId || (record.platform === "Steam" && /^\d+$/.test(record.storeId || "") ? Number(record.storeId) : undefined);
+  const steamHeader = appId ? `https://cdn.akamai.steamstatic.com/steam/apps/${appId}/header.jpg` : undefined;
+  const artworkFallbacks = [...new Set([...(steam?.artworkFallbackUrls || []), steam?.artworkUrl, steamHeader].map(normalizeMedia).filter((url): url is string => Boolean(url)))];
+  const heroArtworkFallbacks = [...new Set([...(steam?.heroFallbackUrls || []), ...artworkFallbacks, record.artworkUrl].map(normalizeMedia).filter((url): url is string => Boolean(url)))];
   const executableLabel = record.executableName ? `Exécutable détecté : ${record.executableName}` : "Exécutable principal à confirmer";
   const modified = new Date(record.lastPlayedAt || record.modifiedAt);
   const lastPlayed = Number.isNaN(modified.valueOf())
@@ -119,8 +126,10 @@ function toGame(record: LocalGameRecord): Game {
     },
     genre: { fr: (steam?.genre ?? "JEU LOCAL").toUpperCase(), en: (steam?.genre ?? "LOCAL GAME").toUpperCase() },
     metadata: steam?.appId ? ["STEAM", "PC"] : ["LOCAL", "PC"],
-    artwork: normalizeMedia(record.artworkUrl) ?? "/assets/brand/nexus-mark.png",
+    artwork: normalizeMedia(record.artworkUrl) ?? artworkFallbacks[0] ?? "/assets/brand/nexus-mark.png",
     heroArtwork: normalizeMedia(steam?.heroArtworkUrl),
+    artworkFallbacks,
+    heroArtworkFallbacks,
     logoArtwork: normalizeMedia(steam?.logoUrl),
     metadataProvider: steam?.metadataProvider ?? "Fichiers locaux",
     installed: Boolean(record.executablePath),

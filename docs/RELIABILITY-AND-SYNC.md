@@ -13,7 +13,7 @@
 
 Some games hand execution to an already running Steam/Epic/third-party client. Their real process may not descend from the executable Nexus started. Very short bootstrap processes can also end before the first Windows process snapshot. These need store-specific running-state adapters; the current tracker does not promise universal detection. Elevated games may hide process information. A surviving helper process may prolong a tracked session. Windows process polling is every 1.5 seconds, so return is not instantaneous. Unavailable process snapshots are retried; automatic return waits for a successful snapshot rather than assuming a game has closed.
 
-The installed V1.0 executable remains a separate build. These changes are in the current sources; no new installer is implied by a source commit.
+The V2.0 installers include these changes and the folder-first setup flow. Source changes after a release still require a new build before they appear in an installed executable.
 
 ## Recommended next improvements, using real data
 

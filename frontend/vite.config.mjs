@@ -145,9 +145,9 @@ async function getSteamMetadata(title, knownAppId) {
       trailerUrl: data.movies?.[0]?.mp4?.max || data.movies?.[0]?.webm?.max || data.movies?.[0]?.hls_h264,
       trailerTitle: data.movies?.[0]?.name,
       artworkUrl: steamGridDb?.gridUrl || data.header_image,
-      heroArtworkUrl: steamGridDb?.heroUrl || (appId === 4570720
-        ? data.background_raw || data.background || data.header_image
-        : `https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/${appId}/library_hero.jpg`),
+      heroArtworkUrl: steamGridDb?.heroUrl || data.background_raw || data.background || data.header_image,
+      artworkFallbackUrls: [data.header_image, `https://cdn.akamai.steamstatic.com/steam/apps/${appId}/header.jpg`].filter(Boolean),
+      heroFallbackUrls: [data.background_raw, data.background, data.header_image].filter(Boolean),
       logoUrl: steamGridDb?.logoUrl,
       metadataProvider: steamGridDb ? "Steam + SteamGridDB" : "Steam",
     };
@@ -206,7 +206,7 @@ async function getSteamGridDbMetadata(appId, title) {
 async function readLibraryCache(root, signature, direct = false, titleHint = "", storeId = "", allowStale = false) {
   try {
     const cached = JSON.parse(await readFile(libraryCacheFile(root, direct, titleHint, storeId), "utf8"));
-    if (cached.root !== root || !Array.isArray(cached.games)) return undefined;
+    if (cached.root !== root || !Array.isArray(cached.games) || (!allowStale && cached.version !== 2)) return undefined;
     const fresh = Date.now() - new Date(cached.cachedAt).valueOf() < 5 * 60 * 1000;
     if (!allowStale && !fresh && (!signature || cached.signature !== signature)) return undefined;
     return cached.games;
@@ -218,7 +218,7 @@ async function readLibraryCache(root, signature, direct = false, titleHint = "",
 async function writeLibraryCache(root, signature, games, direct = false, titleHint = "", storeId = "") {
   try {
     await mkdir(cacheDirectory, { recursive: true });
-    await writeFile(libraryCacheFile(root, direct, titleHint, storeId), JSON.stringify({ version: 1, root, signature, cachedAt: new Date().toISOString(), games }), "utf8");
+    await writeFile(libraryCacheFile(root, direct, titleHint, storeId), JSON.stringify({ version: 2, root, signature, cachedAt: new Date().toISOString(), games }), "utf8");
   } catch {
     // The library remains usable when the optional local cache cannot be written.
   }

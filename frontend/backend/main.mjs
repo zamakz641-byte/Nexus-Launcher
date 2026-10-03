@@ -85,9 +85,6 @@ async function getRegistry() {
     const backend = await getBackend();
     const registry = new LibraryRegistry(app.getPath("userData"), (root, force, direct, title, platform, storeId) => backend.desktopScanLibrary(root, force, direct, title, platform, storeId));
     await registry.load();
-    if (registry.data.roots.length === 0 && registry.data.manualGames.length === 0) {
-      try { if ((await stat(process.env.NEXUS_GAMES_ROOT)).isDirectory()) await registry.addFolder(process.env.NEXUS_GAMES_ROOT, "collection", false); } catch { /* No default library. */ }
-    }
     const discovery = await discoverStoreGames();
     await registry.syncAutoSources(discovery.games);
     discoveryFingerprint = JSON.stringify({ drives: discovery.drives, games: discovery.games.map((game) => [game.path, game.storeId]) });

@@ -80,7 +80,7 @@ export function SearchScreen() {
         <div className="search-grid" aria-live="polite">
           {localResults.map((game, index) => (
             <motion.button className="search-card" key={game.id} initial={reducedMotion || index > 7 ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: .18, delay: reducedMotion ? 0 : Math.min(index, 7) * .018 }} onClick={() => openLocalGame(game.id)} onFocus={() => setSelectedGame(game.id)} onMouseEnter={() => setSelectedGame(game.id)} type="button">
-              <span className="search-card__visual"><img src={game.artwork} alt="" onError={(event) => applyImageFallback(event, game.heroArtwork)} /><span className="search-card__shade" />{game.logoArtwork ? <img className="search-card__logo" src={game.logoArtwork} alt="" onError={(event) => applyImageFallback(event)} /> : null}</span>
+              <span className="search-card__visual"><img src={game.artwork} alt="" onError={(event) => applyImageFallback(event, [...(game.artworkFallbacks || []), game.heroArtwork])} /><span className="search-card__shade" />{game.logoArtwork ? <img className="search-card__logo" src={game.logoArtwork} alt="" onError={(event) => applyImageFallback(event)} /> : null}</span>
               <span className="search-card__body">
                 <span className="search-card__eyebrow"><span><HardDrive aria-hidden="true" size={17} />{t("search.local")}</span>{game.installed ? <span className="search-card__ready"><CheckCircle aria-hidden="true" size={17} weight="fill" />{t("search.ready")}</span> : <span>{t("search.configure")}</span>}</span>
                 <strong>{game.title}</strong>

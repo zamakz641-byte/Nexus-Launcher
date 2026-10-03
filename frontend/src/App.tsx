@@ -54,6 +54,10 @@ export function App() {
   const [onboardingOpen, setOnboardingOpen] = useState(() => new URLSearchParams(window.location.search).get("intro") !== "1" && localStorage.getItem("nexus.onboarding.complete.v1") !== "true");
   const selectedGame = useMemo(() => discoveredGames.find((game) => game.id === selectedGameId) ?? discoveredGames[0], [discoveredGames, selectedGameId]);
   const backdropGame = useMemo(() => discoveredGames.find((game) => game.id === previewGameId) ?? selectedGame, [discoveredGames, previewGameId, selectedGame]);
+  useEffect(() => {
+    const blocked = onboardingOpen || startupOpen;
+    for (const element of document.querySelectorAll<HTMLElement>('.top-navigation, .route-stage')) element.inert = blocked;
+  }, [onboardingOpen, startupOpen, location.pathname]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -181,7 +185,10 @@ export function App() {
   const replayOnboarding = () => { localStorage.removeItem("nexus.onboarding.complete.v1"); setOnboardingOpen(true); };
   const addFolderFromOnboarding = async () => {
     const result = await libraryClient.addFolder();
-    if (result) completeLibraryScan(result.games, result.root, result.roots, result.manualGames, result.scanErrors);
+    if (!result) return null;
+    completeLibraryScan(result.games, result.root, result.roots, result.manualGames, result.scanErrors);
+    const added = result.roots.filter(root => !root.auto).at(-1);
+    return { folder: added?.path || result.root, count: result.games.length };
   };
 
   return (
@@ -190,7 +197,7 @@ export function App() {
         <div className="media-backdrop" aria-hidden="true">
           <AnimatePresence initial={false} mode="popLayout">
             {backdropGame ? backdropGame.heroArtwork || !backdropGame.artwork.includes("/assets/brand/nexus-mark")
-              ? <motion.img animate={{ opacity: 1, scale: 1 }} className="media-backdrop__image" exit={{ opacity: 0 }} initial={{ opacity: 0, scale: 1.015 }} key={`${backdropGame.id}:${backdropGame.heroArtwork ?? backdropGame.artwork}`} onError={(event) => applyImageFallback(event, backdropGame.artwork)} src={backdropGame.heroArtwork ?? backdropGame.artwork} transition={{ opacity: { duration: 0.36 }, scale: { duration: 0.52 } }} />
+              ? <motion.img animate={{ opacity: 1, scale: 1 }} className="media-backdrop__image" exit={{ opacity: 0 }} initial={{ opacity: 0, scale: 1.015 }} key={`${backdropGame.id}:${backdropGame.heroArtwork ?? backdropGame.artwork}`} onError={(event) => applyImageFallback(event, [...(backdropGame.heroArtworkFallbacks || []), backdropGame.artwork])} src={backdropGame.heroArtwork ?? backdropGame.artwork} transition={{ opacity: { duration: 0.36 }, scale: { duration: 0.52 } }} />
               : <motion.div className="media-backdrop__fallback" key={backdropGame.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: .34 }}><img src="/assets/brand/nexus-mark.png" alt="" /></motion.div>
               : null}
           </AnimatePresence>

@@ -48,7 +48,7 @@ export function GameDetailScreen({ onLaunch }: GameDetailScreenProps) {
       <button className="game-detail__back" onClick={() => location.key === "default" ? navigate("/library", { replace: true }) : navigate(-1)} type="button"><ArrowLeft size={20} />{t("detail.back")}</button>
       <div className="game-detail__hero">
         <span className="screen-kicker">{game.source} · {game.genre[locale]}</span>
-        {game.logoArtwork ? <img className="game-detail__logo" src={game.logoArtwork} alt="" onError={(event) => applyImageFallback(event, game.artwork)} /> : null}
+        {game.logoArtwork ? <img className="game-detail__logo" src={game.logoArtwork} alt="" onError={(event) => applyImageFallback(event, [...(game.heroArtworkFallbacks || []), game.artwork])} /> : null}
         <h1 className={game.logoArtwork ? "game-detail__title game-detail__title--with-logo" : "game-detail__title"} id="game-detail-title">{game.title}</h1>
         <span className="game-detail__availability" data-ready={game.installed}><i />{t(game.installed ? "detail.ready" : "detail.installRequired")}</span>
         <p>{game.description[locale]}</p>
@@ -77,7 +77,7 @@ export function GameDetailScreen({ onLaunch }: GameDetailScreenProps) {
             <div className="game-detail__summary"><span className="screen-kicker">{t("detail.about")}</span><p>{game.description[locale]}</p></div>
             <dl className="game-detail__specs"><div><dt>{t("detail.developer")}</dt><dd>{game.developer}</dd></div><div><dt>{t("detail.publisher")}</dt><dd>{game.publisher}</dd></div><div><dt>{t("detail.release")}</dt><dd>{game.releaseDate}</dd></div>{game.ageRating !== "Non renseigné" ? <div><dt>{t("detail.rating")}</dt><dd>{game.ageRating}</dd></div> : null}<div><dt>{t("detail.metadata")}</dt><dd>{game.metadataProvider}</dd></div>{game.executablePath ? <div><dt>{t("detail.executable")}</dt><dd>{game.executablePath.split(/[\\/]/).pop()}</dd></div> : null}</dl>
           </> : null}
-          {tab === "media" ? <button className="game-detail__media" onClick={() => setTrailerOpen(true)} type="button"><img src={game.artwork} alt="" onError={(event) => applyImageFallback(event, game.heroArtwork)} /><span><Play size={26} weight="fill" /><strong>{game.trailer.title[locale]}</strong><small>{game.trailer.duration}</small></span></button> : null}
+          {tab === "media" ? <button className="game-detail__media" onClick={() => setTrailerOpen(true)} type="button"><img src={game.artwork} alt="" onError={(event) => applyImageFallback(event, [...(game.artworkFallbacks || []), game.heroArtwork])} /><span><Play size={26} weight="fill" /><strong>{game.trailer.title[locale]}</strong><small>{game.trailer.duration}</small></span></button> : null}
           {tab === "achievements" ? <div className="game-detail__achievement"><Trophy size={38} /><span><strong>{t("detail.completed", { count: achievementPercent })}</strong><small>{t("detail.unlocked", { unlocked: game.achievementProgress.unlocked, total: game.achievementProgress.total })}</small></span><div><i style={{ width: `${achievementPercent}%` }} /></div></div> : null}
         </motion.div>
       </AnimatePresence>

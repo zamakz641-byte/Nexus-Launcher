@@ -1,24 +1,48 @@
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { FolderSimplePlus, GameController, GlobeHemisphereWest, Sparkle } from "@phosphor-icons/react";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNexusStore } from "../state/useNexusStore";
 import type { Locale, ThemeId } from "../types";
 import { NexusLogo } from "./NexusLogo";
 
-interface OnboardingProps { open: boolean; onComplete: () => void; onAddFolder: () => Promise<void>; }
+interface OnboardingProps { open: boolean; onComplete: () => void; onAddFolder: () => Promise<{ folder: string; count: number } | null>; }
 
-const steps = ["identity", "personalize", "library", "control"] as const;
+const steps = ["library", "personalize", "control"] as const;
 
 export function Onboarding({ open, onComplete, onAddFolder }: OnboardingProps) {
   const { i18n, t } = useTranslation();
   const reducedMotion = useReducedMotion();
   const [step, setStep] = useState(0);
   const [importMessage, setImportMessage] = useState("");
+  const [importing, setImporting] = useState(false);
+  const [folder, setFolder] = useState("");
+  const [libraryChoice, setLibraryChoice] = useState(false);
+  const frame = useRef<HTMLDivElement>(null);
+  const mounted = useRef(true);
   const locale = useNexusStore((state) => state.locale);
   const theme = useNexusStore((state) => state.theme);
   const setLocale = useNexusStore((state) => state.setLocale);
   const setTheme = useNexusStore((state) => state.setTheme);
+  const gameCount = useNexusStore((state) => state.discoveredGames.length);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  useEffect(() => { if (open) { setStep(0); setLibraryChoice(false); setFolder(""); setImportMessage(""); } }, [open]);
+  const focusStep = useCallback((node: HTMLDivElement | null) => {
+    if (!node || !open) return;
+    requestAnimationFrame(() => {
+      if (!node.isConnected) return;
+      (node.querySelector<HTMLButtonElement>('button') || frame.current?.querySelector<HTMLButtonElement>('.onboarding__footer button'))?.focus();
+    });
+  }, [open]);
+  const addFolder = async () => {
+    if (importing) return;
+    setImporting(true); setImportMessage("");
+    try {
+      const result = await onAddFolder();
+      if (mounted.current && result) { setFolder(result.folder); setLibraryChoice(true); setImportMessage(t("onboarding.folderReady", { count: result.count })); }
+    } catch (error) { if (mounted.current) setImportMessage(error instanceof Error ? error.message : t("settings.addError")); }
+    finally { if (mounted.current) setImporting(false); }
+  };
 
   const chooseLocale = (value: Locale) => {
     setLocale(value);
@@ -35,13 +59,21 @@ export function Onboarding({ open, onComplete, onAddFolder }: OnboardingProps) {
   return (
     <AnimatePresence>
       {open ? (
-        <motion.section className="onboarding" aria-label={t("onboarding.label")} initial={false} exit={{ opacity: 0 }} transition={{ duration: reducedMotion ? 0 : 0.28 }}>
+        <motion.section className="onboarding" role="dialog" aria-modal="true" aria-label={t("onboarding.label")} initial={false} exit={{ opacity: 0 }} transition={{ duration: reducedMotion ? 0 : 0.28 }} onKeyDown={(event) => {
+          if (event.key !== "Tab") return;
+          const buttons = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('button:not(:disabled)'));
+          if (!buttons.length) return;
+          event.preventDefault();
+          const index = buttons.indexOf(document.activeElement as HTMLButtonElement);
+          buttons[(index + (event.shiftKey ? -1 : 1) + buttons.length) % buttons.length]?.focus();
+        }}>
           <motion.div className="onboarding__ambient" initial={reducedMotion ? false : { opacity: 0, scale: 0.88 }} animate={{ opacity: 0.62, scale: 1 }} transition={{ duration: 1.15, ease: [0.22, 1, 0.36, 1] }} />
-          <button className="onboarding__skip" onClick={onComplete} type="button">{t("onboarding.skip")}</button>
-          <div className="onboarding__frame">
+          <button className="onboarding__skip" disabled={importing} onClick={onComplete} type="button">{t("onboarding.later")}</button>
+          <div className="onboarding__frame" ref={frame}>
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 className="onboarding__step"
+                ref={focusStep}
                 key={steps[step]}
                 initial={reducedMotion ? { opacity: 0 } : { opacity: 0, y: 18, filter: "blur(8px)" }}
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
@@ -54,8 +86,14 @@ export function Onboarding({ open, onComplete, onAddFolder }: OnboardingProps) {
                       <NexusLogo />
                     </motion.div>
                     <span className="onboarding__eyebrow">{t("onboarding.version")}</span>
-                    <h1 style={{ whiteSpace: "pre-line" }}>{t("onboarding.hero")}</h1>
-                    <p>{t("onboarding.heroDesc")}</p>
+                    <h1 style={{ whiteSpace: "pre-line" }}>{t("onboarding.folderHero")}</h1>
+                    <p>{t("onboarding.folderDesc")}</p>
+                    <div className="onboarding__folder-actions">
+                      <button className="onboarding__next" disabled={importing} onClick={() => void addFolder()} type="button"><FolderSimplePlus size={22} />{t(importing ? "onboarding.scanning" : "onboarding.chooseFolder")}</button>
+                      <button className="onboarding__auto" disabled={importing} aria-pressed={libraryChoice && !folder} onClick={() => { setLibraryChoice(true); setImportMessage(t("onboarding.autoReady", { count: gameCount })); }} type="button">{t("onboarding.useStores")}</button>
+                    </div>
+                    {folder ? <p className="onboarding__folder-path">{folder}</p> : null}
+                    {importMessage ? <p className="onboarding__import-status" role="status">{importMessage}</p> : null}
                   </>
                 ) : null}
 
@@ -79,17 +117,6 @@ export function Onboarding({ open, onComplete, onAddFolder }: OnboardingProps) {
 
                 {step === 2 ? (
                   <>
-                    <div className="onboarding__icon"><FolderSimplePlus size={38} weight="light" /></div>
-                    <span className="onboarding__eyebrow">{t("onboarding.library")}</span>
-                    <h1 style={{ whiteSpace: "pre-line" }}>{t("onboarding.libraryHero")}</h1>
-                    <p>{t("onboarding.libraryDesc")}</p>
-                    {window.nexusDesktop ? <button className="onboarding__next" onClick={() => void onAddFolder().then(() => setImportMessage("onboarding.libraryUpdated")).catch((error: unknown) => setImportMessage(error instanceof Error ? error.message : "settings.addError"))} type="button"><FolderSimplePlus size={18} />{t("onboarding.addFolder")}</button> : null}
-                    {importMessage ? <p role="status">{importMessage === "onboarding.libraryUpdated" || importMessage === "settings.addError" ? t(importMessage) : importMessage}</p> : null}
-                  </>
-                ) : null}
-
-                {step === 3 ? (
-                  <>
                     <div className="onboarding__icon"><GameController size={38} weight="light" /></div>
                     <span className="onboarding__eyebrow">{t("onboarding.control")}</span>
                     <h1 style={{ whiteSpace: "pre-line" }}>{t("onboarding.controlHero")}</h1>
@@ -102,7 +129,7 @@ export function Onboarding({ open, onComplete, onAddFolder }: OnboardingProps) {
 
             <footer className="onboarding__footer">
               <div className="onboarding__progress" aria-label={t("onboarding.step", { current: step + 1, total: steps.length })}>{steps.map((item, index) => <span data-active={index <= step} key={item} />)}</div>
-              <button className="onboarding__next" onClick={next} type="button"><span>{step === steps.length - 1 ? t("onboarding.enter") : t("onboarding.continue")}</span><Sparkle size={18} weight="fill" /></button>
+              <button className="onboarding__next" disabled={importing || (step === 0 && !libraryChoice)} onClick={next} type="button"><span>{step === steps.length - 1 ? t("onboarding.enter") : t("onboarding.continue")}</span><Sparkle size={18} weight="fill" /></button>
             </footer>
           </div>
         </motion.section>

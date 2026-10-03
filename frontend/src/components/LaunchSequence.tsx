@@ -24,7 +24,7 @@ export function LaunchSequence({ game, phase, onReady }: { game: Game; phase: "e
         animate={{ scale: 1, opacity: phase === "error" ? .3 : .88 }}
         transition={{ duration: reducedMotion ? 0 : .75, ease: [.22, 1, .36, 1] }}
       >
-        <img src={game.heroArtwork ?? game.artwork} alt="" onError={(event) => applyImageFallback(event, game.artwork)} />
+        <img src={game.heroArtwork ?? game.artwork} alt="" onError={(event) => applyImageFallback(event, [...(game.heroArtworkFallbacks || []), game.artwork])} />
       </motion.div>
       <div className="launch-sequence__shade" />
       <motion.div

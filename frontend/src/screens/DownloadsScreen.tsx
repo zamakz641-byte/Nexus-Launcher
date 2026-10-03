@@ -68,7 +68,7 @@ export function DownloadsScreen() {
         <div>
           {localGames.map((game) => (
             <article key={game.id}>
-              <img src={game.artwork} alt="" onError={(event) => applyImageFallback(event, game.heroArtwork)} />
+              <img src={game.artwork} alt="" onError={(event) => applyImageFallback(event, [...(game.artworkFallbacks || []), game.heroArtwork])} />
               <span><strong>{game.title}</strong><small>{t(game.executablePath ? "downloads.executableFound" : "downloads.executableConfirm")}</small></span>
               <CheckCircle aria-hidden="true" size={21} weight="fill" />
             </article>
