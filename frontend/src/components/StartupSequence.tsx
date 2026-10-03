@@ -1,32 +1,69 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { useTranslation } from "react-i18next";
-import { createGlassScene } from "../motion/glassScene";
+import { sfx } from "../audio/sfx";
 
-export function StartupSequence({ onSkip }: { onSkip?: () => void }) {
+const film = "/assets/startup/nexus-startup-fr-v1.mp4";
+const poster = "/assets/startup/nexus-startup-fr-v1-poster.jpg";
+
+export function StartupSequence({ onComplete }: { onComplete: () => void }) {
   const reducedMotion = useReducedMotion();
-  const canvas = useRef<HTMLCanvasElement>(null);
+  const video = useRef<HTMLVideoElement>(null);
+  const finished = useRef(false);
+  const [failed, setFailed] = useState(false);
+  const preferences = sfx.getPreferences();
+  const [muted, setMuted] = useState(() => !window.nexusDesktop || preferences.muted);
   const { t } = useTranslation();
-  useEffect(() => canvas.current ? createGlassScene(canvas.current, Boolean(reducedMotion)) : undefined, [reducedMotion]);
+  const finish = useCallback(() => {
+    if (finished.current) return;
+    finished.current = true;
+    video.current?.pause();
+    onComplete();
+  }, [onComplete]);
+
   useEffect(() => {
-    const key = (event: KeyboardEvent) => { if (["Enter", "Escape", " "].includes(event.key)) { event.preventDefault(); event.stopImmediatePropagation(); onSkip?.(); } };
+    const timer = window.setTimeout(finish, reducedMotion ? 650 : failed ? 500 : 12_000);
+    return () => window.clearTimeout(timer);
+  }, [finish, reducedMotion, failed]);
+
+  useEffect(() => {
+    const player = video.current;
+    if (!player || reducedMotion || failed) return;
+    let active = true;
+    player.volume = preferences.masterVolume * preferences.uiVolume;
+    player.muted = muted;
+    void player.play().catch(() => {
+      if (!active || finished.current) return;
+      player.muted = true;
+      setMuted(true);
+      void player.play().catch(() => { if (active) setFailed(true); });
+    });
+    return () => { active = false; player.pause(); };
+  }, [reducedMotion, failed, muted, preferences.masterVolume, preferences.uiVolume]);
+
+  useEffect(() => {
+    const key = (event: KeyboardEvent) => {
+      if (["Enter", "Escape", " "].includes(event.key)) {
+        // Allow the sound button to receive its normal keyboard activation.
+        if (event.target instanceof Element && event.target.closest(".startup-sequence__sound") && event.key !== "Escape") return;
+        event.preventDefault(); event.stopImmediatePropagation(); finish();
+      }
+    };
     let previousPressed = true;
-    const controllerTimer = window.setInterval(() => {
+    const timer = window.setInterval(() => {
       const pressed = Array.from(navigator.getGamepads?.() ?? []).some((pad) => pad?.buttons[0]?.pressed || pad?.buttons[1]?.pressed);
-      if (pressed && !previousPressed) onSkip?.();
+      if (pressed && !previousPressed) finish();
       previousPressed = pressed;
     }, 100);
     window.addEventListener("keydown", key, true);
-    return () => { window.clearInterval(controllerTimer); window.removeEventListener("keydown", key, true); };
-  }, [onSkip]);
+    return () => { window.clearInterval(timer); window.removeEventListener("keydown", key, true); };
+  }, [finish]);
+
   return (
-    <motion.div className="startup-sequence" initial={false} exit={{ opacity: 0, scale: reducedMotion ? 1 : 1.055 }} transition={{ duration: reducedMotion ? 0 : .65, ease: [.22, 1, .36, 1] }}>
-      <canvas ref={canvas} className="startup-sequence__scene" aria-hidden="true" />
-      <motion.div className="startup-sequence__identity" initial={reducedMotion ? false : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: reducedMotion ? 0 : 1, delay: reducedMotion ? 0 : .65 }}>
-        <div className="startup-sequence__emblem"><img src="/assets/brand/nexus-mark.png" alt="" /></div>
-        <strong>NEXUS</strong><span>{t("home.startupLibrary")}</span>
-      </motion.div>
-      <button className="startup-sequence__skip" onClick={onSkip}>{t("onboarding.skip")} <kbd>↵</kbd></button>
+    <motion.div className="startup-sequence" data-mode={reducedMotion ? "still" : "film"} initial={false} exit={{ opacity: 0 }} transition={{ duration: reducedMotion ? 0 : .55 }} aria-label={t("onboarding.label")}>
+      {failed ? <div className="startup-sequence__identity"><div className="startup-sequence__emblem"><img src="/assets/brand/nexus-mark.png" alt="" /></div><strong>NEXUS LAUNCHER</strong></div> : reducedMotion ? <img className="startup-sequence__film" src={poster} alt="Nexus Launcher" /> : <video ref={video} className="startup-sequence__film" src={film} playsInline preload="auto" muted={muted} onEnded={finish} onError={() => setFailed(true)} aria-hidden="true" />}
+      {!reducedMotion && !failed && muted && !preferences.muted ? <button className="startup-sequence__sound" type="button" onClick={() => setMuted(false)}>{t("home.startupSound")}</button> : null}
+      <button className="startup-sequence__skip" type="button" onClick={finish}>{t("onboarding.skip")} <kbd>↵</kbd></button>
     </motion.div>
   );
 }

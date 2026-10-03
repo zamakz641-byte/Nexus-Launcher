@@ -1,5 +1,5 @@
 import { AnimatePresence, MotionConfig, motion } from "motion/react";
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { CSSProperties } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
@@ -46,9 +46,10 @@ export function App() {
   const launchLock = useRef(false);
   const initialScan = useRef<ReturnType<typeof libraryClient.scan> | null>(null);
   const initialSystemInfo = useRef<ReturnType<typeof libraryClient.system> | null>(null);
-  const [startupOpen, setStartupOpen] = useState(() => Boolean(window.nexusDesktop));
+  const [startupOpen, setStartupOpen] = useState(() => Boolean(window.nexusDesktop) || new URLSearchParams(window.location.search).get("intro") === "1");
+  const closeStartup = useCallback(() => setStartupOpen(false), []);
   const [notice, setNotice] = useState<string | null>(null);
-  const [onboardingOpen, setOnboardingOpen] = useState(() => localStorage.getItem("nexus.onboarding.complete.v1") !== "true");
+  const [onboardingOpen, setOnboardingOpen] = useState(() => new URLSearchParams(window.location.search).get("intro") !== "1" && localStorage.getItem("nexus.onboarding.complete.v1") !== "true");
   const selectedGame = useMemo(() => discoveredGames.find((game) => game.id === selectedGameId) ?? discoveredGames[0], [discoveredGames, selectedGameId]);
   const backdropGame = useMemo(() => discoveredGames.find((game) => game.id === previewGameId) ?? selectedGame, [discoveredGames, previewGameId, selectedGame]);
 
@@ -84,19 +85,6 @@ export function App() {
 
   useEffect(() => {
     sfx.preload();
-    if (!window.nexusDesktop) return;
-    let active = true;
-    const soundTimer = window.setTimeout(() => sfx.play("startup"), 160);
-    const scan = initialScan.current?.then(() => undefined, () => undefined) ?? Promise.resolve();
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    void Promise.race([
-      Promise.all([sfx.delay(reducedMotion ? 250 : 3000), scan]),
-      sfx.delay(reducedMotion ? 1600 : 4200),
-    ]).then(() => { if (active) setStartupOpen(false); });
-    return () => {
-      active = false;
-      window.clearTimeout(soundTimer);
-    };
   }, []);
 
   useEffect(() => {
@@ -221,7 +209,7 @@ export function App() {
           </motion.div>
         </AnimatePresence>
         <AnimatePresence>{notice ? <motion.div aria-live="polite" className="system-notice" role="status" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}>{notice}</motion.div> : null}</AnimatePresence>
-        <AnimatePresence>{startupOpen ? <StartupSequence key="startup" onSkip={() => setStartupOpen(false)} /> : null}</AnimatePresence>
+        <AnimatePresence>{startupOpen ? <StartupSequence key="startup" onComplete={closeStartup} /> : null}</AnimatePresence>
         <AnimatePresence>{launchingGame ? <LaunchSequence game={launchingGame} key="launch" phase={launchPhase} onReady={() => launchReady.current?.()} /> : null}</AnimatePresence>
         <Onboarding open={onboardingOpen && !startupOpen} onComplete={completeOnboarding} onAddFolder={addFolderFromOnboarding} />
       </main>

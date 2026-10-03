@@ -63,3 +63,5 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 - `npm run qa:local` remains the deterministic interaction/overflow smoke test; `npm run qa:capture` writes fresh desktop/narrow reference captures to `artifacts/qa/suite`.
 
 - Startup feedback (2026-10-02): the user rejected giant letter panels as a console startup, while appreciating their motion as a separate study. Startup must return to Nexus glass materials and use an original spatial animated scene, with a short transition into the library. Do not reuse the typographic panel intro. Higgsfield must be checked for an actual connection before claiming it generated an asset.
+
+- Startup film approved for integration (2026-10-03): bundle the user-supplied Flow/Veo French 8-second film with its logo, wordmark and slogan. Play through to its end, use its embedded audio respecting existing volume/mute settings, fade into Home, and retain keyboard/controller skip plus a static poster for reduced motion. An English film is pending; do not invent an English video or overlay duplicate branding. Preserve the procedural glass study as a separate prototype.
