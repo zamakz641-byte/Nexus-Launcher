@@ -22,6 +22,7 @@ export function createGlassScene(canvas: HTMLCanvasElement, reducedMotion = fals
       world=p;eye=origin;
     }`;
   const fragment = `precision highp float;
+    uniform float time;
     varying vec3 world; varying vec3 normal; varying vec3 eye;
     void main(){
       vec3 ray=normalize(world-eye);vec3 n=normalize(normal);if(dot(n,ray)>0.)n=-n;
@@ -31,6 +32,8 @@ export function createGlassScene(canvas: HTMLCanvasElement, reducedMotion = fals
       float sheen=pow(max(dot(reflect(-normalize(vec3(1.,.4,.1)),n),-ray),0.),18.);
       vec3 color=vec3(.027,.075,.11)+vec3(.15,.32,.42)*fresnel+vec3(.6,.8,.86)*spec+vec3(.16,.34,.49)*sheen;
       color+=vec3(.07,.14,.18)*max(dot(n,light),0.);
+      float reflection=exp(-pow((world.x+4.-time*1.8)*.65,2.))*exp(-pow((world.z+.6)*1.3,2.));
+      color+=vec3(.12,.16,.18)*reflection*fresnel;
       color=mix(color,vec3(.015,.03,.045),smoothstep(4.,13.,length(world-eye))*.8);
       gl_FragColor=vec4(color,.88);
     }`;
@@ -63,23 +66,28 @@ export function createGlassScene(canvas: HTMLCanvasElement, reducedMotion = fals
   const aspect = gl.getUniformLocation(program,"aspect"), clock = gl.getUniformLocation(program,"time"), cursor = gl.getUniformLocation(program,"pointer");
   gl.enable(gl.DEPTH_TEST); gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
   gl.clearColor(.015,.03,.045,1);
-  let frame = 0, disposed = false, px = 0, py = 0;
+  let frame = 0, disposed = false, px = 0, py = 0, targetX = 0, targetY = 0;
   const start = performance.now();
-  function draw(now: number) {
-    if (disposed || gl!.isContextLost()) return;
+  let lastFrame = start, width = 1, height = 1;
+  function resize() {
     const bounds = canvas.getBoundingClientRect();
     const scale = Math.min(1, 1600 / Math.max(1, bounds.width));
-    const width = Math.max(1, Math.round(bounds.width * scale)), height = Math.max(1, Math.round(bounds.height * scale));
+    width = Math.max(1, Math.round(bounds.width * scale)); height = Math.max(1, Math.round(bounds.height * scale));
     if (canvas.width !== width || canvas.height !== height) { canvas.width = width; canvas.height = height; }
+  }
+  function draw(now: number) {
+    if (disposed || gl!.isContextLost()) return;
+    const smoothing = 1 - Math.exp(-Math.min(now-lastFrame,100) / 180);
+    px += (targetX-px)*smoothing; py += (targetY-py)*smoothing; lastFrame = now;
     gl!.viewport(0,0,width,height); gl!.clear(gl!.COLOR_BUFFER_BIT | gl!.DEPTH_BUFFER_BIT);
     gl!.uniform1f(aspect,width/height);
-    gl!.uniform1f(clock,reducedMotion ? 2 : Math.min((now-start)/1000,12)); gl!.uniform2f(cursor,px,py);
+    gl!.uniform1f(clock,reducedMotion ? 2 : (now-start)/1000); gl!.uniform2f(cursor,px,py);
     gl!.drawArrays(gl!.TRIANGLES,0,vertices.length/3);
     if (!reducedMotion && !document.hidden) frame = requestAnimationFrame(draw);
   }
-  function move(event: PointerEvent) { if (reducedMotion) return; px = event.clientX / innerWidth - .5; py = .5 - event.clientY / innerHeight; }
-  function resume() { cancelAnimationFrame(frame); draw(performance.now()); }
+  function move(event: PointerEvent) { if (reducedMotion) return; targetX = event.clientX / innerWidth - .5; targetY = .5 - event.clientY / innerHeight; }
+  function resume() { cancelAnimationFrame(frame); resize(); draw(performance.now()); }
   window.addEventListener("pointermove",move); window.addEventListener("resize",resume); document.addEventListener("visibilitychange",resume);
-  draw(start);
+  resize(); draw(start);
   return () => { disposed = true; cancelAnimationFrame(frame); window.removeEventListener("pointermove",move); window.removeEventListener("resize",resume); document.removeEventListener("visibilitychange",resume); gl.deleteBuffer(buffer); gl.deleteProgram(program); };
 }

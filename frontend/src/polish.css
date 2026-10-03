@@ -269,7 +269,7 @@
 }
 .launch-sequence__backdrop img {
   object-fit: cover;
-  filter: saturate(.78) brightness(.58);
+  filter: saturate(.86) brightness(.88);
 }
 .launch-sequence__shade {
   background:
@@ -283,7 +283,7 @@
   justify-self: start;
   justify-items: start;
   gap: 1.15rem;
-  width: min(70vw, 58rem);
+  width: min(80vw, 48rem);
   margin-left: clamp(2rem, 8vw, 9rem);
   color: white;
   text-align: left;
@@ -295,24 +295,33 @@
   letter-spacing: .33em;
 }
 .launch-sequence__content > strong {
-  max-width: 12ch;
-  font-family: "Arial Narrow", "Segoe UI", sans-serif;
-  font-size: clamp(3.4rem, 8vw, 8rem);
-  font-weight: 550;
-  letter-spacing: -.07em;
-  line-height: .88;
-  text-transform: uppercase;
+  max-width: 18ch;
+  font-size: clamp(2.4rem, 5vw, 5rem);
+  font-weight: 450;
+  letter-spacing: -.04em;
+  line-height: 1.06;
+  text-wrap: balance;
 }
+.launch-sequence__content > strong[hidden], .launch-sequence__logo[hidden] { display: none; }
+.launch-sequence__logo { width: min(100%, 28rem); max-height: 11rem; object-fit: contain; object-position: left center; }
 .launch-sequence__content > span {
+  display: inline-flex;
+  align-items: center;
+  gap: .75rem;
   margin-top: .4rem;
-  padding: .65rem .85rem;
+  padding: .85rem 1.1rem;
   color: rgba(255,255,255,.86);
-  background: rgba(1,6,14,.54);
-  border-left: 2px solid var(--color-focus);
-  font-size: .68rem;
-  font-weight: 760;
-  letter-spacing: .2em;
+  background: linear-gradient(135deg,rgba(194,224,242,.1),rgba(8,18,27,.65));
+  border: 1px solid rgba(204,229,243,.22);
+  border-radius: 1rem;
+  backdrop-filter: blur(16px);
+  box-shadow: inset 0 1px rgba(255,255,255,.08);
+  font-size: .8rem;
+  font-weight: 500;
+  letter-spacing: .02em;
 }
+.launch-sequence__content > span i { width: .4rem; height: .4rem; flex: 0 0 auto; border-radius: 50%; background: #b9d9e8; }
+.launch-sequence[data-phase="error"] .launch-sequence__content > span i { background: #ffaaa9; }
 .launch-sequence[data-phase="error"] .launch-sequence__content > span { color: #ffaaa9; }
 .route-stage {
   will-change: transform, opacity;
