@@ -90,8 +90,8 @@ export function App() {
     const scan = initialScan.current?.then(() => undefined, () => undefined) ?? Promise.resolve();
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     void Promise.race([
-      Promise.all([sfx.delay(reducedMotion ? 250 : 1300), scan]),
-      sfx.delay(reducedMotion ? 1600 : 2600),
+      Promise.all([sfx.delay(reducedMotion ? 250 : 3000), scan]),
+      sfx.delay(reducedMotion ? 1600 : 4200),
     ]).then(() => { if (active) setStartupOpen(false); });
     return () => {
       active = false;
@@ -221,7 +221,7 @@ export function App() {
           </motion.div>
         </AnimatePresence>
         <AnimatePresence>{notice ? <motion.div aria-live="polite" className="system-notice" role="status" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}>{notice}</motion.div> : null}</AnimatePresence>
-        <AnimatePresence>{startupOpen ? <StartupSequence key="startup" /> : null}</AnimatePresence>
+        <AnimatePresence>{startupOpen ? <StartupSequence key="startup" onSkip={() => setStartupOpen(false)} /> : null}</AnimatePresence>
         <AnimatePresence>{launchingGame ? <LaunchSequence game={launchingGame} key="launch" phase={launchPhase} onReady={() => launchReady.current?.()} /> : null}</AnimatePresence>
         <Onboarding open={onboardingOpen && !startupOpen} onComplete={completeOnboarding} onAddFolder={addFolderFromOnboarding} />
       </main>

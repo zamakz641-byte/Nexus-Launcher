@@ -61,3 +61,5 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 - The Home rail sits on a restrained glass shelf to visually anchor controller navigation without becoming a dashboard panel.
 - Controller/keyboard spatial navigation wraps within an explicit focus group when no forward candidate exists.
 - `npm run qa:local` remains the deterministic interaction/overflow smoke test; `npm run qa:capture` writes fresh desktop/narrow reference captures to `artifacts/qa/suite`.
+
+- Startup feedback (2026-10-02): the user rejected giant letter panels as a console startup, while appreciating their motion as a separate study. Startup must return to Nexus glass materials and use an original spatial animated scene, with a short transition into the library. Do not reuse the typographic panel intro. Higgsfield must be checked for an actual connection before claiming it generated an asset.
