@@ -7,6 +7,11 @@ import { pathToFileURL } from "node:url";
 import { LibraryRegistry } from "./libraryRegistry.mjs";
 import { discoverStoreGames } from "./storeDiscovery.mjs";
 import { SecretStore } from "./secretStore.mjs";
+import { MediaCache } from "./mediaCache.mjs";
+import { trackGameSession } from "./gameSession.mjs";
+
+let artworkCache;
+const gameSessions = new Map();
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -161,13 +166,9 @@ async function serveMedia(url) {
   if (url.pathname === "/remote") {
     const value = url.searchParams.get("url") || "";
     if (!isAllowedRemoteMedia(value)) return new Response("Media source not allowed", { status: 403 });
-    const remote = await net.fetch(value);
-    if (!remote.ok) return new Response("Media unavailable", { status: remote.status });
-    const contentType = remote.headers.get("content-type") || "";
-    if (!contentType.startsWith("image/")) return new Response("Unsupported media", { status: 415 });
-    const buffer = Buffer.from(await remote.arrayBuffer());
-    if (buffer.byteLength > 12 * 1024 * 1024) return new Response("Media too large", { status: 413 });
-    return responseFromBuffer(buffer, contentType, "public, max-age=86400, immutable");
+    artworkCache ??= new MediaCache(join(app.getPath("userData"), "media-cache"), (value, options) => net.fetch(value, options));
+    const { buffer, contentType } = await artworkCache.get(value, url.searchParams.has("retry"));
+    return responseFromBuffer(buffer, contentType, "public, max-age=86400");
   }
   return new Response("Not found", { status: 404 });
 }
@@ -244,13 +245,23 @@ function registerIpc() {
     (await getBackend()).setSteamGridDbApiKey("");
     return status;
   });
-  ipcMain.handle("nexus:launch-game", async (_event, gameId) => {
+  ipcMain.handle("nexus:launch-game", async (event, gameId) => {
+    if (gameSessions.has(String(gameId))) throw new Error("Ce jeu est déjà en cours d’exécution dans Nexus.");
     const registry = await getRegistry();
     const file = await registry.authorizedExecutable(String(gameId));
     const child = spawn(file, [], { cwd: dirname(file), detached: true, stdio: "ignore", windowsHide: false });
-    registry.trackLaunchedProcess(String(gameId), child, (snapshot) => {
+    await new Promise((resolve, reject) => { child.once("spawn", resolve); child.once("error", reject); });
+    const window = BrowserWindow.fromWebContents(event.sender);
+    const session = trackGameSession(child);
+    gameSessions.set(String(gameId), session);
+    session.once("exit", () => {
+      gameSessions.delete(String(gameId));
+      if (!gameSessions.size && window && !window.isDestroyed()) { window.restore(); window.show(); window.focus(); }
+    });
+    registry.trackLaunchedProcess(String(gameId), session, (snapshot) => {
       for (const window of BrowserWindow.getAllWindows()) window.webContents.send("nexus:library-changed", snapshot);
     });
+    if (window && !window.isDestroyed()) window.minimize();
     child.unref();
     return { ok: true, requestId: `local:${Date.now()}` };
   });

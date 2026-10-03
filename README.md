@@ -68,6 +68,12 @@ The earlier Python/pywebview edition is preserved in [`archive/legacy-python-v1.
 
 ## Français
 
+### Current source improvements / Améliorations des sources actuelles
+
+Artwork now persists offline, refresh is available throughout the app (button or F5), and holding a ready game launches it. The desktop app minimizes during tracked sessions and returns afterward. Account achievement sync is planned with real Steam data and explicit account requirements. See [reliability, verification and sync roadmap](docs/RELIABILITY-AND-SYNC.md) for behavior and limits. Published V1.0 installers are a separate build.
+
+Les images sont conservées hors ligne, l’actualisation est accessible partout (bouton ou F5) et un appui long lance le jeu choisi. Nexus se réduit pendant les sessions suivies et revient à leur fermeture. Les succès synchronisés sont prévus via les données réelles du compte Steam. Voir [les détails et limites](docs/RELIABILITY-AND-SYNC.md). Les installateurs V1.0 publiés restent une version distincte.
+
 Nexus Launcher est une application Windows pour parcourir et lancer vos jeux dans une bibliothèque visuelle adaptée au clavier et à la manette. Elle détecte les jeux Steam et Epic installés et permet d’ajouter n’importe quel jeu Windows en sélectionnant son fichier `.exe`.
 
 ### Fonctionnalités

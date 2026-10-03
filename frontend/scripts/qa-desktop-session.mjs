@@ -1,0 +1,31 @@
+import { _electron as electron } from 'playwright-core';
+import { resolve } from 'node:path';
+import assert from 'node:assert/strict';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+const root = resolve(import.meta.dirname, '..');
+const folder = resolve(root, 'artifacts/qa/session');
+await mkdir(folder, { recursive: true });
+const source = resolve(folder, 'GameFixture.cs');
+const fixture = resolve(folder, 'GameFixture.exe');
+await writeFile(source, 'using System; using System.Diagnostics; using System.Threading; class GameFixture { static void Main(string[] args) { if (args.Length == 0) { Process.Start(new ProcessStartInfo { FileName = Process.GetCurrentProcess().MainModule.FileName, Arguments = "child", UseShellExecute = false, CreateNoWindow = true }); Thread.Sleep(2000); } else Thread.Sleep(4500); } }');
+await promisify(execFile)('C:/Windows/Microsoft.NET/Framework64/v4.0.30319/csc.exe', ['/nologo', '/target:winexe', '/out:' + fixture, source], { windowsHide: true });
+const { ELECTRON_RUN_AS_NODE: _, ...env } = process.env;
+const app = await electron.launch({ executablePath: resolve(root, 'node_modules/electron/dist/electron.exe'), args: [root], cwd: root, env });
+let fixtureId;
+let page;
+try {
+  page = await app.firstWindow();
+  await page.waitForFunction(() => Boolean(window.nexusDesktop));
+  await app.evaluate(({ dialog }, fixture) => { dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [fixture] }); }, fixture);
+  const snapshot = await page.evaluate(() => window.nexusDesktop.addGameExecutable());
+  fixtureId = snapshot.games.find(game => game.executablePath === fixture)?.id;
+  assert.ok(fixtureId);
+  await page.evaluate(id => window.nexusDesktop.launchGame(id), fixtureId);
+  const minimized = () => app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isMinimized());
+  await page.waitForTimeout(500); assert.equal(await minimized(), true);
+  await page.waitForTimeout(2300); assert.equal(await minimized(), true, 'Nexus must stay minimized while descendant runs');
+  await page.waitForTimeout(5000); assert.equal(await minimized(), false, 'Nexus must restore after the game exits');
+  console.log(JSON.stringify({ minimizedOnLaunch: true, waitedForDescendant: true, restoredOnExit: true }));
+} finally { if (fixtureId && page) await page.evaluate(id => window.nexusDesktop.removeLibraryEntry(id), fixtureId); await app.close(); }

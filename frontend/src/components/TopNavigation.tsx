@@ -1,5 +1,5 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { CaretDown, DownloadSimple, GameController, GearSix, House, MagnifyingGlass } from "@phosphor-icons/react";
+import { ArrowClockwise, CaretDown, DownloadSimple, GameController, GearSix, House, MagnifyingGlass } from "@phosphor-icons/react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
@@ -7,6 +7,7 @@ import { useNexusStore } from "../state/useNexusStore";
 import type { Locale, ThemeId } from "../types";
 import { motion } from "motion/react";
 import { NexusLogo } from "./NexusLogo";
+import { refreshLibrary } from "../services/refreshLibrary";
 
 const routes = [
   { id: "home", path: "/", icon: House },
@@ -25,6 +26,7 @@ export function TopNavigation() {
   const setLocale = useNexusStore((state) => state.setLocale);
   const setTheme = useNexusStore((state) => state.setTheme);
   const systemInfo = useNexusStore((state) => state.systemInfo);
+  const scanState = useNexusStore((state) => state.libraryScanState);
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 30_000);
@@ -57,6 +59,7 @@ export function TopNavigation() {
       </div>
 
       <div className="top-navigation__system">
+        <button className="icon-button library-refresh" disabled={scanState === "scanning"} aria-label={t("action.refresh")} title={t("action.refresh")} onClick={() => void refreshLibrary()} type="button"><ArrowClockwise size={21} /></button>
         <time className="top-navigation__clock" dateTime={now.toISOString()}>{new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" }).format(now)}</time>
         <span className="top-navigation__divider" aria-hidden="true" />
         <DropdownMenu.Root>
@@ -74,7 +77,7 @@ export function TopNavigation() {
           </DropdownMenu.Portal>
         </DropdownMenu.Root>
         <span className="top-navigation__divider" aria-hidden="true" />
-        <button className="profile-button" type="button" aria-label={`${t("system.profile")} — ${profileName}`}>
+        <button className="profile-button" type="button" onClick={() => navigate("/settings?section=play")} aria-label={`${t("system.profile")} — ${profileName}`}>
           <span className="profile-button__avatar" aria-hidden="true">{initials}</span>
           <span>{profileName}</span><span className="profile-button__presence" aria-label={t("system.online")} />
         </button>

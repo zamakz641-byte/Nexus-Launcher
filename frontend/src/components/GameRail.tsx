@@ -70,6 +70,8 @@ export function GameRail({ games, selectedId, onSelect }: GameRailProps) {
                 data-placeholder={game.artwork.includes("/assets/brand/nexus-mark")}
                 data-selected={selected}
                 data-index={index}
+                data-launch-game={game.installed ? game.id : undefined}
+                title={t("action.holdToPlay")}
                 key={game.id}
                 onClick={() => { selectedIdRef.current = game.id; onSelect(game.id); }}
                 onFocus={() => { selectedIdRef.current = game.id; onSelect(game.id); }}

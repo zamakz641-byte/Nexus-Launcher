@@ -1,4 +1,18 @@
 /* Nexus V2.2 — cinematic resilience + controller polish */
+[data-launch-game] { position: relative; touch-action: pan-y; }
+[data-launch-game]::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px;
+  background: var(--color-focus); transform: scaleX(0); transform-origin: left;
+  pointer-events: none; z-index: 4;
+}
+[data-launch-game][data-holding="true"]::after { animation: nexus-hold .65s linear forwards; }
+@keyframes nexus-hold { to { transform: scaleX(1); } }
+.library-refresh:disabled svg { animation: nexus-refresh 1.2s linear infinite; }
+@keyframes nexus-refresh { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  [data-launch-game][data-holding="true"]::after { animation: none; transform: scaleX(1); }
+  .library-refresh:disabled svg { animation: none; }
+}
 .nexus-shell::before,
 .nexus-shell::after {
   content: "";

@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useLibraryGames } from "../hooks/useLibraryGames";
 import { TrailerDialog } from "../components/TrailerDialog";
-import { libraryClient } from "../services/libraryClient";
+import { refreshLibrary } from "../services/refreshLibrary";
 import { useNexusStore } from "../state/useNexusStore";
 import type { GameId } from "../types";
 import { applyImageFallback } from "../utils/imageFallback";
@@ -23,9 +23,6 @@ export function LibraryScreen() {
   const hoverTimer = useRef<number | null>(null);
   const scanState = useNexusStore((state) => state.libraryScanState);
   const libraryRoot = useNexusStore((state) => state.libraryRoot);
-  const beginLibraryScan = useNexusStore((state) => state.beginLibraryScan);
-  const completeLibraryScan = useNexusStore((state) => state.completeLibraryScan);
-  const failLibraryScan = useNexusStore((state) => state.failLibraryScan);
   const visibleGames = useMemo(() => readyOnly ? games.filter((game) => game.installed) : games, [games, readyOnly]);
   const [activeId, setActiveId] = useState<GameId>(() => selectedGameId || games[0]?.id || "");
 
@@ -44,13 +41,7 @@ export function LibraryScreen() {
   };
   const endPreview = () => { if (hoverTimer.current !== null) window.clearTimeout(hoverTimer.current); hoverTimer.current = null; setPreviewGame(""); };
   const openGame = (id: GameId) => { focusGame(id); navigate(`/game/${id}`); };
-  const refreshMetadata = async () => {
-    beginLibraryScan();
-    try {
-      const result = await libraryClient.scan(undefined, true);
-      completeLibraryScan(result.games, result.root, result.roots, result.manualGames, result.scanErrors);
-    } catch (error) { failLibraryScan(error instanceof Error ? error.message : t("library.scanError")); }
-  };
+  const refreshMetadata = refreshLibrary;
   return (
     <section className="screen library-screen" aria-labelledby="library-title">
       <header className="screen-heading library-heading">
@@ -93,6 +84,8 @@ export function LibraryScreen() {
                 <button
                   className="library-entry"
                   data-active={active}
+                  data-launch-game={game.installed ? game.id : undefined}
+                  title={t("action.holdToPlay")}
                   key={game.id}
                   onClick={() => openGame(game.id)}
                   onFocus={() => focusGame(game.id)}

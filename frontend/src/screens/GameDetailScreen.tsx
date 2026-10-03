@@ -2,7 +2,7 @@ import { ArrowLeft, CheckCircle, Clock, FilmSlate, GameController, HardDrives, P
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Navigate, useNavigate, useParams } from "react-router-dom";
+import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 import { NexusButton } from "../components/NexusButton";
 import { TrailerDialog } from "../components/TrailerDialog";
 import { useLibraryGames } from "../hooks/useLibraryGames";
@@ -19,6 +19,7 @@ export function GameDetailScreen({ onLaunch }: GameDetailScreenProps) {
   const { gameId } = useParams();
   const games = useLibraryGames();
   const navigate = useNavigate();
+  const location = useLocation();
   const locale = useNexusStore((state) => state.locale);
   const setSelectedGame = useNexusStore((state) => state.setSelectedGame);
   const completeLibraryScan = useNexusStore((state) => state.completeLibraryScan);
@@ -44,7 +45,7 @@ export function GameDetailScreen({ onLaunch }: GameDetailScreenProps) {
   const achievementPercent = Math.round((game.achievementProgress.unlocked / Math.max(game.achievementProgress.total, 1)) * 100);
   return (
     <section className="game-detail-screen" aria-labelledby="game-detail-title">
-      <button className="game-detail__back" onClick={() => navigate(-1)} type="button"><ArrowLeft size={20} />{t("detail.back")}</button>
+      <button className="game-detail__back" onClick={() => location.key === "default" ? navigate("/library", { replace: true }) : navigate(-1)} type="button"><ArrowLeft size={20} />{t("detail.back")}</button>
       <div className="game-detail__hero">
         <span className="screen-kicker">{game.source} · {game.genre[locale]}</span>
         {game.logoArtwork ? <img className="game-detail__logo" src={game.logoArtwork} alt="" onError={(event) => applyImageFallback(event, game.artwork)} /> : null}

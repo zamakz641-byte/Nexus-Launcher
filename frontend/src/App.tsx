@@ -9,10 +9,12 @@ import { Onboarding } from "./components/Onboarding";
 import { TopNavigation } from "./components/TopNavigation";
 import { libraryClient } from "./services/libraryClient";
 import { useGamepadNavigation } from "./hooks/useGamepadNavigation";
+import { useHoldToLaunch } from "./hooks/useHoldToLaunch";
+import { refreshLibrary } from "./services/refreshLibrary";
 import { HomeScreen } from "./screens/HomeScreen";
 import { launcherClient } from "./services/launcherClient";
 import { useNexusStore } from "./state/useNexusStore";
-import { applyImageFallback } from "./utils/imageFallback";
+import { applyImageFallback, clearRecoveredArtwork } from "./utils/imageFallback";
 import { getGameAccent } from "./theme/gameAccents";
 import { sfx } from "./audio/sfx";
 import { premiumEase, routeDirection, routeVariants } from "./motion/transitions";
@@ -85,6 +87,8 @@ export function App() {
 
   useEffect(() => {
     sfx.preload();
+    document.addEventListener("load", clearRecoveredArtwork, true);
+    return () => document.removeEventListener("load", clearRecoveredArtwork, true);
   }, []);
 
   useEffect(() => {
@@ -140,10 +144,10 @@ export function App() {
     return () => window.clearTimeout(timer);
   }, [location.pathname, onboardingOpen]);
 
-  const launch = async () => {
-    if (!selectedGame || launchLock.current) { if (!selectedGame) setNotice(t("home.noSelected")); return; }
+  const launch = async (requestedGame = selectedGame) => {
+    if (!requestedGame || launchLock.current) { if (!requestedGame) setNotice(t("home.noSelected")); return; }
     launchLock.current = true;
-    const game = selectedGame;
+    const game = requestedGame;
     setNotice(null);
     setLaunchPhase("enter");
     setLaunchingGame(game);
@@ -164,6 +168,15 @@ export function App() {
       launchLock.current = false;
     }
   };
+  useHoldToLaunch((id) => { const game = discoveredGames.find(game => game.id === id); if (game) void launch(game); });
+  useEffect(() => {
+    const refresh = (event: KeyboardEvent) => {
+      if (event.key !== "F5" || document.querySelector('[role="dialog"], .launch-sequence, .startup-sequence')) return;
+      event.preventDefault(); void refreshLibrary();
+    };
+    window.addEventListener("keydown", refresh);
+    return () => window.removeEventListener("keydown", refresh);
+  }, []);
   const completeOnboarding = () => { localStorage.setItem("nexus.onboarding.complete.v1", "true"); setOnboardingOpen(false); };
   const replayOnboarding = () => { localStorage.removeItem("nexus.onboarding.complete.v1"); setOnboardingOpen(true); };
   const addFolderFromOnboarding = async () => {
@@ -177,7 +190,7 @@ export function App() {
         <div className="media-backdrop" aria-hidden="true">
           <AnimatePresence initial={false} mode="popLayout">
             {backdropGame ? backdropGame.heroArtwork || !backdropGame.artwork.includes("/assets/brand/nexus-mark")
-              ? <motion.img animate={{ opacity: 1, scale: 1 }} className="media-backdrop__image" exit={{ opacity: 0 }} initial={{ opacity: 0, scale: 1.015 }} key={backdropGame.id} onError={(event) => applyImageFallback(event, backdropGame.artwork)} src={backdropGame.heroArtwork ?? backdropGame.artwork} transition={{ opacity: { duration: 0.36 }, scale: { duration: 0.52 } }} />
+              ? <motion.img animate={{ opacity: 1, scale: 1 }} className="media-backdrop__image" exit={{ opacity: 0 }} initial={{ opacity: 0, scale: 1.015 }} key={`${backdropGame.id}:${backdropGame.heroArtwork ?? backdropGame.artwork}`} onError={(event) => applyImageFallback(event, backdropGame.artwork)} src={backdropGame.heroArtwork ?? backdropGame.artwork} transition={{ opacity: { duration: 0.36 }, scale: { duration: 0.52 } }} />
               : <motion.div className="media-backdrop__fallback" key={backdropGame.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: .34 }}><img src="/assets/brand/nexus-mark.png" alt="" /></motion.div>
               : null}
           </AnimatePresence>
@@ -197,10 +210,10 @@ export function App() {
           >
             <Suspense fallback={<div className="route-loading"><span />{t("home.loadingSpace")}</div>}>
               <Routes location={location}>
-                <Route path="/" element={selectedGame ? <HomeScreen selectedGame={selectedGame} onLaunch={launch} /> : <div className="route-loading"><span />{t("home.scanning")}</div>} />
+                <Route path="/" element={selectedGame ? <HomeScreen selectedGame={selectedGame} onLaunch={() => void launch()} /> : <LibraryScreen />} />
                 <Route path="/library" element={<LibraryScreen />} />
                 <Route path="/search" element={<SearchScreen />} />
-                <Route path="/game/:gameId" element={<GameDetailScreen onLaunch={launch} />} />
+                <Route path="/game/:gameId" element={<GameDetailScreen onLaunch={() => void launch()} />} />
                 <Route path="/settings" element={<SettingsScreen onReplayOnboarding={replayOnboarding} />} />
                 <Route path="/downloads" element={<DownloadsScreen />} />
                 <Route path="*" element={<Navigate to="/" replace />} />

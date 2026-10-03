@@ -10,6 +10,7 @@ import { createHash } from "node:crypto";
 import { LibraryRegistry } from "./backend/libraryRegistry.mjs";
 import { discoverStoreGames } from "./backend/storeDiscovery.mjs";
 import { pickWindowsGamePath } from "./backend/windowsPicker.mjs";
+import { MediaCache } from "./backend/mediaCache.mjs";
 
 let runtimeConfig = { libraryRoot: process.env.NEXUS_GAMES_ROOT || "F:\\Games", steamGridDbApiKey: process.env.STEAMGRIDDB_API_KEY || "" };
 const ignoredFolder = /^(redist|_commonredist|support|installer|installers|rdr2 updated setup files)$/i;
@@ -27,7 +28,7 @@ const steamAppIds = new Map([
 const steamMetadataCache = new Map();
 const steamGridDbCache = new Map();
 const catalogSearchCache = new Map();
-const remoteMediaCache = new Map();
+let remoteMediaCache;
 let devRegistryPromise;
 let devDiscoveryFingerprint = "";
 let devPlaytimeRevision = 0;
@@ -202,12 +203,12 @@ async function getSteamGridDbMetadata(appId, title) {
   }
 }
 
-async function readLibraryCache(root, signature, direct = false, titleHint = "", storeId = "") {
+async function readLibraryCache(root, signature, direct = false, titleHint = "", storeId = "", allowStale = false) {
   try {
     const cached = JSON.parse(await readFile(libraryCacheFile(root, direct, titleHint, storeId), "utf8"));
     if (cached.root !== root || !Array.isArray(cached.games)) return undefined;
     const fresh = Date.now() - new Date(cached.cachedAt).valueOf() < 5 * 60 * 1000;
-    if (!fresh && (!signature || cached.signature !== signature)) return undefined;
+    if (!allowStale && !fresh && (!signature || cached.signature !== signature)) return undefined;
     return cached.games;
   } catch {
     return undefined;
@@ -255,26 +256,18 @@ function isAllowedMediaUrl(value) {
   }
 }
 
-async function serveRemoteMedia(value, response) {
+async function serveRemoteMedia(value, response, refresh = false) {
   if (!isAllowedMediaUrl(value)) { response.statusCode = 403; response.end("Media source not allowed"); return; }
-  let cached = remoteMediaCache.get(value);
-  if (!cached) {
-    const remote = await fetch(value, { headers: { "User-Agent": "NexusLauncher/2.0" }, signal: AbortSignal.timeout(7000) });
-    if (!remote.ok) { response.statusCode = remote.status; response.end("Media unavailable"); return; }
-    const contentType = remote.headers.get("content-type") || "";
-    if (!contentType.startsWith("image/")) { response.statusCode = 415; response.end("Unsupported media"); return; }
-    const buffer = Buffer.from(await remote.arrayBuffer());
-    if (buffer.byteLength > 12 * 1024 * 1024) { response.statusCode = 413; response.end("Media too large"); return; }
-    cached = { buffer, contentType };
-    if (remoteMediaCache.size >= 120) remoteMediaCache.delete(remoteMediaCache.keys().next().value);
-    remoteMediaCache.set(value, cached);
-  }
+  remoteMediaCache ??= new MediaCache(join(process.env.NEXUS_CACHE_DIR || process.cwd(), ".nexus-cache", "media"));
+  const cached = await remoteMediaCache.get(value, refresh);
   response.setHeader("Content-Type", cached.contentType);
-  response.setHeader("Cache-Control", "public, max-age=86400, immutable");
+  response.setHeader("Cache-Control", "public, max-age=86400");
   response.end(cached.buffer);
 }
 
 async function scanLibrary(root, force = false, direct = false, titleHint, platform, storeId) {
+  const previous = await readLibraryCache(root, undefined, direct, titleHint, storeId, true) || [];
+  if (force) { steamMetadataCache.clear(); steamGridDbCache.clear(); }
   if (!force) {
     const freshGames = await readLibraryCache(root, undefined, direct, titleHint, storeId);
     if (freshGames) return { games: freshGames, cached: true };
@@ -294,7 +287,9 @@ async function scanLibrary(root, force = false, direct = false, titleHint, platf
   const games = await Promise.all(folderStats.map(async ({ folder, info: folderStat }) => {
     const folderPath = directGame ? root : join(root, folder.name);
     const title = direct && titleHint ? titleHint : titleFromFolder(folder.name);
-    const [detected, steamMetadata] = await Promise.all([inspectGameFolder(folderPath, folder.name), getSteamMetadata(title, platform === "Steam" ? storeId : undefined)]);
+    const [detected, fetchedMetadata] = await Promise.all([inspectGameFolder(folderPath, folder.name), getSteamMetadata(title, platform === "Steam" ? storeId : undefined)]);
+    const previousGame = previous.find(game => game.folderPath === folderPath && game.title === title);
+    const steamMetadata = fetchedMetadata || previousGame?.steamMetadata;
     return {
       id: `local-${slug(folder.name)}`,
       title,
@@ -456,7 +451,7 @@ export function localLibraryPlugin() {
             return;
           }
           if (url.pathname === "/api/library/media" && request.method === "GET") {
-            await serveRemoteMedia(url.searchParams.get("url") || "", response);
+            await serveRemoteMedia(url.searchParams.get("url") || "", response, url.searchParams.has("retry"));
             return;
           }
           if (url.pathname === "/api/library/launch" && request.method === "POST") {

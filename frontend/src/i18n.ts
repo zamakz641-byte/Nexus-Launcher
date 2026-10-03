@@ -3,7 +3,7 @@ import { initReactI18next } from "react-i18next";
 
 const fr = {
   nav: { home: "Accueil", library: "Bibliothèque", search: "Recherche", settings: "Paramètres", downloads: "Téléchargements" },
-  action: { play: "Jouer", configure: "Configurer", install: "Installer", more: "Plus d’options", close: "Fermer" },
+  action: { play: "Jouer", configure: "Configurer", install: "Installer", more: "Plus d’options", close: "Fermer", holdToPlay: "Maintenir pour jouer", refresh: "Actualiser les jeux et les images (F5)" },
   system: { theme: "Thème", language: "Langue", profile: "Profil", player: "Joueur", settings: "Paramètres", obsidienne: "Obsidienne", solaris: "Solaris", online: "En ligne" },
   hints: { title: "Commandes", enter: "Entrée", escape: "Échap", select: "Sélectionner", back: "Retour", navigate: "Naviguer", tabs: "Changer d’onglet" },
   launch: { title: "Jeu lancé", description: "{{game}} a été transmis au lanceur système local.", success: "Exécutable démarré" },
@@ -79,7 +79,7 @@ const fr = {
 
 const en = {
   nav: { home: "Home", library: "Library", search: "Search", settings: "Settings", downloads: "Downloads" },
-  action: { play: "Play", configure: "Configure", install: "Install", more: "More options", close: "Close" },
+  action: { play: "Play", configure: "Configure", install: "Install", more: "More options", close: "Close", holdToPlay: "Hold to play", refresh: "Refresh games and artwork (F5)" },
   system: { theme: "Theme", language: "Language", profile: "Profile", player: "Player", settings: "Settings", obsidienne: "Obsidian", solaris: "Solaris", online: "Online" },
   hints: { title: "Controls", enter: "Enter", escape: "Esc", select: "Select", back: "Back", navigate: "Navigate", tabs: "Switch tabs" },
   launch: { title: "Game launched", description: "{{game}} was handed to the local system launcher.", success: "Executable started" },

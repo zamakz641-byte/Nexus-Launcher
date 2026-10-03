@@ -17,12 +17,18 @@ type Direction = "ArrowLeft" | "ArrowRight" | "ArrowUp" | "ArrowDown";
 function keepsDirectionalKey(element: Element | null, direction: Direction) {
   if (!(element instanceof HTMLElement)) return false;
   if (element.matches("textarea, [contenteditable='true']")) return true;
+  if (element.matches('input[type="range"], input[type="number"]')) return true;
   if (element.matches("input")) return direction === "ArrowLeft" || direction === "ArrowRight";
   return element.matches("select");
 }
 
 function visibleFocusableElements() {
+  const modal = document.querySelector<HTMLElement>('[role="dialog"][data-state="open"], [role="dialog"]');
+  const stage = Array.from(document.querySelectorAll('.route-stage')).at(-1);
   return Array.from(document.querySelectorAll<HTMLElement>(focusableSelector)).filter((element) => {
+    if (element.closest('[inert], [aria-hidden="true"]')) return false;
+    if (modal && !modal.contains(element)) return false;
+    if (!modal && element.closest('.route-stage') && !stage?.contains(element)) return false;
     const rect = element.getBoundingClientRect();
     const style = getComputedStyle(element);
     return rect.width > 1 && rect.height > 1 && style.visibility !== "hidden" && style.display !== "none";
@@ -109,6 +115,16 @@ export function useGamepadNavigation() {
   }, [location.key, location.pathname, navigate]);
 
   useEffect(() => {
+    if (useNexusStore.getState().inputMode === "pointer") return;
+    const timer = window.setTimeout(() => {
+      if (document.activeElement !== document.body || document.querySelector('[role="dialog"], .startup-sequence, .launch-sequence')) return;
+      const stage = Array.from(document.querySelectorAll('.route-stage')).at(-1);
+      stage?.querySelector<HTMLElement>(focusableSelector)?.focus({ preventScroll: true });
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [location.key]);
+
+  useEffect(() => {
     let frame = 0;
     let idleTimer = 0;
     const active = new Set<string>();
@@ -137,6 +153,7 @@ export function useGamepadNavigation() {
       if (document.querySelector(".launch-sequence")) { event.preventDefault(); return; }
       if (event.isTrusted) setInputMode("keyboard");
       if (event.defaultPrevented) return;
+      if ((event.target as Element | null)?.closest?.('[role="menu"], [role="listbox"]:not(.game-rail__track)')) return;
 
       if (event.key === "GamepadLB" || event.key === "GamepadRB") {
         event.preventDefault();
@@ -171,12 +188,24 @@ export function useGamepadNavigation() {
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("pointerdown", onPointer, { passive: true });
 
+    let confirmTarget: HTMLElement | null = null;
+    let confirmOwned = false;
     const dispatch = (key: string) => {
       if (document.querySelector(".launch-sequence")) return;
       setInputMode("controller");
       const target = document.activeElement instanceof HTMLElement ? document.activeElement : document.body;
+      if (target instanceof HTMLInputElement && ['range', 'number'].includes(target.type) && key.startsWith('Arrow')) {
+        if (key === 'ArrowUp' || key === 'ArrowDown') moveSpatially(key);
+        else {
+          if (key === 'ArrowRight') target.stepUp(); else target.stepDown();
+          target.dispatchEvent(new Event('input', { bubbles: true }));
+          target.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        return;
+      }
       if (key === "Enter" && target !== document.body) {
-        target.click();
+        confirmTarget = target;
+        confirmOwned = !target.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true }));
         return;
       }
       target.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true }));
@@ -184,7 +213,7 @@ export function useGamepadNavigation() {
 
     const poll = (timestamp: number) => {
       frame = 0;
-      const gamepad = navigator.getGamepads?.()[0];
+      const gamepad = Array.from(navigator.getGamepads?.() || []).find(Boolean);
       if (gamepad) {
         const intents: Array<[string, boolean, string, boolean]> = [
           ["left", Boolean(gamepad.buttons[14]?.pressed || gamepad.axes[0] < -0.55), "ArrowLeft", true],
@@ -205,12 +234,19 @@ export function useGamepadNavigation() {
             lastActionAt.set(name, timestamp);
             dispatch(key);
           } else if (!pressed) {
+            if (name === "confirm" && wasActive && confirmTarget) {
+              const target = confirmTarget; confirmTarget = null;
+              target.dispatchEvent(new KeyboardEvent("keyup", { key: "Enter", bubbles: true, cancelable: true }));
+              if (!confirmOwned && target.isConnected && !document.querySelector(".launch-sequence")) target.click();
+            }
             active.delete(name);
             lastActionAt.delete(name);
           }
         }
         frame = requestAnimationFrame(poll);
       } else {
+        if (confirmTarget) window.dispatchEvent(new Event("pointercancel"));
+        confirmTarget = null;
         active.clear();
         lastActionAt.clear();
         idleTimer = window.setTimeout(() => {
