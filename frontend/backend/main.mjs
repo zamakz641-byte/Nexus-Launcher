@@ -9,6 +9,7 @@ import { discoverStoreGames } from "./storeDiscovery.mjs";
 import { SecretStore } from "./secretStore.mjs";
 import { MediaCache } from "./mediaCache.mjs";
 import { trackGameSession } from "./gameSession.mjs";
+import { SteamAchievements } from "./steamAchievements.mjs";
 
 let artworkCache;
 const gameSessions = new Map();
@@ -47,6 +48,8 @@ const mimeTypes = {
 let backendPromise;
 let registryPromise;
 let secretStore;
+let steamAchievements;
+function getSteamAchievements() { return steamAchievements ||= new SteamAchievements(app.getPath("userData"), safeStorage, { fetch: (url, options) => net.fetch(url, options) }); }
 let discoveryFingerprint = "";
 let discoveryBusy = false;
 function getSecretStore() { return secretStore ||= new SecretStore(app.getPath("userData"), safeStorage); }
@@ -226,6 +229,10 @@ function registerIpc() {
     return backend.desktopSystemInfo();
   });
   ipcMain.handle("nexus:steamgrid-status", async () => getSecretStore().status());
+  ipcMain.handle("nexus:steam-account-status", async () => getSteamAchievements().status());
+  ipcMain.handle("nexus:steam-account-save", async (_event, value) => getSteamAchievements().saveAccount(value));
+  ipcMain.handle("nexus:steam-account-clear", async () => getSteamAchievements().clearAccount());
+  ipcMain.handle("nexus:steam-achievements", async (_event, appId, locale, force) => getSteamAchievements().getAchievements(appId, locale === 'fr' ? 'fr' : 'en', force === true));
   ipcMain.handle("nexus:steamgrid-save", async (_event, value) => {
     const validate = async (key) => {
       try {

@@ -24,6 +24,9 @@ interface LocalGameRecord {
     features?: string[];
     trailerUrl?: string;
     trailerTitle?: string;
+    trailers?: { id: string; title: string; url: string; poster?: string }[];
+    screenshots?: string[];
+    backgroundGallery?: string[];
     artworkUrl?: string;
     heroArtworkUrl?: string;
     artworkFallbackUrls?: string[];
@@ -128,6 +131,13 @@ export function toGame(record: LocalGameRecord): Game {
     metadata: steam?.appId ? ["STEAM", "PC"] : ["LOCAL", "PC"],
     artwork: normalizeMedia(record.artworkUrl) ?? artworkFallbacks[0] ?? "/assets/brand/nexus-mark.png",
     heroArtwork: normalizeMedia(steam?.heroArtworkUrl),
+    steamAppId: appId,
+    backgroundGallery: [...new Set([steam?.heroArtworkUrl, ...(steam?.backgroundGallery || [])].map(normalizeMedia).filter((url): url is string => Boolean(url)))],
+    screenshots: (steam?.screenshots || []).map(normalizeMedia).filter((url): url is string => Boolean(url)),
+    trailers: (steam?.trailers || []).flatMap(trailer => {
+      const url = normalizeTrailer(trailer.url);
+      return url ? [{ id: trailer.id, title: { fr: trailer.title, en: trailer.title }, url, poster: normalizeMedia(trailer.poster) }] : [];
+    }),
     artworkFallbacks,
     heroArtworkFallbacks,
     logoArtwork: normalizeMedia(steam?.logoUrl),

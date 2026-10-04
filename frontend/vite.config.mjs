@@ -11,6 +11,7 @@ import { LibraryRegistry } from "./backend/libraryRegistry.mjs";
 import { discoverStoreGames } from "./backend/storeDiscovery.mjs";
 import { pickWindowsGamePath } from "./backend/windowsPicker.mjs";
 import { MediaCache } from "./backend/mediaCache.mjs";
+import { getCatalogMedia } from "./backend/catalogMedia.mjs";
 
 let runtimeConfig = { libraryRoot: process.env.NEXUS_GAMES_ROOT || "F:\\Games", steamGridDbApiKey: process.env.STEAMGRIDDB_API_KEY || "" };
 const ignoredFolder = /^(redist|_commonredist|support|installer|installers|rdr2 updated setup files)$/i;
@@ -133,6 +134,7 @@ async function getSteamMetadata(title, knownAppId) {
     const data = payload?.[appId]?.data ?? Object.values(payload ?? {}).find((entry) => Number(entry?.data?.steam_appid) === Number(appId))?.data;
     if (!data) return undefined;
     const steamGridDb = await getSteamGridDbMetadata(appId, title);
+    const media = getCatalogMedia(data);
     const metadata = {
       appId,
       title: data.name,
@@ -142,8 +144,11 @@ async function getSteamMetadata(title, knownAppId) {
       releaseDate: data.release_date?.date,
       genre: data.genres?.[0]?.description,
       features: data.categories?.slice(0, 3).map((category) => category.description).filter(Boolean),
-      trailerUrl: data.movies?.[0]?.mp4?.max || data.movies?.[0]?.webm?.max || data.movies?.[0]?.hls_h264,
-      trailerTitle: data.movies?.[0]?.name,
+      trailerUrl: media.trailers[0]?.url,
+      trailerTitle: media.trailers[0]?.title,
+      trailers: media.trailers,
+      screenshots: media.screenshots,
+      backgroundGallery: [...new Set([steamGridDb?.heroUrl, ...(steamGridDb?.heroUrls || []), data.background_raw, ...media.screenshots].filter(Boolean))].slice(0, 12),
       artworkUrl: steamGridDb?.gridUrl || data.header_image,
       heroArtworkUrl: steamGridDb?.heroUrl || data.background_raw || data.background || data.header_image,
       artworkFallbackUrls: [data.header_image, `https://cdn.akamai.steamstatic.com/steam/apps/${appId}/header.jpg`].filter(Boolean),
@@ -195,7 +200,8 @@ async function getSteamGridDbMetadata(appId, title) {
       ]);
     }
     const preferred = (items = []) => items.find((item) => !item.nsfw && !item.humor) ?? items[0];
-    const metadata = { gameId, gridUrl: preferred(grids)?.url, heroUrl: preferred(heroes)?.url, logoUrl: preferred(logos)?.url };
+    const heroUrls = (heroes || []).filter(item => !item.nsfw && !item.humor && Number(item.width) >= 1920).slice(0, 5).map(item => item.url);
+    const metadata = { gameId, gridUrl: preferred(grids)?.url, heroUrl: heroUrls[0] || preferred(heroes)?.url, heroUrls, logoUrl: preferred(logos)?.url };
     steamGridDbCache.set(appId, metadata);
     return metadata;
   } catch {
@@ -206,7 +212,7 @@ async function getSteamGridDbMetadata(appId, title) {
 async function readLibraryCache(root, signature, direct = false, titleHint = "", storeId = "", allowStale = false) {
   try {
     const cached = JSON.parse(await readFile(libraryCacheFile(root, direct, titleHint, storeId), "utf8"));
-    if (cached.root !== root || !Array.isArray(cached.games) || (!allowStale && cached.version !== 2)) return undefined;
+    if (cached.root !== root || !Array.isArray(cached.games) || (!allowStale && cached.version !== 3)) return undefined;
     const fresh = Date.now() - new Date(cached.cachedAt).valueOf() < 5 * 60 * 1000;
     if (!allowStale && !fresh && (!signature || cached.signature !== signature)) return undefined;
     return cached.games;
@@ -218,7 +224,7 @@ async function readLibraryCache(root, signature, direct = false, titleHint = "",
 async function writeLibraryCache(root, signature, games, direct = false, titleHint = "", storeId = "") {
   try {
     await mkdir(cacheDirectory, { recursive: true });
-    await writeFile(libraryCacheFile(root, direct, titleHint, storeId), JSON.stringify({ version: 2, root, signature, cachedAt: new Date().toISOString(), games }), "utf8");
+    await writeFile(libraryCacheFile(root, direct, titleHint, storeId), JSON.stringify({ version: 3, root, signature, cachedAt: new Date().toISOString(), games }), "utf8");
   } catch {
     // The library remains usable when the optional local cache cannot be written.
   }

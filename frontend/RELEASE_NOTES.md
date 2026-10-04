@@ -1,27 +1,31 @@
-# Nexus Launcher V2.0
-
-## English
-
-- **First launch asks for your games folder.** Open the native folder picker, save a collection and scan it. You can explicitly choose automatic Steam/Epic discovery or set up later. Canceling the picker never validates an import.
-- **More reliable artwork.** Use actual Steam background URLs, retain images offline and fall back across providers before showing the Nexus emblem. Steam installations with unavailable catalog details can still use artwork from their known AppID.
-- **Refresh anywhere.** Use the navigation refresh button or F5 to retry images and metadata.
-- **Hold to play.** Hold a ready Home/Library game with pointer, Enter/Space or controller A. Short activation keeps selection/details behavior.
-- **Desktop session return.** Nexus minimizes after a successful game start, follows discovered child processes, records Nexus session time and returns when the tracked session ends.
-- **Controller navigation fixes.** Native menus, volume sliders, focus recovery and dialogs behave consistently.
-- **Local console startup films.** French and English Flow/Veo intros follow the interface language, respect volume and reduced motion, and can be skipped.
-
-### Downloads
-
-- **Nexus-Launcher-Setup-2.0.0-x64.exe** — installer for Windows x64.
-- **Nexus-Launcher-Portable-2.0.0-x64.exe** — portable application for Windows x64.
-- **SHA256SUMS.txt** — checksums for both executables.
-
-The executables are unsigned. Removing a library entry never deletes game files. Historical Steam playtime and account achievements are not yet synchronized; SteamGridDB keys only provide artwork. A game handing execution to an already running external store client may require a dedicated adapter for accurate session return. See [reliability and account-sync roadmap](https://github.com/zamakz641-byte/Nexus-Launcher/blob/main/docs/RELIABILITY-AND-SYNC.md).
+# Nexus Launcher V2.1 — Media & Steam achievements
 
 ## Français
 
-Au premier démarrage, Nexus demande **le dossier de vos jeux** et ouvre l’explorateur pour le choisir. Le dossier est enregistré et analysé ; vous pouvez aussi choisir explicitement la détection Steam/Epic ou configurer plus tard.
+- Fonds plus clairs : luminosité et voile sombre réglables, avec contraste conservé derrière le texte.
+- Diaporama lent des fonds et captures HD du jeu sélectionné, préchargement avant le fondu et pause dans les menus, fenêtres masquées et avec les mouvements réduits.
+- Tous les trailers du catalogue Steam, sélection de vidéo et bouton Réessayer.
+- Galerie des captures en pleine résolution, navigation clavier et manette.
+- Aperçus vidéo silencieux sur l’accueil, activables dans Paramètres → Médias.
+- Connexion Steam dans Paramètres → Métadonnées : SteamID64 et clé Steam Web API chiffrée localement.
+- Succès réels et localisés dans les fiches des jeux reconnus, actualisation manuelle, cache hors ligne et date de dernière synchronisation.
+- Corrections des réponses périmées lors d’un changement de jeu, de langue ou de compte.
 
-Cette V2.0 comprend les corrections des jaquettes et fonds, le cache hors ligne, l’actualisation via le bouton ou F5, le lancement par appui long, la réduction et le retour de Nexus pendant les sessions suivies, les améliorations de navigation et les intros locales FR/EN.
+### À savoir
 
-Choisissez **Setup** pour installer ou **Portable** pour lancer sans installation. Les deux versions ciblent Windows x64 et ne sont pas signées. Les succès Steam synchronisés et les heures historiques restent une prochaine étape ; aucun progrès fictif n’est affiché.
+La clé Steam Web API est différente de la clé SteamGridDB. Les succès dépendent de l’accès aux données du compte Steam et d’un AppID reconnu. La connexion Epic, les notifications de nouveaux succès et l’import manuel des trailers restent à venir. La synchronisation a été vérifiée avec des réponses API contrôlées ; le test avec votre compte reste nécessaire. Les exécutables Windows ne sont pas signés.
+
+## English
+
+- Clearer backgrounds with saved brightness and dimming controls; text keeps localized contrast.
+- Calm HD background/screenshot slideshow with preloading and suspension for menus, hidden windows and reduced motion.
+- All Steam catalog trailers, a video picker and playback retry.
+- Full-resolution screenshot gallery with keyboard/controller navigation.
+- Optional silent Home video previews in Settings → Media.
+- Steam account connection in Settings → Metadata using SteamID64 and a locally encrypted Steam Web API key.
+- Real localized achievements, manual sync, persistent offline cache and last-successful-sync timestamps.
+- Stale response fixes when switching games, languages or accounts.
+
+### Notes
+
+Steam Web API credentials are separate from SteamGridDB's artwork key. Achievement availability depends on accessible Steam account data and a recognized AppID. Epic synchronization, unlock notifications and manual trailer imports are future additions. API behavior was verified with controlled responses; live account verification requires your credentials. Windows builds are unsigned.

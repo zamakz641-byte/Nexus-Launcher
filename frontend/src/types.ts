@@ -16,6 +16,10 @@ export interface Game {
   metadata: string[];
   artwork: string;
   heroArtwork?: string;
+  steamAppId?: number;
+  backgroundGallery?: string[];
+  screenshots?: string[];
+  trailers?: { id: string; title: LocalizedText; url: string; poster?: string }[];
   artworkFallbacks?: string[];
   heroArtworkFallbacks?: string[];
   logoArtwork?: string;

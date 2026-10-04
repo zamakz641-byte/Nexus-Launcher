@@ -6,6 +6,7 @@ import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { LaunchSequence } from "./components/LaunchSequence";
 import { StartupSequence } from "./components/StartupSequence";
 import { Onboarding } from "./components/Onboarding";
+import { GameBackdrop } from "./components/GameBackdrop";
 import { TopNavigation } from "./components/TopNavigation";
 import { libraryClient } from "./services/libraryClient";
 import { useGamepadNavigation } from "./hooks/useGamepadNavigation";
@@ -14,7 +15,7 @@ import { refreshLibrary } from "./services/refreshLibrary";
 import { HomeScreen } from "./screens/HomeScreen";
 import { launcherClient } from "./services/launcherClient";
 import { useNexusStore } from "./state/useNexusStore";
-import { applyImageFallback, clearRecoveredArtwork } from "./utils/imageFallback";
+import { clearRecoveredArtwork } from "./utils/imageFallback";
 import { getGameAccent } from "./theme/gameAccents";
 import { sfx } from "./audio/sfx";
 import { premiumEase, routeDirection, routeVariants } from "./motion/transitions";
@@ -36,6 +37,7 @@ export function App() {
   const selectedGameId = useNexusStore((state) => state.selectedGameId);
   const previewGameId = useNexusStore((state) => state.previewGameId);
   const theme = useNexusStore((state) => state.theme);
+  const mediaPreferences = useNexusStore((state) => state.mediaPreferences);
   const inputMode = useNexusStore((state) => state.inputMode);
   const discoveredGames = useNexusStore((state) => state.discoveredGames);
   const beginLibraryScan = useNexusStore((state) => state.beginLibraryScan);
@@ -193,16 +195,8 @@ export function App() {
 
   return (
     <MotionConfig reducedMotion="user">
-      <main className="nexus-shell" data-theme={theme} data-input={inputMode} data-route={location.pathname === "/" ? "home" : location.pathname.startsWith("/game/") ? "detail" : "interior"} style={{ "--game-accent": selectedGame ? getGameAccent(selectedGame.id) : "var(--color-focus)" } as CSSProperties}>
-        <div className="media-backdrop" aria-hidden="true">
-          <AnimatePresence initial={false} mode="popLayout">
-            {backdropGame ? backdropGame.heroArtwork || !backdropGame.artwork.includes("/assets/brand/nexus-mark")
-              ? <motion.img animate={{ opacity: 1, scale: 1 }} className="media-backdrop__image" exit={{ opacity: 0 }} initial={{ opacity: 0, scale: 1.015 }} key={`${backdropGame.id}:${backdropGame.heroArtwork ?? backdropGame.artwork}`} onError={(event) => applyImageFallback(event, [...(backdropGame.heroArtworkFallbacks || []), backdropGame.artwork])} src={backdropGame.heroArtwork ?? backdropGame.artwork} transition={{ opacity: { duration: 0.36 }, scale: { duration: 0.52 } }} />
-              : <motion.div className="media-backdrop__fallback" key={backdropGame.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: .34 }}><img src="/assets/brand/nexus-mark.png" alt="" /></motion.div>
-              : null}
-          </AnimatePresence>
-          <div className="media-backdrop__grade" />
-        </div>
+      <main className="nexus-shell" data-theme={theme} data-input={inputMode} data-route={location.pathname === "/" ? "home" : location.pathname.startsWith("/game/") ? "detail" : "interior"} style={{ "--game-accent": selectedGame ? getGameAccent(selectedGame.id) : "var(--color-focus)", '--art-brightness': mediaPreferences.brightness / 100, '--art-dimming': mediaPreferences.dimming / 100 } as CSSProperties}>
+        <GameBackdrop game={backdropGame} paused={onboardingOpen || startupOpen || Boolean(launchingGame)} allowVideo={location.pathname === '/'} />
         <TopNavigation />
         <AnimatePresence mode="popLayout" initial={false} custom={direction}>
           <motion.div

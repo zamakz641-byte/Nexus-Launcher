@@ -13,6 +13,10 @@ interface Window {
     chooseGameExecutable: (id: string) => Promise<unknown | null>;
     chooseGameArtwork: (id: string, role: "gridArtwork" | "heroArtwork" | "logoArtwork") => Promise<unknown | null>;
     getSteamGridStatus: () => Promise<unknown>;
+    getSteamAccountStatus: () => Promise<import('./steamAchievementsTypes').SteamAccountStatus>;
+    saveSteamAccount: (value: { steamId:string; apiKey:string }) => Promise<import('./steamAchievementsTypes').SteamAccountStatus>;
+    clearSteamAccount: () => Promise<import('./steamAchievementsTypes').SteamAccountStatus>;
+    getSteamAchievements: (appId:number, locale:'fr'|'en', force?:boolean) => Promise<import('./steamAchievementsTypes').SteamAchievementResult>;
     saveSteamGridKey: (value: string) => Promise<unknown>;
     clearSteamGridKey: () => Promise<unknown>;
     searchCatalog: (query: string) => Promise<unknown>;

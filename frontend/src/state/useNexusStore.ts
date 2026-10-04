@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { Game, GameId, Locale, SystemInfo, ThemeId } from "../types";
+import { readMediaPreferences, sanitizeMediaPreferences, type MediaPreferences } from "../media/preferences";
 
 const readLocale = (): Locale => typeof localStorage !== "undefined" && localStorage.getItem("nexus.locale.v1") === "en" ? "en" : "fr";
 const readTheme = (): ThemeId => typeof localStorage !== "undefined" && localStorage.getItem("nexus.theme.v1") === "solaris" ? "solaris" : "obsidienne";
@@ -9,6 +10,8 @@ interface NexusState {
   previewGameId: GameId;
   locale: Locale;
   theme: ThemeId;
+  mediaPreferences: MediaPreferences;
+  setMediaPreferences: (value: Partial<MediaPreferences>) => void;
   inputMode: "controller" | "keyboard" | "pointer";
   discoveredGames: Game[];
   libraryRoot: string;
@@ -34,6 +37,12 @@ export const useNexusStore = create<NexusState>((set) => ({
   previewGameId: "",
   locale: readLocale(),
   theme: readTheme(),
+  mediaPreferences: readMediaPreferences(),
+  setMediaPreferences: (value) => set(state => {
+    const mediaPreferences = sanitizeMediaPreferences({ ...state.mediaPreferences, ...value });
+    localStorage.setItem('nexus.media.v1', JSON.stringify(mediaPreferences));
+    return { mediaPreferences };
+  }),
   inputMode: "controller",
   discoveredGames: [],
   libraryRoot: "",

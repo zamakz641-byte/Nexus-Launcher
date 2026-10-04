@@ -5,6 +5,8 @@ import { useTranslation } from "react-i18next";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 import { NexusButton } from "../components/NexusButton";
 import { TrailerDialog } from "../components/TrailerDialog";
+import { ScreenshotGallery } from "../components/ScreenshotGallery";
+import { SteamAchievements } from "../components/SteamAchievements";
 import { useLibraryGames } from "../hooks/useLibraryGames";
 import { useNexusStore } from "../state/useNexusStore";
 import { applyImageFallback } from "../utils/imageFallback";
@@ -42,7 +44,6 @@ export function GameDetailScreen({ onLaunch }: GameDetailScreenProps) {
   if (!game && (libraryScanState === "idle" || libraryScanState === "scanning")) return <div className="route-loading"><span />{t("detail.loading")}</div>;
   if (!game) return <Navigate to="/library" replace />;
 
-  const achievementPercent = Math.round((game.achievementProgress.unlocked / Math.max(game.achievementProgress.total, 1)) * 100);
   return (
     <section className="game-detail-screen" aria-labelledby="game-detail-title">
       <button className="game-detail__back" onClick={() => location.key === "default" ? navigate("/library", { replace: true }) : navigate(-1)} type="button"><ArrowLeft size={20} />{t("detail.back")}</button>
@@ -68,8 +69,8 @@ export function GameDetailScreen({ onLaunch }: GameDetailScreenProps) {
 
       <nav className="game-detail__tabs" aria-label={t("detail.tabs")}>
         <button data-active={tab === "overview"} onClick={() => setTab("overview")} type="button">{t("detail.overview")}</button>
-        {game.trailer.url ? <button data-active={tab === "media"} onClick={() => setTab("media")} type="button">{t("detail.media")}</button> : null}
-        {game.achievementProgress.total > 0 ? <button data-active={tab === "achievements"} onClick={() => setTab("achievements")} type="button">{t("detail.achievementsTab")}</button> : null}
+        {game.trailer.url || game.screenshots?.length ? <button data-active={tab === "media"} onClick={() => setTab("media")} type="button">{t("detail.media")}</button> : null}
+        <button data-active={tab === "achievements"} onClick={() => setTab("achievements")} type="button">{t("detail.achievementsTab")}</button>
       </nav>
       <AnimatePresence mode="wait" initial={false}>
         <motion.div className="game-detail__panel" key={tab} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -3 }} transition={{ duration: .18 }}>
@@ -77,8 +78,8 @@ export function GameDetailScreen({ onLaunch }: GameDetailScreenProps) {
             <div className="game-detail__summary"><span className="screen-kicker">{t("detail.about")}</span><p>{game.description[locale]}</p></div>
             <dl className="game-detail__specs"><div><dt>{t("detail.developer")}</dt><dd>{game.developer}</dd></div><div><dt>{t("detail.publisher")}</dt><dd>{game.publisher}</dd></div><div><dt>{t("detail.release")}</dt><dd>{game.releaseDate}</dd></div>{game.ageRating !== "Non renseigné" ? <div><dt>{t("detail.rating")}</dt><dd>{game.ageRating}</dd></div> : null}<div><dt>{t("detail.metadata")}</dt><dd>{game.metadataProvider}</dd></div>{game.executablePath ? <div><dt>{t("detail.executable")}</dt><dd>{game.executablePath.split(/[\\/]/).pop()}</dd></div> : null}</dl>
           </> : null}
-          {tab === "media" ? <button className="game-detail__media" onClick={() => setTrailerOpen(true)} type="button"><img src={game.artwork} alt="" onError={(event) => applyImageFallback(event, [...(game.artworkFallbacks || []), game.heroArtwork])} /><span><Play size={26} weight="fill" /><strong>{game.trailer.title[locale]}</strong><small>{game.trailer.duration}</small></span></button> : null}
-          {tab === "achievements" ? <div className="game-detail__achievement"><Trophy size={38} /><span><strong>{t("detail.completed", { count: achievementPercent })}</strong><small>{t("detail.unlocked", { unlocked: game.achievementProgress.unlocked, total: game.achievementProgress.total })}</small></span><div><i style={{ width: `${achievementPercent}%` }} /></div></div> : null}
+          {tab === "media" ? <div className="game-media-panel">{game.trailer.url ? <button className="game-detail__media" onClick={() => setTrailerOpen(true)} type="button"><img src={game.artwork} alt="" onError={(event) => applyImageFallback(event, [...(game.artworkFallbacks || []), game.heroArtwork])} /><span><Play size={26} weight="fill" /><strong>{game.trailer.title[locale]}</strong><small>{game.trailers?.length || 1} · {t('trailer.label')}</small></span></button> : null}{game.screenshots?.length ? <ScreenshotGallery images={game.screenshots} title={game.title} /> : null}</div> : null}
+          {tab === "achievements" ? <SteamAchievements appId={game.steamAppId} locale={locale} /> : null}
         </motion.div>
       </AnimatePresence>
       <div className="game-detail__source"><GameController size={18} /><span>{t("detail.source", { source: game.source })}</span><HardDrives size={18} /><span>{game.libraryPath}</span></div>

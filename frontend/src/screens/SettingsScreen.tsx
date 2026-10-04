@@ -7,6 +7,7 @@ import { useNexusStore } from "../state/useNexusStore";
 import { libraryClient } from "../services/libraryClient";
 import type { Locale, ThemeId } from "../types";
 import { sfx } from "../audio/sfx";
+import { SteamAccountSettings } from "../components/SteamAchievements";
 import type { AudioPreferences } from "../audio/sfx";
 
 type SettingsSection = "interface" | "libraries" | "metadata" | "media" | "downloads" | "play" | "accessibility";
@@ -58,6 +59,8 @@ export function SettingsScreen({ onReplayOnboarding }: { onReplayOnboarding: () 
   };
   const locale = useNexusStore((state) => state.locale);
   const theme = useNexusStore((state) => state.theme);
+  const media = useNexusStore(state => state.mediaPreferences);
+  const setMedia = useNexusStore(state => state.setMediaPreferences);
   const setLocale = useNexusStore((state) => state.setLocale);
   const setTheme = useNexusStore((state) => state.setTheme);
   const discoveredGames = useNexusStore((state) => state.discoveredGames);
@@ -151,6 +154,7 @@ export function SettingsScreen({ onReplayOnboarding }: { onReplayOnboarding: () 
             </> : null}
 
             {section === "metadata" ? <>
+              <SteamAccountSettings locale={locale} />
               <SettingsRow icon={<FolderOpen size={22} />} title={t("settings.localMetadata")} description={t("settings.localGamesFrom", { count: discoveredGames.length, root: libraryRoot })}><button className="settings-inline-action" disabled={libraryScanState === "scanning"} onClick={() => void scanLocalLibrary()} type="button">{t("settings.refresh")}</button></SettingsRow>
               <SettingsRow icon={<Database size={22} />} title={t("settings.steamStore")} description={t("settings.steamStoreDesc")}><span className="provider-tag">{t(systemInfo?.providers.steamStore ? "settings.active" : "settings.unavailable")}</span></SettingsRow>
               <SettingsRow icon={<Images size={22} />} title={t("settings.steamGrid")} description={t("settings.steamGridDesc")}><span className="provider-tag">{t(steamGridStatus?.configured || systemInfo?.providers.steamGridDb ? "settings.configured" : "settings.missingKey")}</span></SettingsRow>
@@ -158,6 +162,11 @@ export function SettingsScreen({ onReplayOnboarding }: { onReplayOnboarding: () 
             </> : null}
 
             {section === "media" ? <>
+              <SettingsRow icon={<Eye size={22} />} title={t('media.brightness')} description={t('media.brightnessDesc')}><label className="settings-volume"><input aria-label={t('media.brightness')} type="range" min="70" max="120" value={media.brightness} onChange={event => setMedia({ brightness: Number(event.target.value) })} /><output>{media.brightness}%</output></label></SettingsRow>
+              <SettingsRow icon={<MoonStars size={22} />} title={t('media.dimming')} description={t('media.dimmingDesc')}><label className="settings-volume"><input aria-label={t('media.dimming')} type="range" min="0" max="70" value={media.dimming} onChange={event => setMedia({ dimming: Number(event.target.value) })} /><output>{media.dimming}%</output></label></SettingsRow>
+              <SettingsRow icon={<Images size={22} />} title={t('media.slideshow')} description={t('media.slideshowDesc')}><button className="settings-audio-toggle" aria-pressed={media.slideshow} type="button" onClick={() => setMedia({ slideshow: !media.slideshow })}>{t(media.slideshow ? 'media.enabled' : 'media.disabled')}</button></SettingsRow>
+              <SettingsRow icon={<SlidersHorizontal size={22} />} title={t('media.interval')} description={t('media.intervalDesc')}><label className="settings-volume"><input aria-label={t('media.interval')} type="range" min="8" max="30" step="1" value={media.interval} onChange={event => setMedia({ interval: Number(event.target.value) })} /><output>{t('media.seconds', { count: media.interval })}</output></label></SettingsRow>
+              <SettingsRow icon={<FilmSlate size={22} />} title={t('media.previews')} description={t('media.previewsDesc')}><button className="settings-audio-toggle" aria-pressed={media.previewVideo} type="button" onClick={() => setMedia({ previewVideo: !media.previewVideo })}>{t(media.previewVideo ? 'media.enabled' : 'media.disabled')}</button></SettingsRow>
               <SettingsRow icon={<FilmSlate size={22} />} title={t("settings.trailers")} description={t("settings.trailersDesc", { count: trailerCount })}><span className="provider-tag">{trailerCount}/{discoveredGames.length}</span></SettingsRow>
               <SettingsRow icon={<Images size={22} />} title={t("settings.artwork")} description={t("settings.artworkDesc")}><span className="provider-tag">{t("settings.auto")}</span></SettingsRow>
             </> : null}

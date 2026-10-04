@@ -1,0 +1,42 @@
+// @vitest-environment jsdom
+import { act, cleanup, render } from '@testing-library/react';
+import { afterEach, expect, it, vi } from 'vitest';
+import type { Game } from '../types';
+import { GameBackdrop } from './GameBackdrop';
+import { useNexusStore } from '../state/useNexusStore';
+vi.mock('motion/react', () => ({ useReducedMotion: () => false, AnimatePresence: ({ children }: any) => children, motion: { img: ({ initial, animate, exit, transition, ...props }: any) => <img {...props} /> } }));
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.useRealTimers(); });
+it('keeps the last loaded image while navigating and ignores a late previous-game load', () => {
+  const requests: any[] = [];
+  vi.stubGlobal('Image', class { onload: (() => void) | null = null; onerror: (() => void) | null = null; naturalWidth = 1920; set src(value: string) { requests.push({ value, image: this }); } });
+  const game = (id: string) => ({ id, artwork: `${id}.jpg`, heroArtwork: `${id}-hero.jpg`, trailer: {} }) as Game;
+  const view = render(<GameBackdrop game={game('a')} paused allowVideo={false} />);
+  act(() => requests[0].image.onload());
+  expect(view.container.querySelector('img')?.getAttribute('src')).toBe('a-hero.jpg');
+  view.rerender(<GameBackdrop game={game('b')} paused allowVideo={false} />);
+  const lateB = requests[1].image.onload;
+  view.rerender(<GameBackdrop game={game('c')} paused allowVideo={false} />);
+  act(() => lateB());
+  expect(view.container.querySelector('img')?.getAttribute('src')).toBe('a-hero.jpg');
+  act(() => requests[2].image.onload());
+  expect(view.container.querySelector('img')?.getAttribute('src')).toBe('c-hero.jpg');
+});
+it('rotates only after the next full-sized image loads, and suspends on a dialog', async () => {
+  vi.useFakeTimers();
+  Object.defineProperty(document, 'hidden', { configurable: true, value: false });
+  const requests: any[] = [];
+  vi.stubGlobal('Image', class { onload: (() => void) | null = null; onerror: (() => void) | null = null; naturalWidth = 1920; set src(value: string) { requests.push({ value, image: this }); } });
+  useNexusStore.getState().setMediaPreferences({ interval: 8, slideshow: true });
+  const game = { id: 'a', heroArtwork: 'a.jpg', backgroundGallery: ['a.jpg', 'b.jpg'], trailer: {} } as Game;
+  const view = render(<GameBackdrop game={game} paused={false} allowVideo={false} />);
+  act(() => requests[0].image.onload());
+  act(() => vi.advanceTimersByTime(8000));
+  expect(view.container.querySelector('img')?.getAttribute('src')).toBe('a.jpg');
+  act(() => requests[1].image.onload());
+  expect(view.container.querySelector('img')?.getAttribute('src')).toBe('b.jpg');
+  const dialog = document.createElement('div'); dialog.setAttribute('role', 'dialog');
+  await act(async () => { document.body.append(dialog); });
+  act(() => vi.advanceTimersByTime(16000));
+  expect(requests.length).toBe(2);
+  dialog.remove();
+});
