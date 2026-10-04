@@ -2,6 +2,17 @@ import { readFile, writeFile, rename, rm, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
 const TTL = 5 * 60_000;
+function parseProfile(value) {
+  if (/^\d{17}$/.test(value)) return {steamId:value};
+  try {
+    const url = new URL(/^steamcommunity\.com\//i.test(value) ? `https://${value}` : value);
+    if (!['https:','http:'].includes(url.protocol) || url.hostname !== 'steamcommunity.com' || url.username || url.password || url.port) return null;
+    const match = url.pathname.match(/^\/(profiles|id)\/([a-zA-Z0-9_-]+)\/?$/);
+    if (!match) return null;
+    if (match[1] === 'profiles') return /^\d{17}$/.test(match[2]) ? {steamId:match[2]} : null;
+    return match[2].length <= 64 ? {vanity:match[2]} : null;
+  } catch { return null; }
+}
 const safeIcon = value => { try { const url = new URL(value); return url.protocol === 'https:' && ['steamstatic.com','steamusercontent.com','steamcommunity.com'].some(domain => url.hostname === domain || url.hostname.endsWith('.'+domain)) ? url.href : undefined; } catch { return undefined; } };
 export class SteamAchievements {
   constructor(userData, safeStorage, { fetch = globalThis.fetch, now = Date.now } = {}) {
@@ -22,9 +33,15 @@ export class SteamAchievements {
   }
   async saveAccount(value) {
     if (!this.available()) return {...await this.status(),error:'storage-unavailable'};
-    const steamId = typeof value?.steamId === 'string' ? value.steamId.trim() : '', apiKey = typeof value?.apiKey === 'string' ? value.apiKey.trim() : '';
-    if (!/^\d{17}$/.test(steamId) || !/^[a-f\d]{32}$/i.test(apiKey)) return {...await this.status(),error:'invalid-input'};
+    const profile = parseProfile(typeof value?.steamId === 'string' ? value.steamId.trim() : ''), apiKey = typeof value?.apiKey === 'string' ? value.apiKey.trim() : '';
+    if (!profile || !/^[a-f\d]{32}$/i.test(apiKey)) return {...await this.status(),error:'invalid-input'};
     try {
+      let steamId = profile.steamId;
+      if (profile.vanity) {
+        const resolved = await this.request('ISteamUser/ResolveVanityURL/v1',{key:apiKey,vanityurl:profile.vanity,url_type:1});
+        if (resolved.response?.success !== 1 || !/^\d{17}$/.test(resolved.response.steamid || '')) throw new Error('invalid-account');
+        steamId = resolved.response.steamid;
+      }
       const data = await this.request('ISteamUser/GetPlayerSummaries/v2',{key:apiKey,steamids:steamId});
       if (!data.response?.players?.some(player => player.steamid === steamId)) throw new Error('invalid-account');
       this.generation++; this.pending.clear(); await this.write(async () => {await this.atomic(this.file,this.storage.encryptString(JSON.stringify({steamId,apiKey}))); await rm(this.cacheFile,{force:true});}); return this.status();

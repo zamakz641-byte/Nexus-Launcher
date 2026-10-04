@@ -106,3 +106,25 @@ test('disconnect during cache read never returns fresh cached account progress',
   await f.service.clearAccount();unblock();
   const result=await pending;assert.equal(result.state,'unconfigured');assert.equal(result.achievements.length,0);
 });
+test('accepts a copied numeric Steam profile URL and stores canonical numeric ID', async () => {
+  const f=await fixture(); const status=await f.service.saveAccount({steamId:`https://steamcommunity.com/profiles/${steamId}/`,apiKey});
+  assert.equal(status.configured,true);assert.equal(status.steamId,steamId);assert.equal((await f.service.account()).steamId,steamId);
+});
+test('resolves custom Steam profile link with supplied key before validating account', async () => {
+  const f=await fixture();let resolved=false;
+  f.service.fetch=async value=>{const url=new URL(value);if(url.pathname.includes('ResolveVanityURL')) {assert.equal(url.searchParams.get('vanityurl'),'my-profile');assert.equal(url.searchParams.get('key'),apiKey);resolved=true;return {ok:true,json:async()=>({response:{success:1,steamid:steamId}})};}assert.ok(resolved);return f.fetch(value);};
+  assert.equal((await f.service.saveAccount({steamId:'https://steamcommunity.com/id/my-profile/',apiKey})).steamId,steamId);
+  assert.equal((await f.service.account()).steamId,steamId);
+});
+test('rejects unrelated hosts and malformed profile links without network requests', async () => {
+  const f=await fixture();
+  for (const input of ['https://steamcommunity.com.evil.test/id/player','https://evil.test/profiles/'+steamId,'https://steamcommunity.com/id/name/extra','https://steamcommunity.com/id/a%2Fb','https://user@steamcommunity.com/id/name']) assert.equal((await f.service.saveAccount({steamId:input,apiKey})).error,'invalid-input');
+  assert.equal(f.calls(),0);
+});
+test('vanity not found or failed resolution preserves the existing account', async () => {
+  const f=await fixture();await f.service.saveAccount({steamId,apiKey});
+  f.service.fetch=async()=>({ok:true,json:async()=>({response:{success:42}})});
+  assert.equal((await f.service.saveAccount({steamId:'https://steamcommunity.com/id/missing',apiKey})).error,'invalid-account');
+  f.service.fetch=async()=>{throw new Error('network '+apiKey);};
+  const status=await f.service.saveAccount({steamId:'https://steamcommunity.com/id/player',apiKey});assert.equal(status.error,'offline');assert.equal(status.configured,true);assert.ok(!JSON.stringify(status).includes(apiKey));
+});

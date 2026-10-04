@@ -21,11 +21,24 @@ test('account key clears after validation and remains outside renderer persisten
   window.nexusDesktop = {getSteamAccountStatus:vi.fn().mockResolvedValue({configured:false,storageAvailable:true}),saveSteamAccount:vi.fn().mockResolvedValue({configured:true,storageAvailable:true,steamId:'76561198000000000'})} as unknown as NonNullable<Window['nexusDesktop']>;
   render(<SteamAccountSettings locale="en" />);
   const input = screen.getByLabelText('Steam Web API key') as HTMLInputElement;
-  fireEvent.change(screen.getByLabelText('SteamID64'),{target:{value:'76561198000000000'}});
+  const profile = screen.getByLabelText('Steam profile');
+  expect(profile.getAttribute('inputmode')).toBeNull();
+  expect(Number(profile.getAttribute('maxlength'))).toBeGreaterThan(100);
+  expect(screen.getAllByRole('listitem')).toHaveLength(3);
+  fireEvent.change(screen.getByLabelText('Steam profile'),{target:{value:'https://steamcommunity.com/id/my-profile'}});
   fireEvent.change(input,{target:{value:'a'.repeat(32)}});
   fireEvent.click(screen.getByRole('button',{name:'Connect'}));
   await waitFor(() => expect(input.value).toBe(''));
   expect(localStorage.getItem('steamApiKey')).toBeNull();
+  expect(window.nexusDesktop.saveSteamAccount).toHaveBeenCalledWith({steamId:'https://steamcommunity.com/id/my-profile',apiKey:'a'.repeat(32)});
+});
+test('connected profile reopens as a usable link with technical ID collapsed', async () => {
+  window.nexusDesktop={getSteamAccountStatus:vi.fn().mockResolvedValue({configured:true,storageAvailable:true,steamId:'76561198000000000'})} as unknown as NonNullable<Window['nexusDesktop']>;
+  render(<SteamAccountSettings locale="fr" />);
+  await screen.findByText('Connecté · Steam');
+  expect((screen.getByLabelText('Profil Steam') as HTMLInputElement).value).toBe('https://steamcommunity.com/profiles/76561198000000000');
+  const details=screen.getByText('Détails de la connexion').closest('details');
+  expect(details?.open).toBe(false);
 });
 test.each([{appId:20,locale:'en' as const},{appId:10,locale:'fr' as const}])('old manual refresh cannot overwrite a new game or language: %j', async next => {
   const result = (title:string) => ({source:'Steam',state:'ready',cached:false,lastSynced:'2026-10-04T10:00:00Z',achievements:[{id:'A',title,description:'',unlocked:true,unlockTime:null}]});

@@ -194,6 +194,18 @@ export function useGamepadNavigation() {
       if (document.querySelector(".launch-sequence")) return;
       setInputMode("controller");
       const target = document.activeElement instanceof HTMLElement ? document.activeElement : document.body;
+      if (target instanceof HTMLSelectElement && key.startsWith('Arrow')) {
+        if (key === 'ArrowUp' || key === 'ArrowDown') moveSpatially(key);
+        else {
+          const options = Array.from(target.options).filter(option => !option.disabled);
+          if (options.length) {
+            const current = options.findIndex(option => option.value === target.value);
+            target.value = options[(current + (key === 'ArrowRight' ? 1 : -1) + options.length) % options.length].value;
+            target.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+        }
+        return;
+      }
       if (target instanceof HTMLInputElement && ['range', 'number'].includes(target.type) && key.startsWith('Arrow')) {
         if (key === 'ArrowUp' || key === 'ArrowDown') moveSpatially(key);
         else {

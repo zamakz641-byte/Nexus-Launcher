@@ -6,14 +6,27 @@ export function SteamAccountSettings({locale}:{locale:'fr'|'en'}) {
   const copy = steamAchievementsCopy[locale], desktop = window.nexusDesktop;
   const [status,setStatus] = useState<SteamAccountStatus>();
   const [steamId,setSteamId] = useState(''), [apiKey,setApiKey] = useState(''), [busy,setBusy] = useState(false), [error,setError] = useState('');
-  useEffect(() => { let alive = true; void desktop?.getSteamAccountStatus().then(value => {if (alive) {setStatus(value);setSteamId(value.steamId || '');}}).catch(() => {if(alive)setError('failure');}); return () => {alive=false;}; },[desktop]);
+  useEffect(() => { let alive = true; void desktop?.getSteamAccountStatus().then(value => {if (alive) {setStatus(value);setSteamId(value.steamId ? `https://steamcommunity.com/profiles/${value.steamId}` : '');}}).catch(() => {if(alive)setError('failure');}); return () => {alive=false;}; },[desktop]);
   const save = async () => {
     if (!desktop) return; setBusy(true); setError('');
-    try { const result = await desktop.saveSteamAccount({steamId,apiKey}); setStatus(result); if(result.error)setError(result.error === 'invalid-input' ? 'invalid' : result.error === 'storage-unavailable' ? 'storage' : 'failure'); }
+    try { const result = await desktop.saveSteamAccount({steamId,apiKey}); setStatus(result); if(result.error)setError(({ 'invalid-input':'invalid', 'storage-unavailable':'storage', 'offline':'offlineAccount', 'invalid-account':'accountMissing', 'invalid-key':'keyInvalid' } as Record<string,string>)[result.error] || 'failure'); }
     catch {setError('failure');} finally {setApiKey('');setBusy(false);}
   };
   const clear = async () => {if(!desktop)return; setBusy(true);try {setStatus(await desktop.clearSteamAccount());setSteamId('');setApiKey('');setError('');} catch {setError('failure');}finally {setBusy(false);}};
-  return <section className="steam-account-settings" aria-label={copy.account}><h3>{copy.account}</h3>{!desktop ? <p>{copy.desktop}</p> : <><p>{copy.explanation}</p><a href="https://steamcommunity.com/dev/apikey" target="_blank" rel="noreferrer">{copy.keyLink}</a>{status?.configured && <p>{copy.connected} · Steam · {status.steamId}</p>}<div className="steam-account-settings__fields"><label>{copy.steamId}<input aria-label={copy.steamId} autoComplete="off" inputMode="numeric" maxLength={17} value={steamId} onChange={event => setSteamId(event.target.value)} disabled={busy} /></label><label>{copy.apiKey}<input aria-label={copy.apiKey} type="password" autoComplete="off" spellCheck={false} maxLength={32} value={apiKey} onChange={event => setApiKey(event.target.value)} disabled={busy || status?.storageAvailable === false} /></label></div><div className="steam-account-settings__actions"><button className="settings-inline-action" type="button" disabled={busy || !steamId || !apiKey || status?.storageAvailable === false} onClick={() => void save()}>{busy ? copy.busy : status?.configured ? copy.replace : copy.connect}</button>{status?.configured && <button className="settings-inline-action" type="button" disabled={busy} onClick={() => void clear()}>{copy.disconnect}</button>}</div><p role="status">{status?.storageAvailable === false ? copy.storage : error ? copy[error as 'invalid'|'storage'|'failure'] : ''}</p></>}</section>;
+  return <section className="steam-account-settings" aria-label={copy.account}>
+    <h3>{copy.account}</h3>
+    {!desktop ? <p>{copy.desktop}</p> : <>
+      <p>{copy.explanation}</p>
+      <ol className="steam-account-settings__guide"><li>{copy.profileStep}</li><li>{copy.keyStep} <a href="https://steamcommunity.com/dev/apikey" target="_blank" rel="noreferrer">{copy.keyLink}</a></li><li>{copy.privacyStep}</li></ol>
+      {status?.configured && <><p>{copy.connected} · Steam</p><details><summary>{copy.advanced}</summary><p>SteamID64 · {status.steamId}</p></details></>}
+      <div className="steam-account-settings__fields">
+        <label>{copy.steamId}<input aria-label={copy.steamId} autoComplete="off" spellCheck={false} placeholder={copy.profilePlaceholder} maxLength={2048} value={steamId} onChange={event => setSteamId(event.target.value)} disabled={busy} /></label>
+        <label>{copy.apiKey}<input aria-label={copy.apiKey} type="password" autoComplete="off" spellCheck={false} maxLength={32} value={apiKey} onChange={event => setApiKey(event.target.value)} disabled={busy || status?.storageAvailable === false} /></label>
+      </div>
+      <div className="steam-account-settings__actions"><button className="settings-inline-action" type="button" disabled={busy || !steamId || !apiKey || status?.storageAvailable === false} onClick={() => void save()}>{busy ? copy.busy : status?.configured ? copy.replace : copy.connect}</button>{status?.configured && <button className="settings-inline-action" type="button" disabled={busy} onClick={() => void clear()}>{copy.disconnect}</button>}</div>
+      <p role="status">{status?.storageAvailable === false ? copy.storage : error ? copy[error as 'invalid'|'storage'|'failure'|'offlineAccount'|'accountMissing'|'keyInvalid'] : ''}</p>
+    </>}
+  </section>;
 }
 
 export function SteamAchievements({appId,locale}:{appId?:number;locale:'fr'|'en'}) {

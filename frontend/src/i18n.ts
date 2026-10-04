@@ -1,5 +1,6 @@
 import i18n from "i18next";
 import { mediaCopy } from "./media/i18n";
+import { libraryCopy } from "./libraryI18n";
 import { initReactI18next } from "react-i18next";
 
 const fr = {
@@ -156,7 +157,7 @@ const en = {
   }
 };
 
-const resources = { fr: { common: { ...fr, media: mediaCopy.fr } }, en: { common: { ...en, media: mediaCopy.en } } } as const;
+const resources = { fr: { common: { ...fr, library: { ...fr.library, ...libraryCopy.fr }, media: mediaCopy.fr } }, en: { common: { ...en, library: { ...en.library, ...libraryCopy.en }, media: mediaCopy.en } } } as const;
 const initialLocale = typeof localStorage !== "undefined" && localStorage.getItem("nexus.locale.v1") === "en" ? "en" : "fr";
 void i18n.use(initReactI18next).init({ resources, lng: initialLocale, fallbackLng: "en", defaultNS: "common", interpolation: { escapeValue: false } });
 if (typeof document !== "undefined") {
