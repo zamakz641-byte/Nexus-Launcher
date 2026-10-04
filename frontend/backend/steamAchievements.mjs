@@ -49,6 +49,35 @@ export class SteamAchievements {
   }
   async clearAccount() { this.generation++; this.pending.clear(); await this.write(async () => {await rm(this.file,{force:true}); await rm(this.cacheFile,{force:true});}); return this.status(); }
   async cache() { try { return JSON.parse(await readFile(this.cacheFile,'utf8')); } catch { return {}; } }
+  async getLibrary(force=false) {
+    const base = {source:'Steam',state:'unconfigured',games:[],lastSynced:null,cached:false};
+    const generation = this.generation;
+    await this.writes;
+    const account = await this.account();
+    if (!account || generation !== this.generation) return base;
+    const key = `${account.steamId}:library`;
+    if (this.pending.has(key)) return this.pending.get(key);
+    const task = (async () => {
+      const cached = (await this.cache())[key];
+      if (generation !== this.generation) return base;
+      if (!force && cached && this.now()-Date.parse(cached.lastSynced)<TTL) return {...cached,cached:true};
+      try {
+        const data = await this.request('IPlayerService/GetOwnedGames/v1',{key:account.apiKey,input_json:JSON.stringify({steamid:account.steamId,include_appinfo:true,include_played_free_games:true})});
+        if (generation !== this.generation) return base;
+        if (!data.response || !Number.isInteger(data.response.game_count)) return {...base,state:'private'};
+        if (data.response.game_count > 0 && !Array.isArray(data.response.games)) throw new Error('api-error');
+        const games = (data.response.games || []).filter(item => Number.isInteger(item.appid) && item.appid>0).map(item => ({id:String(item.appid),title:String(item.name || `Steam ${item.appid}`),playtimeMinutes:Math.max(0,Number(item.playtime_forever)||0)}));
+        const result = {...base,state:'ready',games,lastSynced:new Date(this.now()).toISOString()};
+        await this.write(async () => {if(generation !== this.generation)return; const cache=await this.cache();cache[key]=result;await this.atomic(this.cacheFile,JSON.stringify(cache));});
+        return generation === this.generation ? result : base;
+      } catch(error) {
+        if (generation !== this.generation) return base;
+        return {...(cached || base),state:error.message==='offline'?'offline':'error',cached:Boolean(cached)};
+      }
+    })();
+    this.pending.set(key,task);
+    try {return await task;} finally {if(this.pending.get(key)===task)this.pending.delete(key);}
+  }
   async getAchievements(appId,locale='en',force=false) {
     const base = { source:'Steam', appId, achievements:[], lastSynced:null, cached:false };
     if (!Number.isInteger(appId) || appId < 1 || appId > 4294967295) return {...base,state:'unsupported'};

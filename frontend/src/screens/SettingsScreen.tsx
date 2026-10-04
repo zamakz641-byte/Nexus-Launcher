@@ -7,14 +7,15 @@ import { useNexusStore } from "../state/useNexusStore";
 import { libraryClient } from "../services/libraryClient";
 import type { Locale, ThemeId } from "../types";
 import { sfx } from "../audio/sfx";
-import { SteamAccountSettings } from "../components/SteamAchievements";
+import { ConnectedAccounts } from "../components/ConnectedAccounts";
 import type { AudioPreferences } from "../audio/sfx";
 
-type SettingsSection = "interface" | "libraries" | "metadata" | "media" | "downloads" | "play" | "accessibility";
+type SettingsSection = "interface" | "libraries" | "accounts" | "metadata" | "media" | "downloads" | "play" | "accessibility";
 
 const sections: { id: SettingsSection; icon: ReactNode }[] = [
   { id: "interface", icon: <Palette size={20} /> },
   { id: "libraries", icon: <Link size={20} /> },
+  { id: "accounts", icon: <Link size={20} /> },
   { id: "metadata", icon: <Database size={20} /> },
   { id: "media", icon: <FilmSlate size={20} /> },
   { id: "downloads", icon: <DownloadSimple size={20} /> },
@@ -135,7 +136,7 @@ export function SettingsScreen({ onReplayOnboarding }: { onReplayOnboarding: () 
       <div className="settings-layout">
         <nav className="settings-nav" aria-label={t("settings.sections")}>{sections.map((item) => <button aria-current={section === item.id ? "page" : undefined} data-active={section === item.id} key={item.id} onClick={() => chooseSection(item.id)} type="button">{item.icon}{t(`settings.${item.id}`)}</button>)}</nav>
         <div className="settings-content">
-          <header className="settings-content__header"><span className="screen-kicker">{t(`settings.${section}`).toLocaleUpperCase(locale)}</span><strong>{t(section === "libraries" ? "settings.libraryHeader" : section === "metadata" ? "settings.metadataHeader" : section === "media" ? "settings.mediaHeader" : "settings.genericHeader")}</strong></header>
+          <header className="settings-content__header"><span className="screen-kicker">{t(`settings.${section}`).toLocaleUpperCase(locale)}</span><strong>{t(section === "accounts" ? "settings.accountsHeader" : section === "libraries" ? "settings.libraryHeader" : section === "metadata" ? "settings.metadataHeader" : section === "media" ? "settings.mediaHeader" : "settings.genericHeader")}</strong></header>
           <AnimatePresence mode="popLayout" initial={false}>
           <motion.div className="settings-list" key={section} initial={prefersReducedMotion ? false : { opacity: 0, x: 9 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -7 }} transition={{ duration: prefersReducedMotion ? 0 : .18, ease: [0.22, 1, 0.36, 1] }}>
             {section === "interface" ? <>
@@ -153,8 +154,9 @@ export function SettingsScreen({ onReplayOnboarding }: { onReplayOnboarding: () 
               <SettingsRow icon={<HardDrives size={22} />} title={t("settings.executables")} description={t("settings.executableDesc", { count: executableCount })}><span className="provider-tag">{executableCount}/{discoveredGames.length}</span></SettingsRow>
             </> : null}
 
+            {section === "accounts" ? <ConnectedAccounts locale={locale} /> : null}
             {section === "metadata" ? <>
-              <SteamAccountSettings locale={locale} />
+
               <SettingsRow icon={<FolderOpen size={22} />} title={t("settings.localMetadata")} description={t("settings.localGamesFrom", { count: discoveredGames.length, root: libraryRoot })}><button className="settings-inline-action" disabled={libraryScanState === "scanning"} onClick={() => void scanLocalLibrary()} type="button">{t("settings.refresh")}</button></SettingsRow>
               <SettingsRow icon={<Database size={22} />} title={t("settings.steamStore")} description={t("settings.steamStoreDesc")}><span className="provider-tag">{t(systemInfo?.providers.steamStore ? "settings.active" : "settings.unavailable")}</span></SettingsRow>
               <SettingsRow icon={<Images size={22} />} title={t("settings.steamGrid")} description={t("settings.steamGridDesc")}><span className="provider-tag">{t(steamGridStatus?.configured || systemInfo?.providers.steamGridDb ? "settings.configured" : "settings.missingKey")}</span></SettingsRow>

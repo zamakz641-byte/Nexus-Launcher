@@ -19,10 +19,29 @@ try {
   assert.equal(invalid.error, 'invalid-input'); assert.equal(invalid.configured, false);
   const achievements = await page.evaluate(() => window.nexusDesktop.getSteamAchievements(2281730, 'fr', true));
   assert.equal(achievements.state, 'unconfigured'); assert.deepEqual(achievements.achievements, []);
+  assert.equal((await page.evaluate(()=>window.nexusDesktop.getSteamLibrary())).state,'unconfigured');
+  for(const provider of ['epic','gog']) {
+    const status=await page.evaluate(provider=>window.nexusDesktop.getStoreAccountStatus(provider),provider);
+    assert.equal(status.configured,false);assert.equal(status.storageAvailable,true);
+    assert.equal((await page.evaluate(provider=>window.nexusDesktop.getStoreLibrary(provider),provider)).state,'unconfigured');
+  }
   await page.locator('.top-navigation__route[href="/settings"]').click();
-  await page.getByRole('button', { name: 'Métadonnées', exact: true }).click();
+  await page.getByRole('button', { name: 'Comptes', exact: true }).click();
+  await page.getByRole('button', { name: 'Connecter Steam', exact: true }).click();
   await page.locator('.steam-account-settings input[type="password"]').waitFor();
   await page.screenshot({ path: join(root, 'artifacts/qa/steam/account-settings.png') });
+  await page.keyboard.press('Escape');
+  await page.getByRole('button',{name:'Connecter Steam',exact:true}).waitFor();
+  assert.equal(await page.getByRole('button',{name:'Connecter Steam',exact:true}).evaluate(element=>element===document.activeElement),true);
+  const created=app.waitForEvent('window');
+  const connection=page.evaluate(()=>window.nexusDesktop.connectStoreAccount('epic'));
+  const login=await created;
+  const nativeWindow=await app.browserWindow(login);
+  const preferences=await nativeWindow.evaluate(window=>window.webContents.getLastWebPreferences());
+  assert.equal(preferences.nodeIntegration,false);assert.equal(preferences.sandbox,true);assert.equal(preferences.contextIsolation,true);
+  await nativeWindow.evaluate(window=>window.close());
+  const cancelled=await connection;
+  assert.equal(cancelled.configured,false);assert.equal(cancelled.error,'cancelled');
   assert.deepEqual(errors, []);
   console.log(JSON.stringify({ encryptedStorageAvailable: true, realPreloadIPC: true, invalidInputRejected: true, unconfiguredNotZeroProgress: true, settingsVisible: true, errors }));
 } finally { await app.close(); }

@@ -2,6 +2,7 @@ import { ArrowClockwise, CircleNotch, FilmSlate, FolderSimplePlus, MagnifyingGla
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { accountsCopy } from "../accountsCopy";
 import { useLibraryGames } from '../hooks/useLibraryGames';
 import { TrailerDialog } from '../components/TrailerDialog';
 import { refreshLibrary } from '../services/refreshLibrary';
@@ -52,7 +53,7 @@ export function LibraryScreen() {
   return <section className="screen library-screen library-clean" aria-labelledby="library-title">
     <header className="screen-heading library-heading">
       <div><h1 id="library-title">{t('library.title')}</h1><p role="status">{scanState === 'scanning' ? <><CircleNotch className="library-heading__spinner" size={15} />{t('library.enriching')}</> : scanState === 'error' ? t('library.unavailableSource') : t('library.detected', { count: games.length })}</p></div>
-      <div className="library-heading__tools">
+      <div className="library-heading__tools"><button className="screen-tool" type="button" onClick={()=>navigate("/settings?section=accounts")}>{accountsCopy[locale].settings}</button>
         <button className="screen-tool" type="button" disabled={busy} onClick={() => void add('game')}><Plus size={18} />{t('library.addGame')}</button>
         <button className="screen-tool" type="button" disabled={busy} onClick={() => void add('folder')}><FolderSimplePlus size={18} />{t('library.addFolder')}</button>
         <button className="screen-tool" type="button" disabled={busy || scanState === 'scanning'} aria-label={t('library.refreshMetadata')} onClick={() => void refreshLibrary()}><ArrowClockwise size={19} /></button>

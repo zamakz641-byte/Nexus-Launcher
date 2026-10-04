@@ -10,6 +10,8 @@ import { SecretStore } from "./secretStore.mjs";
 import { MediaCache } from "./mediaCache.mjs";
 import { trackGameSession } from "./gameSession.mjs";
 import { SteamAchievements } from "./steamAchievements.mjs";
+import { StoreAccounts } from './storeAccounts.mjs';
+import { createStoreLogin } from './storeLogin.mjs';
 
 let artworkCache;
 const gameSessions = new Map();
@@ -49,6 +51,8 @@ let backendPromise;
 let registryPromise;
 let secretStore;
 let steamAchievements;
+let storeAccounts;
+function getStoreAccounts() { return storeAccounts ||= new StoreAccounts(app.getPath('userData'), safeStorage, { fetch: (url, options) => net.fetch(url, options), login: createStoreLogin(BrowserWindow) }); }
 function getSteamAchievements() { return steamAchievements ||= new SteamAchievements(app.getPath("userData"), safeStorage, { fetch: (url, options) => net.fetch(url, options) }); }
 let discoveryFingerprint = "";
 let discoveryBusy = false;
@@ -186,6 +190,10 @@ async function registerDesktopProtocol() {
 }
 
 function registerIpc() {
+  const accountIpc = (channel, handler) => ipcMain.handle(channel, (event, ...args) => {
+    if (!event.senderFrame || event.senderFrame !== event.sender.mainFrame || !event.senderFrame.url.startsWith('nexus://app/')) throw new Error('Store account access is restricted to Nexus.');
+    return handler(event, ...args);
+  });
   ipcMain.handle("nexus:choose-library", async () => {
     const result = await dialog.showOpenDialog({
       properties: ["openDirectory", "createDirectory"],
@@ -230,6 +238,11 @@ function registerIpc() {
   });
   ipcMain.handle("nexus:steamgrid-status", async () => getSecretStore().status());
   ipcMain.handle("nexus:steam-account-status", async () => getSteamAchievements().status());
+  accountIpc('nexus:steam-library', async (_event, force) => getSteamAchievements().getLibrary(force === true));
+  accountIpc('nexus:store-account-status', async (_event, provider) => getStoreAccounts().status(provider));
+  accountIpc('nexus:store-account-connect', async (event, provider) => getStoreAccounts().connect(provider, BrowserWindow.fromWebContents(event.sender)));
+  accountIpc('nexus:store-account-clear', async (_event, provider) => getStoreAccounts().clear(provider));
+  accountIpc('nexus:store-library', async (_event, provider, force) => getStoreAccounts().library(provider, force === true));
   ipcMain.handle("nexus:steam-account-save", async (_event, value) => getSteamAchievements().saveAccount(value));
   ipcMain.handle("nexus:steam-account-clear", async () => getSteamAchievements().clearAccount());
   ipcMain.handle("nexus:steam-achievements", async (_event, appId, locale, force) => getSteamAchievements().getAchievements(appId, locale === 'fr' ? 'fr' : 'en', force === true));

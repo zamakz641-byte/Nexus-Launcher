@@ -23,7 +23,7 @@ Nexus Launcher is a Windows desktop app for browsing and launching games from a 
 - **Game details:** fetch available Steam metadata, artwork, and trailers; correct a game's title to search again.
 - **Personal controls:** choose covers and backgrounds, set a SteamGridDB API key in the desktop app, and switch between French and English.
 - **Made for the couch:** keyboard and controller navigation, a cinematic home screen, and the restrained “Minimal · tactile” sound set.
-- **Playtime:** tracks sessions launched through Nexus. Earlier time played in Steam or Epic is not imported.
+- **Playtime:** tracks sessions launched through Nexus. The development source can also display historical Steam playtime after account connection; Epic playtime is not imported.
 
 <table><tr><td width="50%"><img src="frontend/docs/screenshots/library.png" alt="Landscape game library" /></td><td width="50%"><img src="frontend/docs/screenshots/settings.png" alt="Library settings and game sources" /></td></tr></table>
 
@@ -109,3 +109,11 @@ Clearer artwork, a calm HD slideshow, multiple Steam trailers, screenshot galler
 Des fonds plus clairs, un diaporama HD, plusieurs trailers Steam, une galerie de captures et des succès Steam réels avec identifiants chiffrés.
 
 [Behavior and limitations / Fonctionnement et limites](docs/MEDIA-AND-ACHIEVEMENTS.md)
+
+### Account connections in the development source / Comptes dans la version de développement
+
+**Settings → Accounts** provides Steam, Epic Games and GOG connection buttons and owned-library browsing. Steam supplies playtime and achievements when game details are accessible. Epic/GOG owned-library connections use the community desktop protocols implemented by Legendary/GOGDL; achievements and cloud saves are not synchronized. Live authenticated Epic/GOG sign-in still needs user verification. The browser preview cannot connect accounts: use the desktop app. These latest source changes are not yet in the published V2.1 executable.
+
+**Paramètres → Comptes** regroupe les boutons Steam, Epic Games et GOG et les bibliothèques possédées. Steam fournit aussi le temps de jeu et les succès accessibles. Les connexions Epic/GOG restent à vérifier avec des comptes réels ; leurs succès et sauvegardes ne sont pas synchronisés. Ces changements du code source ne sont pas encore inclus dans l’exécutable V2.1 publié.
+
+See [account behavior and verification](docs/MEDIA-AND-ACHIEVEMENTS.md).

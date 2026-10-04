@@ -1,6 +1,9 @@
-import { ArrowLeft, CheckCircle, Clock, FilmSlate, GameController, HardDrives, Play, Star, Trophy } from "@phosphor-icons/react";
+import * as Dialog from "@radix-ui/react-dialog";
+import { accountsCopy } from "../accountsCopy";
+import { SteamPlaytime } from "../components/SteamPlaytime";
+import { X, SlidersHorizontal, Link, ArrowLeft, CheckCircle, Clock, FilmSlate, GameController, HardDrives, Play, Star, Trophy } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 import { NexusButton } from "../components/NexusButton";
@@ -29,6 +32,8 @@ export function GameDetailScreen({ onLaunch }: GameDetailScreenProps) {
   const game = games.find((item) => item.id === gameId) ?? games.find((item) => item.legacyId === gameId);
   const [tab, setTab] = useState<DetailTab>("overview");
   const [trailerOpen, setTrailerOpen] = useState(false);
+  const customizeTrigger = useRef<HTMLButtonElement>(null);
+  const [customizeOpen, setCustomizeOpen] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editMessage, setEditMessage] = useState("");
 
@@ -45,22 +50,25 @@ export function GameDetailScreen({ onLaunch }: GameDetailScreenProps) {
   if (!game) return <Navigate to="/library" replace />;
 
   return (
-    <section className="game-detail-screen" aria-labelledby="game-detail-title">
+    <section className="game-detail-screen game-detail-visual" aria-labelledby="game-detail-title">
       <button className="game-detail__back" onClick={() => location.key === "default" ? navigate("/library", { replace: true }) : navigate(-1)} type="button"><ArrowLeft size={20} />{t("detail.back")}</button>
       <div className="game-detail__hero">
+        <div className="game-detail__cover"><img src={game.artwork} alt="" decoding="async" onError={event=>applyImageFallback(event,[...(game.artworkFallbacks||[]),game.heroArtwork])}/></div>
         <span className="screen-kicker">{game.source} · {game.genre[locale]}</span>
         {game.logoArtwork ? <img className="game-detail__logo" src={game.logoArtwork} alt="" onError={(event) => applyImageFallback(event, [...(game.heroArtworkFallbacks || []), game.artwork])} /> : null}
         <h1 className={game.logoArtwork ? "game-detail__title game-detail__title--with-logo" : "game-detail__title"} id="game-detail-title">{game.title}</h1>
         <span className="game-detail__availability" data-ready={game.installed}><i />{t(game.installed ? "detail.ready" : "detail.installRequired")}</span>
-        <p>{game.description[locale]}</p>
+
         <div className="game-detail__tags">{game.features.map((feature) => <span key={feature.fr}><CheckCircle size={15} weight="fill" />{feature[locale]}</span>)}</div>
         <div className="game-detail__actions">
           <NexusButton data-sfx={game.installed ? "launch" : undefined} onClick={game.installed ? onLaunch : () => navigate("/settings?section=play")} icon={game.installed ? <Play size={18} weight="fill" /> : <GameController size={18} />}>{t(game.installed ? "action.play" : "action.configure")}</NexusButton>
           {game.trailer.url ? <NexusButton variant="ghost" onClick={() => setTrailerOpen(true)} icon={<FilmSlate size={20} />}>{t("detail.trailer")}</NexusButton> : null}
         </div>
+        <div className="game-detail__utilities">{game.discovered?<button className="screen-tool" type="button" ref={customizeTrigger} onClick={()=>setCustomizeOpen(true)}><SlidersHorizontal size={16}/>{accountsCopy[locale].customize}</button>:null}<button className="screen-tool" type="button" onClick={()=>navigate("/settings?section=accounts")}><Link size={16}/>{accountsCopy[locale].settings}</button></div>
       </div>
 
       <div className="game-detail__facts" aria-label={t("detail.quickInfo")}>
+        <SteamPlaytime appId={game.steamAppId} locale={locale}/>
         {game.discovered || game.playtimeHours > 0 ? <div><Clock size={22} /><span><small>{t(game.discovered ? "detail.nexusPlaytime" : "detail.playtime")}</small><strong>{game.discovered ? t("detail.playtimeValue", { hours: Math.floor(game.playtimeHours), minutes: Math.floor((game.playtimeHours * 60) % 60) }) : `${game.playtimeHours.toLocaleString(locale)} h`}</strong></span></div> : null}
         {game.achievementProgress.total > 0 ? <div><Trophy size={22} /><span><small>{t("detail.achievements")}</small><strong>{game.achievementProgress.unlocked}/{game.achievementProgress.total}</strong></span></div> : null}
         {game.rating > 0 ? <div><Star size={22} /><span><small>{t("detail.community")}</small><strong>{game.rating}/100</strong></span></div> : null}
@@ -83,7 +91,7 @@ export function GameDetailScreen({ onLaunch }: GameDetailScreenProps) {
         </motion.div>
       </AnimatePresence>
       <div className="game-detail__source"><GameController size={18} /><span>{t("detail.source", { source: game.source })}</span><HardDrives size={18} /><span>{game.libraryPath}</span></div>
-      {game.discovered ? <div className="game-detail__customize"><span className="screen-kicker">{t("detail.customize")}</span><label>{t("detail.gameTitle")} <input aria-label={t("detail.gameTitle")} onChange={(event) => setEditTitle(event.target.value)} placeholder={game.title} value={editTitle} /></label><button className="screen-tool" disabled={!editTitle.trim()} onClick={() => void updateGame(() => libraryClient.setTitle(game.id, editTitle))} type="button">{t("detail.saveTitle")}</button>{window.nexusDesktop ? <><button className="screen-tool" onClick={() => void updateGame(async () => (await libraryClient.chooseExecutable(game.id)) ?? libraryClient.scan())} type="button">{t("detail.chooseExecutable")}</button><button className="screen-tool" onClick={() => void updateGame(async () => (await libraryClient.chooseArtwork(game.id, "gridArtwork")) ?? libraryClient.scan())} type="button">{t("detail.chooseCover")}</button><button className="screen-tool" onClick={() => void updateGame(async () => (await libraryClient.chooseArtwork(game.id, "heroArtwork")) ?? libraryClient.scan())} type="button">{t("detail.chooseBackground")}</button><button className="screen-tool" onClick={() => void updateGame(async () => (await libraryClient.chooseArtwork(game.id, "logoArtwork")) ?? libraryClient.scan())} type="button">{t("detail.chooseLogo")}</button></> : null}{editMessage ? <span role="status">{editMessage.startsWith("detail.") ? t(editMessage) : editMessage}</span> : null}</div> : null}
+      {game.discovered ? <Dialog.Root open={customizeOpen} onOpenChange={setCustomizeOpen}><Dialog.Portal><Dialog.Overlay className="trailer-overlay"/><Dialog.Content className="account-dialog game-customize-dialog" aria-describedby={undefined} onCloseAutoFocus={event=>{event.preventDefault();customizeTrigger.current?.focus();}}><Dialog.Title>{accountsCopy[locale].customize} · {game.title}</Dialog.Title><Dialog.Close className="trailer-dialog__close" aria-label={t("action.close")}><X size={22}/></Dialog.Close><div className="game-detail__customize"><span className="screen-kicker">{t("detail.customize")}</span><label>{t("detail.gameTitle")} <input aria-label={t("detail.gameTitle")} onChange={(event) => setEditTitle(event.target.value)} placeholder={game.title} value={editTitle} /></label><button className="screen-tool" disabled={!editTitle.trim()} onClick={() => void updateGame(() => libraryClient.setTitle(game.id, editTitle))} type="button">{t("detail.saveTitle")}</button>{window.nexusDesktop ? <><button className="screen-tool" onClick={() => void updateGame(async () => (await libraryClient.chooseExecutable(game.id)) ?? libraryClient.scan())} type="button">{t("detail.chooseExecutable")}</button><button className="screen-tool" onClick={() => void updateGame(async () => (await libraryClient.chooseArtwork(game.id, "gridArtwork")) ?? libraryClient.scan())} type="button">{t("detail.chooseCover")}</button><button className="screen-tool" onClick={() => void updateGame(async () => (await libraryClient.chooseArtwork(game.id, "heroArtwork")) ?? libraryClient.scan())} type="button">{t("detail.chooseBackground")}</button><button className="screen-tool" onClick={() => void updateGame(async () => (await libraryClient.chooseArtwork(game.id, "logoArtwork")) ?? libraryClient.scan())} type="button">{t("detail.chooseLogo")}</button></> : null}{editMessage ? <span role="status">{editMessage.startsWith("detail.") ? t(editMessage) : editMessage}</span> : null}</div></Dialog.Content></Dialog.Portal></Dialog.Root> : null}
       <TrailerDialog game={game} locale={locale} open={trailerOpen} onOpenChange={setTrailerOpen} />
     </section>
   );

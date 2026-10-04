@@ -1,18 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { accountsCopy } from '../accountsCopy';
 import { steamAchievementsCopy } from '../steamAchievementsI18n';
 import type { SteamAccountStatus, SteamAchievementResult } from '../steamAchievementsTypes';
 
-export function SteamAccountSettings({locale}:{locale:'fr'|'en'}) {
+export function SteamAccountSettings({locale,onAccountChange}:{locale:'fr'|'en';onAccountChange?:()=>void}) {
   const copy = steamAchievementsCopy[locale], desktop = window.nexusDesktop;
   const [status,setStatus] = useState<SteamAccountStatus>();
   const [steamId,setSteamId] = useState(''), [apiKey,setApiKey] = useState(''), [busy,setBusy] = useState(false), [error,setError] = useState('');
   useEffect(() => { let alive = true; void desktop?.getSteamAccountStatus().then(value => {if (alive) {setStatus(value);setSteamId(value.steamId ? `https://steamcommunity.com/profiles/${value.steamId}` : '');}}).catch(() => {if(alive)setError('failure');}); return () => {alive=false;}; },[desktop]);
   const save = async () => {
     if (!desktop) return; setBusy(true); setError('');
-    try { const result = await desktop.saveSteamAccount({steamId,apiKey}); setStatus(result); if(result.error)setError(({ 'invalid-input':'invalid', 'storage-unavailable':'storage', 'offline':'offlineAccount', 'invalid-account':'accountMissing', 'invalid-key':'keyInvalid' } as Record<string,string>)[result.error] || 'failure'); }
+    try { const result = await desktop.saveSteamAccount({steamId,apiKey}); setStatus(result); if(!result.error)onAccountChange?.(); if(result.error)setError(({ 'invalid-input':'invalid', 'storage-unavailable':'storage', 'offline':'offlineAccount', 'invalid-account':'accountMissing', 'invalid-key':'keyInvalid' } as Record<string,string>)[result.error] || 'failure'); }
     catch {setError('failure');} finally {setApiKey('');setBusy(false);}
   };
-  const clear = async () => {if(!desktop)return; setBusy(true);try {setStatus(await desktop.clearSteamAccount());setSteamId('');setApiKey('');setError('');} catch {setError('failure');}finally {setBusy(false);}};
+  const clear = async () => {if(!desktop)return; setBusy(true);try {setStatus(await desktop.clearSteamAccount());onAccountChange?.();setSteamId('');setApiKey('');setError('');} catch {setError('failure');}finally {setBusy(false);}};
   return <section className="steam-account-settings" aria-label={copy.account}>
     <h3>{copy.account}</h3>
     {!desktop ? <p>{copy.desktop}</p> : <>
@@ -47,5 +49,5 @@ export function SteamAchievements({appId,locale}:{appId?:number;locale:'fr'|'en'
     finally {if(generation === requestGeneration.current)setLoading(false);}
   };
   const date = (value:string|number) => new Date(typeof value === 'number' ? value*1000 : value).toLocaleString(locale === 'fr' ? 'fr-FR' : 'en-GB');
-  return <section className="steam-achievements" aria-label={copy.title}><div className="steam-achievements__header"><h3>{copy.title}</h3>{desktop && appId && <button className="screen-tool" type="button" disabled={loading} onClick={() => void refresh()}>{copy.refresh}</button>}</div><p role="status">{!desktop ? copy.desktop : !appId ? copy.unsupported : loading ? copy.loading : result ? copy[result.state] : copy.loading}</p>{result && <><p className="steam-achievements__sync">Steam · {copy.lastSync}: {result.lastSynced ? date(result.lastSynced) : copy.never}{result.cached ? ` · ${copy.cached}` : ''}</p>{result.achievements.length > 0 && <><p className="steam-achievements__count">{result.achievements.filter(item => item.unlocked).length} / {result.achievements.length}</p><ul className="steam-achievements__list">{result.achievements.map(item => <li key={item.id} className={item.unlocked ? 'is-unlocked' : ''}>{item.icon && <img src={item.icon} alt="" width={48} height={48} loading="lazy" onError={event => {event.currentTarget.hidden=true;}} />}<div><strong>{item.hidden && !item.unlocked ? copy.hidden : item.title}</strong>{item.description && <p>{item.description}</p>}<span>{item.unlocked ? copy.unlocked : copy.locked}{item.unlockTime ? ` · ${date(item.unlockTime)}` : ''}</span></div></li>)}</ul></>}</>}</section>;
+  return <section className="steam-achievements" aria-label={copy.title}><div className="steam-achievements__header"><h3>{copy.title}</h3>{desktop && appId && <button className="screen-tool" type="button" disabled={loading} onClick={() => void refresh()}>{copy.refresh}</button>}</div><p role="status">{!desktop ? copy.desktop : !appId ? copy.unsupported : loading ? copy.loading : result ? copy[result.state] : copy.loading}</p>{result?.state === 'unconfigured' ? <Link className="screen-tool" to="/settings?section=accounts">{accountsCopy[locale].settings}</Link> : null}{result && <><p className="steam-achievements__sync">Steam · {copy.lastSync}: {result.lastSynced ? date(result.lastSynced) : copy.never}{result.cached ? ` · ${copy.cached}` : ''}</p>{result.achievements.length > 0 && <><p className="steam-achievements__count">{result.achievements.filter(item => item.unlocked).length} / {result.achievements.length}</p><ul className="steam-achievements__list">{result.achievements.map(item => <li key={item.id} className={item.unlocked ? 'is-unlocked' : ''}>{item.icon && <img src={item.icon} alt="" width={48} height={48} loading="lazy" onError={event => {event.currentTarget.hidden=true;}} />}<div><strong>{item.hidden && !item.unlocked ? copy.hidden : item.title}</strong>{item.description && <p>{item.description}</p>}<span>{item.unlocked ? copy.unlocked : copy.locked}{item.unlockTime ? ` · ${date(item.unlockTime)}` : ''}</span></div></li>)}</ul></>}</>}</section>;
 }

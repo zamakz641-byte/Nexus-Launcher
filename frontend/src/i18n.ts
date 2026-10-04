@@ -30,7 +30,7 @@ const fr = {
   },
   settings: {
     kicker: "CENTRE DE CONTRÔLE", title: "Paramètres", description: "Sources, médias et comportement de votre Nexus.", sources: "{{count}}/3 sources disponibles",
-    interface: "Interface", libraries: "Bibliothèques", metadata: "Métadonnées", media: "Médias & trailers", downloads: "Téléchargements", play: "Jeu", accessibility: "Accessibilité",
+    interface: "Interface", accounts: "Comptes", accountsHeader: "Vos comptes, vos bibliothèques", libraries: "Bibliothèques", metadata: "Métadonnées", media: "Médias & trailers", downloads: "Téléchargements", play: "Jeu", accessibility: "Accessibilité",
     libraryHeader: "Votre bibliothèque locale", metadataHeader: "Choisir les meilleures données", mediaHeader: "Façonner l’expérience cinématique", genericHeader: "Configurer votre expérience",
     themeTitle: "Thème visuel", themeDesc: "Couleurs, géométrie et traitement des surfaces.", languageTitle: "Langue", languageDesc: "L’interface s’adapte immédiatement.",
     replay: "Rejouer l’introduction Nexus", localFolder: "Dossier local", change: "Changer", analyze: "Analyser tous les disques", analyzing: "Analyse…",
@@ -107,7 +107,7 @@ const en = {
   },
   settings: {
     kicker: "CONTROL CENTER", title: "Settings", description: "Sources, media, and behavior for your Nexus.", sources: "{{count}}/3 sources available",
-    interface: "Interface", libraries: "Libraries", metadata: "Metadata", media: "Media & trailers", downloads: "Downloads", play: "Gaming", accessibility: "Accessibility",
+    interface: "Interface", accounts: "Accounts", accountsHeader: "Your accounts, your libraries", libraries: "Libraries", metadata: "Metadata", media: "Media & trailers", downloads: "Downloads", play: "Gaming", accessibility: "Accessibility",
     libraryHeader: "Your local library", metadataHeader: "Choose the best data", mediaHeader: "Shape the cinematic experience", genericHeader: "Configure your experience",
     themeTitle: "Visual theme", themeDesc: "Colors, geometry, and surface treatment.", languageTitle: "Language", languageDesc: "The interface updates instantly.",
     replay: "Replay the Nexus introduction", localFolder: "Local folder", change: "Change", analyze: "Scan all drives", analyzing: "Scanning…",

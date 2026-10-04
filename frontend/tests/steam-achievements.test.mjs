@@ -7,6 +7,31 @@ import { SteamAchievements } from '../backend/steamAchievements.mjs';
 
 const steamId = '76561198000000000', apiKey = 'a'.repeat(32);
 const crypto = { isEncryptionAvailable: () => true, encryptString: value => Buffer.from(value).map(x => x ^ 42), decryptString: value => Buffer.from(value.map(x => x ^ 42)).toString() };
+test('owned library returns actual playtime, caches offline and clears on logout', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'nexus-steam-library-'));
+  let offline = false;
+  const service = new SteamAchievements(dir, crypto, {fetch: async url => {
+    if (offline) throw new Error('offline');
+    return {ok:true,json:async () => new URL(url).pathname.includes('GetPlayerSummaries') ? {response:{players:[{steamid:steamId}]}} : {response:{game_count:1,games:[{appid:123,name:'Actual game',playtime_forever:91}]}}};
+  }});
+  await service.saveAccount({steamId,apiKey});
+  const result = await service.getLibrary();
+  assert.deepEqual(result.games,[{id:'123',title:'Actual game',playtimeMinutes:91}]);
+  offline = true;
+  assert.equal((await service.getLibrary(true)).state,'offline');
+  assert.equal((await service.getLibrary(true)).games.length,1);
+  await service.clearAccount();
+  assert.equal((await service.getLibrary()).state,'unconfigured');
+});
+test('Steam library distinguishes hidden details from an empty owned library', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'nexus-steam-private-'));
+  let response = {};
+  const service = new SteamAchievements(dir, crypto, {fetch:async url => ({ok:true,json:async () => new URL(url).pathname.includes('GetPlayerSummaries') ? {response:{players:[{steamid:steamId}]}} : {response}})});
+  await service.saveAccount({steamId,apiKey});
+  assert.equal((await service.getLibrary()).state,'private');
+  response = {game_count:0};
+  assert.equal((await service.getLibrary(true)).state,'ready');
+});
 async function fixture() {
   const dir = await mkdtemp(join(tmpdir(), 'nexus-steam-'));
   let mode = 'ok', calls = 0;
