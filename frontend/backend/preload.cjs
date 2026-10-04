@@ -13,6 +13,8 @@ contextBridge.exposeInMainWorld("nexusDesktop", Object.freeze({
   chooseGameArtwork: (id, role) => ipcRenderer.invoke("nexus:game-artwork", id, role),
   getSteamGridStatus: () => ipcRenderer.invoke("nexus:steamgrid-status"),
   getSteamAccountStatus: () => ipcRenderer.invoke("nexus:steam-account-status"),
+  connectSteamAccount: () => ipcRenderer.invoke('nexus:steam-account-connect'),
+  cancelSteamConnection: () => ipcRenderer.invoke('nexus:steam-account-cancel'),
   getSteamLibrary: (force = false) => ipcRenderer.invoke('nexus:steam-library', force),
   getStoreAccountStatus: (provider) => ipcRenderer.invoke('nexus:store-account-status', provider),
   connectStoreAccount: (provider) => ipcRenderer.invoke('nexus:store-account-connect', provider),

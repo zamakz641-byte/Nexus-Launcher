@@ -117,3 +117,7 @@ Des fonds plus clairs, un diaporama HD, plusieurs trailers Steam, une galerie de
 **Paramètres → Comptes** regroupe les boutons Steam, Epic Games et GOG et les bibliothèques possédées. Steam fournit aussi le temps de jeu et les succès accessibles. Les connexions Epic/GOG restent à vérifier avec des comptes réels ; leurs succès et sauvegardes ne sont pas synchronisés. Ces changements du code source ne sont pas encore inclus dans l’exécutable V2.1 publié.
 
 See [account behavior and verification](docs/MEDIA-AND-ACHIEVEMENTS.md).
+
+### Steam browser connection
+
+The current source opens Steam sign-in in Chrome using your existing session. After confirming the official Steam page, Nexus links your profile. Library, Steam playtime and achievements require a Steam Web API key; SteamGridDB only supplies artwork. See the [UX audit and improvement priorities](docs/UX-AUDIT-2026-10-04.md). These changes are newer than the V2.1.0 downloadable executables.

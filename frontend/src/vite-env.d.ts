@@ -14,6 +14,8 @@ interface Window {
     chooseGameArtwork: (id: string, role: "gridArtwork" | "heroArtwork" | "logoArtwork") => Promise<unknown | null>;
     getSteamGridStatus: () => Promise<unknown>;
     getSteamAccountStatus: () => Promise<import('./steamAchievementsTypes').SteamAccountStatus>;
+    connectSteamAccount: () => Promise<import('./steamAchievementsTypes').SteamAccountStatus>;
+    cancelSteamConnection: () => Promise<import('./steamAchievementsTypes').SteamAccountStatus>;
     getSteamLibrary: (force?: boolean) => Promise<import('./storeAccountsTypes').StoreLibraryResult>;
     getStoreAccountStatus: (provider: import('./storeAccountsTypes').StoreProvider) => Promise<import('./storeAccountsTypes').StoreAccountStatus>;
     connectStoreAccount: (provider: import('./storeAccountsTypes').StoreProvider) => Promise<import('./storeAccountsTypes').StoreAccountStatus>;

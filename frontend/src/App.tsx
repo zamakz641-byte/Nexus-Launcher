@@ -2,7 +2,8 @@ import { AnimatePresence, MotionConfig, motion } from "motion/react";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { CSSProperties } from "react";
-import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import { RouteErrorBoundary } from "./components/RouteErrorBoundary";
 import { LaunchSequence } from "./components/LaunchSequence";
 import { StartupSequence } from "./components/StartupSequence";
 import { Onboarding } from "./components/Onboarding";
@@ -28,7 +29,8 @@ const GameDetailScreen = lazy(() => import("./screens/GameDetailScreen").then((m
 const DownloadsScreen = lazy(() => import("./screens/DownloadsScreen").then((module) => ({ default: module.DownloadsScreen })));
 
 export function App() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   useGamepadNavigation();
   const location = useLocation();
   const previousPath = useRef(location.pathname);
@@ -209,6 +211,7 @@ export function App() {
             exit="exit"
             transition={{ duration: .29, ease: premiumEase }}
           >
+            <RouteErrorBoundary locale={i18n.language} onReload={() => window.location.reload()} onHome={() => navigate("/")}>
             <Suspense fallback={<div className="route-loading"><span />{t("home.loadingSpace")}</div>}>
               <Routes location={location}>
                 <Route path="/" element={selectedGame ? <HomeScreen selectedGame={selectedGame} onLaunch={() => void launch()} /> : <LibraryScreen />} />
@@ -220,6 +223,7 @@ export function App() {
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </Suspense>
+            </RouteErrorBoundary>
           </motion.div>
         </AnimatePresence>
         <AnimatePresence>{notice ? <motion.div aria-live="polite" className="system-notice" role="status" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}>{notice}</motion.div> : null}</AnimatePresence>

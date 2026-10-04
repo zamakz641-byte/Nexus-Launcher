@@ -20,8 +20,23 @@ export class SteamAchievements {
     this.storage = safeStorage; this.fetch = fetch; this.now = now; this.pending = new Map(); this.generation = 0; this.writes = Promise.resolve();
   }
   available() { return this.storage.isEncryptionAvailable() && this.storage.getSelectedStorageBackend?.() !== 'basic_text'; }
-  async account() { if (!this.available()) return null; try { const value = JSON.parse(this.storage.decryptString(await readFile(this.file))); return /^\d{17}$/.test(value.steamId) && /^[a-f\d]{32}$/i.test(value.apiKey) ? value : null; } catch { return null; } }
-  async status() { const account = await this.account(); return { configured: Boolean(account), storageAvailable: this.available(), steamId: account?.steamId }; }
+  async account() { if (!this.available()) return null; try { const value = JSON.parse(this.storage.decryptString(await readFile(this.file))); return /^\d{17}$/.test(value.steamId) && (value.apiKey === undefined || /^[a-f\d]{32}$/i.test(value.apiKey)) ? value : null; } catch { return null; } }
+  async status() { await this.writes; const account = await this.account(); return { linked: Boolean(account), configured: Boolean(account?.apiKey), storageAvailable: this.available(), steamId: account?.steamId }; }
+  async linkAccount(steamId, generation = this.generation) {
+    if (!this.available()) return {...await this.status(),error:'storage-unavailable'};
+    if (!/^\d{17}$/.test(steamId)) return {...await this.status(),error:'invalid-input'};
+    try { await this.write(async () => {
+      if (generation !== this.generation) return;
+      const previous = await this.account();
+      if (generation !== this.generation) return;
+      this.generation++; this.pending.clear();
+      const value = {steamId};
+      if (previous?.steamId === steamId && previous.apiKey) value.apiKey = previous.apiKey;
+      await this.atomic(this.file,this.storage.encryptString(JSON.stringify(value)));
+      if (previous?.steamId !== steamId) await rm(this.cacheFile,{force:true});
+    }); } catch { return {...await this.status(),error:'storage-error'}; }
+    return this.status();
+  }
   async atomic(file,value) { await mkdir(this.dir,{recursive:true}); const temp = `${file}.${process.pid}.tmp`; await writeFile(temp,value,{mode:0o600}); await rename(temp,file); }
   write(action) { const task = this.writes.then(action); this.writes = task.catch(() => {}); return task; }
   async request(method,params) {
@@ -32,6 +47,7 @@ export class SteamAchievements {
     try { return await response.json(); } catch { throw new Error('api-error'); }
   }
   async saveAccount(value) {
+    const generation = this.generation;
     if (!this.available()) return {...await this.status(),error:'storage-unavailable'};
     const profile = parseProfile(typeof value?.steamId === 'string' ? value.steamId.trim() : ''), apiKey = typeof value?.apiKey === 'string' ? value.apiKey.trim() : '';
     if (!profile || !/^[a-f\d]{32}$/i.test(apiKey)) return {...await this.status(),error:'invalid-input'};
@@ -44,7 +60,7 @@ export class SteamAchievements {
       }
       const data = await this.request('ISteamUser/GetPlayerSummaries/v2',{key:apiKey,steamids:steamId});
       if (!data.response?.players?.some(player => player.steamid === steamId)) throw new Error('invalid-account');
-      this.generation++; this.pending.clear(); await this.write(async () => {await this.atomic(this.file,this.storage.encryptString(JSON.stringify({steamId,apiKey}))); await rm(this.cacheFile,{force:true});}); return this.status();
+      await this.write(async () => {if (generation !== this.generation) return; this.generation++; this.pending.clear(); await this.atomic(this.file,this.storage.encryptString(JSON.stringify({steamId,apiKey}))); await rm(this.cacheFile,{force:true});}); return this.status();
     } catch(error) { return {...await this.status(),error:['invalid-account','invalid-key','offline','api-error'].includes(error.message) ? error.message : 'storage-error'}; }
   }
   async clearAccount() { this.generation++; this.pending.clear(); await this.write(async () => {await rm(this.file,{force:true}); await rm(this.cacheFile,{force:true});}); return this.status(); }
@@ -55,6 +71,7 @@ export class SteamAchievements {
     await this.writes;
     const account = await this.account();
     if (!account || generation !== this.generation) return base;
+    if (!account.apiKey) return {...base,state:'key-required'};
     const key = `${account.steamId}:library`;
     if (this.pending.has(key)) return this.pending.get(key);
     const task = (async () => {
@@ -84,6 +101,7 @@ export class SteamAchievements {
     const generation = this.generation;
     await this.writes;
     const account = await this.account(); if (!account || generation !== this.generation) return {...base,state:'unconfigured'};
+    if (!account.apiKey) return {...base,state:'key-required'};
     const key = `${account.steamId}:${appId}:${locale === 'fr' ? 'fr' : 'en'}`;
     if (this.pending.has(key)) return this.pending.get(key);
     const task = (async () => {

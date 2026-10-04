@@ -29,6 +29,12 @@ try {
   await page.getByRole('button', { name: 'Comptes', exact: true }).click();
   await page.getByRole('button', { name: 'Connecter Steam', exact: true }).click();
   await page.locator('.steam-account-settings input[type="password"]').waitFor();
+  const layers = await page.locator('.account-dialog').evaluate(element => {
+    const rect = element.getBoundingClientRect();
+    return { dialog: Number(getComputedStyle(element).zIndex), overlay: Number(getComputedStyle(document.querySelector('.trailer-overlay')).zIndex), hit: element.contains(document.elementFromPoint(rect.x + rect.width / 2, rect.y + 50)), background: getComputedStyle(element).backgroundColor };
+  });
+  assert.ok(layers.dialog > layers.overlay); assert.equal(layers.hit, true); assert.equal(layers.background, 'rgb(8, 19, 29)');
+  assert.equal(await page.getByRole('button', { name: 'Continuer avec Steam dans mon navigateur' }).isEnabled(), true);
   await page.screenshot({ path: join(root, 'artifacts/qa/steam/account-settings.png') });
   await page.keyboard.press('Escape');
   await page.getByRole('button',{name:'Connecter Steam',exact:true}).waitFor();

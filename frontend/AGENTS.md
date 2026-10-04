@@ -77,3 +77,9 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 - Usability correction (2026-10-04): Steam connection accepts a copied Steam Community profile URL (including vanity links) and resolves the numeric account ID; keep technical IDs collapsed and show short setup instructions. Library uses a clean cover grid with explicit search/status/platform/sort controls and native Add Game/Add Folder actions. Remove the duplicated large selected-game banner and numbered tiles. Pointer hover previews only the ambient background; focus selects, short activation opens details and hold launches.
 
 - Accounts feedback (2026-10-04): expose Steam, Epic and GOG connection buttons in a dedicated Accounts section, with links from Library/game details. Connections cover owned libraries beyond achievements. Steam imports historical playtime separately from Nexus session time. Owned games are not marked installed without local evidence. Game details use a landscape cover, one description and a customization dialog with focus restoration. Epic/GOG authentication stays isolated from the app renderer; account secrets remain encrypted.
+
+## Steam connection and window sizing (2026-10-04)
+
+- Steam sign-in opens the installed Chrome profile through official OpenID, falling back to the default browser. Preserve the distinction between linked identity and Web API synchronization; SteamGridDB credentials do not grant account progress.
+- Account and customization dialogs must remain above their overlay with an opaque readable surface. Verify hit testing, Escape and focus restoration in Electron.
+- Keep Home actions clear of the game rail on short windows. At intermediate widths, detail, settings and downloads must adapt without clipping controls; every section remains scrollable.

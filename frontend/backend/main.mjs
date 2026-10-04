@@ -10,6 +10,7 @@ import { SecretStore } from "./secretStore.mjs";
 import { MediaCache } from "./mediaCache.mjs";
 import { trackGameSession } from "./gameSession.mjs";
 import { SteamAchievements } from "./steamAchievements.mjs";
+import { SteamOpenId, createSteamBrowserLauncher } from './steamOpenId.mjs';
 import { StoreAccounts } from './storeAccounts.mjs';
 import { createStoreLogin } from './storeLogin.mjs';
 
@@ -51,6 +52,7 @@ let backendPromise;
 let registryPromise;
 let secretStore;
 let steamAchievements;
+const steamOpenId = new SteamOpenId({openExternal: createSteamBrowserLauncher({openExternal: url => shell.openExternal(url)}), fetch: (url, options) => net.fetch(url, options)});
 let storeAccounts;
 function getStoreAccounts() { return storeAccounts ||= new StoreAccounts(app.getPath('userData'), safeStorage, { fetch: (url, options) => net.fetch(url, options), login: createStoreLogin(BrowserWindow) }); }
 function getSteamAchievements() { return steamAchievements ||= new SteamAchievements(app.getPath("userData"), safeStorage, { fetch: (url, options) => net.fetch(url, options) }); }
@@ -238,13 +240,21 @@ function registerIpc() {
   });
   ipcMain.handle("nexus:steamgrid-status", async () => getSecretStore().status());
   ipcMain.handle("nexus:steam-account-status", async () => getSteamAchievements().status());
+  accountIpc('nexus:steam-account-connect', async () => {
+    const service = getSteamAchievements();
+    if (!service.available()) return {...await service.status(),error:'storage-unavailable'};
+    const generation = service.generation;
+    const result = await steamOpenId.connect();
+    return result.steamId ? service.linkAccount(result.steamId,generation) : {...await service.status(),error:result.error};
+  });
+  accountIpc('nexus:steam-account-cancel', async () => { steamOpenId.cancel(); return getSteamAchievements().status(); });
   accountIpc('nexus:steam-library', async (_event, force) => getSteamAchievements().getLibrary(force === true));
   accountIpc('nexus:store-account-status', async (_event, provider) => getStoreAccounts().status(provider));
   accountIpc('nexus:store-account-connect', async (event, provider) => getStoreAccounts().connect(provider, BrowserWindow.fromWebContents(event.sender)));
   accountIpc('nexus:store-account-clear', async (_event, provider) => getStoreAccounts().clear(provider));
   accountIpc('nexus:store-library', async (_event, provider, force) => getStoreAccounts().library(provider, force === true));
   ipcMain.handle("nexus:steam-account-save", async (_event, value) => getSteamAchievements().saveAccount(value));
-  ipcMain.handle("nexus:steam-account-clear", async () => getSteamAchievements().clearAccount());
+  ipcMain.handle("nexus:steam-account-clear", async () => { steamOpenId.cancel(); return getSteamAchievements().clearAccount(); });
   ipcMain.handle("nexus:steam-achievements", async (_event, appId, locale, force) => getSteamAchievements().getAchievements(appId, locale === 'fr' ? 'fr' : 'en', force === true));
   ipcMain.handle("nexus:steamgrid-save", async (_event, value) => {
     const validate = async (key) => {
@@ -307,7 +317,7 @@ async function createWindow() {
   });
 
   window.webContents.setWindowOpenHandler(({ url }) => {
-    if (/^https:\/\/store\.steampowered\.com\//i.test(url)) void shell.openExternal(url);
+    if (/^https:\/\/store\.steampowered\.com\//i.test(url) || /^https:\/\/steamcommunity\.com\/dev\/apikey(?:[?#]|$)/i.test(url)) void shell.openExternal(url);
     return { action: "deny" };
   });
   window.webContents.on("before-input-event", (event, input) => {
@@ -332,6 +342,7 @@ app.whenReady().then(async () => {
 });
 
 app.on("window-all-closed", () => {
+  steamOpenId.cancel();
   if (process.platform !== "darwin") app.quit();
 });
 app.on("activate", () => {

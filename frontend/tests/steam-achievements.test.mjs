@@ -50,9 +50,42 @@ test('validates account and persists only encrypted credentials', async () => {
   const f = await fixture();
   const status = await f.service.saveAccount({ steamId, apiKey });
   assert.equal(status.configured, true);
+  assert.equal(status.linked, true);
   assert.equal(status.steamId, steamId);
   assert.ok(!JSON.stringify(status).includes(apiKey));
   assert.ok(!(await readFile(join(f.dir, 'steam-account-secret.bin'))).includes(Buffer.from(apiKey)));
+});
+
+test('browser verified identity is encrypted and requires a key before reading progress', async () => {
+  const f=await fixture();
+  const status=await f.service.linkAccount(steamId);
+  assert.equal(status.linked,true);assert.equal(status.configured,false);assert.equal(status.steamId,steamId);
+  assert.equal((await f.service.getLibrary()).state,'key-required');
+  assert.equal((await f.service.getAchievements(10)).state,'key-required');assert.equal(f.calls(),0);
+  assert.ok(!(await readFile(join(f.dir,'steam-account-secret.bin'))).includes(Buffer.from(steamId)));
+  const restarted=new SteamAchievements(f.dir,crypto,{fetch:f.fetch});assert.equal((await restarted.status()).linked,true);
+  await f.service.clearAccount();assert.equal((await f.service.status()).linked,false);
+});
+test('browser reauthentication preserves validated key only for the same Steam identity', async () => {
+  const f=await fixture();await f.service.saveAccount({steamId,apiKey});await f.service.getAchievements(10);
+  await f.service.linkAccount(steamId);assert.equal((await f.service.account()).apiKey,apiKey);assert.equal((await f.service.status()).configured,true);
+  const other='76561198000000001';await f.service.linkAccount(other);
+  assert.equal((await f.service.account()).apiKey,undefined);assert.equal((await f.service.status()).steamId,other);
+  assert.equal((await f.service.getAchievements(10)).state,'key-required');
+  await assert.rejects(readFile(join(f.dir,'steam-achievements-cache.json')),{code:'ENOENT'});
+});
+test('logout during browser authentication cannot restore the identity', async () => {
+  const f=await fixture();const generation=f.service.generation;await f.service.clearAccount();
+  const status=await f.service.linkAccount(steamId,generation);assert.equal(status.linked,false);
+  await assert.rejects(readFile(join(f.dir,'steam-account-secret.bin')),{code:'ENOENT'});
+});
+test('old API key validation finishing after account switch cannot restore the old account', async () => {
+  const f=await fixture();let unblock,entered;
+  const gate=new Promise(resolve=>{unblock=resolve;}),started=new Promise(resolve=>{entered=resolve;});
+  f.service.fetch=async url=>{entered();await gate;return f.fetch(url);};
+  const pending=f.service.saveAccount({steamId,apiKey});await started;
+  await f.service.linkAccount('76561198000000001');unblock();await pending;
+  const status=await f.service.status();assert.equal(status.steamId,'76561198000000001');assert.equal(status.configured,false);
 });
 test('joins real unlocks to schema, caches across restart, and deduplicates refresh', async () => {
   const f = await fixture(); await f.service.saveAccount({ steamId, apiKey });

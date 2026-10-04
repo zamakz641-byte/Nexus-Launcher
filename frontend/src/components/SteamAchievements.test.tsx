@@ -4,6 +4,14 @@ import { act, cleanup, render, screen, waitFor, fireEvent } from '@testing-libra
 import { afterEach, expect, test, vi } from 'vitest';
 import { SteamAchievements, SteamAccountSettings } from './SteamAchievements';
 afterEach(() => { cleanup(); delete window.nexusDesktop; });
+test('browser login links the Steam profile without asking for an API key first',async()=>{
+  window.nexusDesktop={getSteamAccountStatus:vi.fn().mockResolvedValue({configured:false,linked:false,storageAvailable:true}),connectSteamAccount:vi.fn().mockResolvedValue({configured:false,linked:true,storageAvailable:true,steamId:'76561198000000000'}),cancelSteamConnection:vi.fn().mockResolvedValue({configured:false,linked:false,storageAvailable:true})} as unknown as NonNullable<Window['nexusDesktop']>;
+  render(<SteamAccountSettings locale="en"/>);
+  fireEvent.click(screen.getByRole('button',{name:'Continue with Steam in my browser'}));
+  await screen.findByText('Steam profile linked');
+  expect(window.nexusDesktop.connectSteamAccount).toHaveBeenCalledOnce();
+  expect((screen.getByLabelText('Steam profile') as HTMLInputElement).value).toContain('76561198000000000');
+});
 test('browser explains desktop requirement without fabricated progress', () => {
   render(<SteamAchievements appId={10} locale="en" />);
   expect(screen.getByText(/desktop app/i)).toBeTruthy();
@@ -24,7 +32,7 @@ test('account key clears after validation and remains outside renderer persisten
   const profile = screen.getByLabelText('Steam profile');
   expect(profile.getAttribute('inputmode')).toBeNull();
   expect(Number(profile.getAttribute('maxlength'))).toBeGreaterThan(100);
-  expect(screen.getAllByRole('listitem')).toHaveLength(3);
+  expect(screen.getByText(/separate from SteamGridDB/)).toBeTruthy();
   fireEvent.change(screen.getByLabelText('Steam profile'),{target:{value:'https://steamcommunity.com/id/my-profile'}});
   fireEvent.change(input,{target:{value:'a'.repeat(32)}});
   fireEvent.click(screen.getByRole('button',{name:'Connect'}));
@@ -35,7 +43,7 @@ test('account key clears after validation and remains outside renderer persisten
 test('connected profile reopens as a usable link with technical ID collapsed', async () => {
   window.nexusDesktop={getSteamAccountStatus:vi.fn().mockResolvedValue({configured:true,storageAvailable:true,steamId:'76561198000000000'})} as unknown as NonNullable<Window['nexusDesktop']>;
   render(<SteamAccountSettings locale="fr" />);
-  await screen.findByText('Connecté · Steam');
+  await screen.findByText('Profil Steam relié · Synchronisation activée');
   expect((screen.getByLabelText('Profil Steam') as HTMLInputElement).value).toBe('https://steamcommunity.com/profiles/76561198000000000');
   const details=screen.getByText('Détails de la connexion').closest('details');
   expect(details?.open).toBe(false);
