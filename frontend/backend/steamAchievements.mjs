@@ -63,6 +63,13 @@ export class SteamAchievements {
       await this.write(async () => {if (generation !== this.generation) return; this.generation++; this.pending.clear(); await this.atomic(this.file,this.storage.encryptString(JSON.stringify({steamId,apiKey}))); await rm(this.cacheFile,{force:true});}); return this.status();
     } catch(error) { return {...await this.status(),error:['invalid-account','invalid-key','offline','api-error'].includes(error.message) ? error.message : 'storage-error'}; }
   }
+  async notificationSettings() {
+    try {const value=JSON.parse(await readFile(join(this.dir,'achievement-notifications.json'),'utf8'));return {enabled:value.enabled!==false,locale:value.locale==='en'?'en':'fr'};}catch{return {enabled:true,locale:'fr'};}
+  }
+  async saveNotificationSettings(value) {
+    if(typeof value?.enabled!=='boolean'||!['fr','en'].includes(value.locale))throw new Error('invalid-input');
+    const prefs={enabled:value.enabled,locale:value.locale};await this.write(()=>this.atomic(join(this.dir,'achievement-notifications.json'),JSON.stringify(prefs)));return prefs;
+  }
   async clearAccount() { this.generation++; this.pending.clear(); await this.write(async () => {await rm(this.file,{force:true}); await rm(this.cacheFile,{force:true});}); return this.status(); }
   async cache() { try { return JSON.parse(await readFile(this.cacheFile,'utf8')); } catch { return {}; } }
   async getLibrary(force=false) {

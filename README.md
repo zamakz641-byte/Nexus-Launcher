@@ -7,7 +7,7 @@
 **Your PC game library, in one cinematic space.**  
 **Tous vos jeux PC dans un espace cinématique.**
 
-[English](#english) · [Français](#français) · [Download V2.2](https://github.com/zamakz641-byte/Nexus-Launcher/releases/tag/v2.2.0)
+[English](#english) · [Français](#français) · [Download V2.2.1](https://github.com/zamakz641-byte/Nexus-Launcher/releases/tag/v2.2.1)
 
 <img src="frontend/docs/screenshots/home.png" alt="Nexus Launcher home screen" width="100%" />
 
@@ -29,7 +29,7 @@ Nexus Launcher is a Windows desktop app for browsing and launching games from a 
 
 ### Download and install
 
-1. Open the [V2.2 release](https://github.com/zamakz641-byte/Nexus-Launcher/releases/tag/v2.2.0).
+1. Open the [V2.2.1 release](https://github.com/zamakz641-byte/Nexus-Launcher/releases/tag/v2.2.1).
 2. Choose **Setup.exe** for an installer or **Portable.exe** to run without installation. Both are for **Windows x64**.
 3. On first launch, choose your games folder in the native picker, use automatic Steam/Epic discovery, or explicitly set up later. Add more sources in **Settings → Libraries**.
 
@@ -86,7 +86,7 @@ Nexus Launcher est une application Windows pour parcourir et lancer vos jeux dan
 
 ### Télécharger
 
-1. Ouvrez la [release V2.2](https://github.com/zamakz641-byte/Nexus-Launcher/releases/tag/v2.2.0).
+1. Ouvrez la [release V2.2.1](https://github.com/zamakz641-byte/Nexus-Launcher/releases/tag/v2.2.1).
 2. Choisissez **Setup.exe** pour l’installation ou **Portable.exe** pour lancer Nexus sans installation. Les deux versions sont pour **Windows x64**.
 3. Au premier démarrage, choisissez le dossier de vos jeux dans l’explorateur. Vous pouvez aussi utiliser Steam/Epic ou configurer plus tard. Ajoutez ensuite des sources dans **Paramètres → Bibliothèques**.
 
@@ -125,3 +125,12 @@ The current source opens Steam sign-in in Chrome using your existing session. Af
 ### V2.2 connected accounts / Comptes reliés
 
 Steam, Epic and GOG account controls live in **Settings → Accounts**. Steam opens Chrome; Epic and GOG use an isolated sign-in window. Owned libraries stay separate from locally detected installation status. [Release notes](frontend/RELEASE_NOTES.md) · [Launch kit / Kit de lancement](docs/LAUNCH-KIT.md).
+
+
+### Steam Achievement Notifier companion (V2.2.1)
+
+Settings / Accounts / Steam includes an optional [Steam Achievement Notifier](https://github.com/SteamAchievementNotifier/SteamAchievementNotifier) companion. Download and install SAN from its official releases, click Detect (or choose the installed SAN executable), then enable startup before Steam games. SAN provides its own live notifications without an API key, with animations, themes and sounds configured in SAN. Steam must be running and signed in. Nexus avoids duplicate notifications when SAN launches successfully; its built-in fallback checks Steam every 30 seconds during tracked sessions. Windowed/borderless modes are recommended; exclusive fullscreen may hide notifications.
+
+SAN remains separate and is not bundled. Historical playtime and achievement lists inside Nexus still require Steam Web API synchronization. Linking a profile alone does not activate that synchronization.
+
+Dans Paramètres / Comptes / Steam, téléchargez et installez SAN depuis sa page officielle, puis Détecter ou Choisir SAN (.exe). Activez son lancement avant les jeux Steam. Les thèmes, animations et sons se règlent dans SAN. Ses notifications en direct ne demandent pas de clé API ; les heures et l'historique dans Nexus nécessitent toujours la synchronisation Steam. SAN reste une application séparée.

@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import { SanCompanionSettings } from './SanCompanionSettings';
+import { AchievementNotificationSettings } from './AchievementNotificationSettings';
 import { Link } from 'react-router-dom';
 import { steamLoginCopy } from '../steamLoginCopy';
 import { accountsCopy } from '../accountsCopy';
@@ -39,16 +41,16 @@ export function SteamAccountSettings({locale,onAccountChange}:{locale:'fr'|'en';
       <button className="steam-browser-action" type="button" disabled={busy||status?.storageAvailable===false} onClick={()=>void browserLogin()}>{busy&&browserPending.current?login.wait:login.browser}</button>
       {busy&&browserPending.current?<button className="settings-inline-action" type="button" onClick={()=>void desktop.cancelSteamConnection()}>{login.cancel}</button>:null}
       {status?.linked||status?.configured?<p className="steam-link-confirmation">{login.linked}{status.configured?` · ${login.syncReady}`:''}</p>:null}
-      <div className="steam-sync-setup"><h3>{login.syncTitle}</h3><p>{login.difference}</p>
+      <div className="steam-sync-setup">{status?.linked&&!status.configured?<p className="steam-sync-required" role="status">{locale==='fr'?'Étape 2 : activez la synchronisation pour récupérer vos heures et succès.':'Step 2: enable synchronization to retrieve playtime and achievements.'}</p>:null}<h3>{login.syncTitle}</h3><p>{login.difference}</p>
         <a href="https://steamcommunity.com/dev/apikey" target="_blank" rel="noreferrer">{copy.keyLink}</a>
         <label>{copy.apiKey}<input aria-label={copy.apiKey} type="password" autoComplete="off" spellCheck={false} maxLength={32} value={apiKey} onChange={event=>setApiKey(event.target.value)} disabled={busy||status?.storageAvailable===false}/></label>
         <p>{copy.privacyStep}</p>
-        <button className="settings-inline-action" type="button" disabled={busy||!steamId||!apiKey||status?.storageAvailable===false} onClick={()=>void save()}>{busy?copy.busy:copy.connect}</button>
+        <button className="settings-inline-action" type="button" disabled={busy||!steamId||!apiKey||status?.storageAvailable===false} onClick={()=>void save()}>{busy?copy.busy:locale==='fr'?'Activer la synchronisation':'Enable synchronization'}</button>
       </div>
       <details className="steam-manual-profile"><summary>{login.manual}</summary><p>{copy.profileStep}</p><label>{copy.steamId}<input aria-label={copy.steamId} autoComplete="off" spellCheck={false} placeholder={copy.profilePlaceholder} maxLength={2048} value={steamId} onChange={event=>setSteamId(event.target.value)} disabled={busy}/></label></details>
       {status?.linked||status?.configured?<button className="settings-inline-action" type="button" disabled={busy} onClick={()=>void clear()}>{copy.disconnect}</button>:null}
       {status?.configured?<details><summary>{copy.advanced}</summary><p>SteamID64 · {status.steamId}</p></details>:null}
-      <p role="status">{status?.storageAvailable===false?copy.storage:error}</p>
+      <SanCompanionSettings locale={locale}/><AchievementNotificationSettings locale={locale}/><p role="status">{status?.storageAvailable===false?copy.storage:error}</p>
     </>}
   </section>;
 }
@@ -61,7 +63,11 @@ export function SteamAchievements({appId,locale}:{appId?:number;locale:'fr'|'en'
     const generation = ++requestGeneration.current; setResult(undefined);
     if (desktop && appId) {setLoading(true); void desktop.getSteamAchievements(appId,locale,false).then(value => {if(generation === requestGeneration.current)setResult(value);}).catch(() => {if(generation === requestGeneration.current)setResult({source:'Steam',state:'error',lastSynced:null,cached:false,achievements:[]});}).finally(() => {if(generation === requestGeneration.current)setLoading(false);});}
     else setLoading(false);
-    return () => {requestGeneration.current++;};
+    const unsubscribe=desktop?.onSteamDataChanged?.(()=>{
+      if(!appId)return;const next=++requestGeneration.current;setLoading(true);
+      void desktop.getSteamAchievements(appId,locale,true).then(value=>{if(next===requestGeneration.current)setResult(value);}).catch(()=>{if(next===requestGeneration.current)setResult({source:'Steam',state:'error',lastSynced:null,cached:false,achievements:[]});}).finally(()=>{if(next===requestGeneration.current)setLoading(false);});
+    });
+    return () => {requestGeneration.current++;unsubscribe?.();};
   },[desktop,appId,locale]);
   const refresh = async () => {
     if (!desktop || !appId) return;

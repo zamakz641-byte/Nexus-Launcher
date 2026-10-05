@@ -16,6 +16,15 @@ interface Window {
     getSteamAccountStatus: () => Promise<import('./steamAchievementsTypes').SteamAccountStatus>;
     connectSteamAccount: () => Promise<import('./steamAchievementsTypes').SteamAccountStatus>;
     cancelSteamConnection: () => Promise<import('./steamAchievementsTypes').SteamAccountStatus>;
+    onSteamDataChanged: (callback:()=>void) => ()=>void;
+    getAchievementNotificationSettings: () => Promise<{enabled:boolean;locale:'fr'|'en'}>;
+    setAchievementNotificationSettings: (value:{enabled:boolean;locale:'fr'|'en'}) => Promise<{enabled:boolean;locale:'fr'|'en'}>;
+    testAchievementNotification: (locale:'fr'|'en') => Promise<{ok:true}>;
+    getSanCompanionStatus: () => Promise<{enabled:boolean;installed:boolean;executable:string;supported:boolean}>;
+    chooseSanExecutable: () => Promise<{enabled:boolean;installed:boolean;executable:string;supported:boolean}>;
+    setSanCompanionEnabled: (enabled:boolean) => Promise<{enabled:boolean;installed:boolean;executable:string;supported:boolean}>;
+    launchSanCompanion: () => Promise<{state:string}>;
+    openSanDownload: () => Promise<{ok:true}>;
     getSteamLibrary: (force?: boolean) => Promise<import('./storeAccountsTypes').StoreLibraryResult>;
     getStoreAccountStatus: (provider: import('./storeAccountsTypes').StoreProvider) => Promise<import('./storeAccountsTypes').StoreAccountStatus>;
     connectStoreAccount: (provider: import('./storeAccountsTypes').StoreProvider) => Promise<import('./storeAccountsTypes').StoreAccountStatus>;
@@ -28,7 +37,7 @@ interface Window {
     clearSteamGridKey: () => Promise<unknown>;
     searchCatalog: (query: string) => Promise<unknown>;
     system: () => Promise<unknown>;
-    launchGame: (gameId: string) => Promise<unknown>;
+    launchGame: (gameId: string, locale?:'fr'|'en') => Promise<unknown>;
     platform: string;
   };
 }

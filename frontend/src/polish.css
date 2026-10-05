@@ -943,3 +943,16 @@
   .nexus-shell[data-route="home"] .hero-game__metadata > span { flex: 0 0 auto; min-height: 1.5rem; padding: .2rem .4rem; font-size: .65rem; }
   .nexus-shell[data-route="home"] .hero-game__actions { gap: .6rem; }
 }
+
+.steam-sync-required { color: #f5d89c; background: #41321a; border: 1px solid #bd9248; border-radius: .5rem; padding: .85rem; }
+.achievement-notification-settings { margin: 1.2rem 0; padding-top: 1rem; border-top: 1px solid var(--color-border); }
+.achievement-notification-settings h3 { font-size: 1rem; }
+.achievement-notification-settings label { display: flex; align-items: center; gap: .65rem; }
+.achievement-notification-settings input { width: auto; }
+.achievement-notification-settings p { font-size: .8rem; line-height: 1.5; }
+.game-detail__facts .steam-playtime { align-items: start; }
+.steam-playtime span { display: grid; gap: .4rem; }
+.steam-playtime a, .steam-playtime__refresh { font-size: .75rem; color: var(--color-focus); }
+.steam-playtime__refresh { justify-self: start; padding: .3rem .5rem; background: #10202f; border: 1px solid var(--color-border); border-radius: .35rem; cursor: pointer; }
+
+.san-companion-actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}

@@ -186,3 +186,12 @@ test('vanity not found or failed resolution preserves the existing account', asy
   f.service.fetch=async()=>{throw new Error('network '+apiKey);};
   const status=await f.service.saveAccount({steamId:'https://steamcommunity.com/id/player',apiKey});assert.equal(status.error,'offline');assert.equal(status.configured,true);assert.ok(!JSON.stringify(status).includes(apiKey));
 });
+
+test('notification preferences survive restart and reject invalid payloads', async()=>{
+  const dir=await mkdtemp(join(tmpdir(),'nexus-notifications-'));
+  const service=new SteamAchievements(dir,crypto);
+  assert.deepEqual(await service.notificationSettings(),{enabled:true,locale:'fr'});
+  await service.saveNotificationSettings({enabled:false,locale:'en'});
+  assert.deepEqual(await new SteamAchievements(dir,crypto).notificationSettings(),{enabled:false,locale:'en'});
+  await assert.rejects(service.saveNotificationSettings({enabled:'yes',locale:'en'}),/invalid-input/);
+});

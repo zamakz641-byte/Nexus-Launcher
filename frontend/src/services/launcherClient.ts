@@ -1,3 +1,4 @@
+import { useNexusStore } from "../state/useNexusStore";
 import type { Game } from "../types";
 
 export interface LaunchResult { ok: true; requestId: string; }
@@ -7,7 +8,7 @@ class LocalLauncherClient implements LauncherClient {
   async launchGame(game: Game): Promise<LaunchResult> {
     if (game.executablePath) {
       if (window.nexusDesktop) {
-        return window.nexusDesktop.launchGame(game.id) as Promise<LaunchResult>;
+        return window.nexusDesktop.launchGame(game.id,useNexusStore.getState().locale) as Promise<LaunchResult>;
       }
       const response = await fetch("/api/library/launch", {
         method: "POST",

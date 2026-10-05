@@ -35,7 +35,7 @@ test('account key clears after validation and remains outside renderer persisten
   expect(screen.getByText(/separate from SteamGridDB/)).toBeTruthy();
   fireEvent.change(screen.getByLabelText('Steam profile'),{target:{value:'https://steamcommunity.com/id/my-profile'}});
   fireEvent.change(input,{target:{value:'a'.repeat(32)}});
-  fireEvent.click(screen.getByRole('button',{name:'Connect'}));
+  fireEvent.click(screen.getByRole('button',{name:'Enable synchronization'}));
   await waitFor(() => expect(input.value).toBe(''));
   expect(localStorage.getItem('steamApiKey')).toBeNull();
   expect(window.nexusDesktop.saveSteamAccount).toHaveBeenCalledWith({steamId:'https://steamcommunity.com/id/my-profile',apiKey:'a'.repeat(32)});
@@ -61,4 +61,12 @@ test.each([{appId:20,locale:'en' as const},{appId:10,locale:'fr' as const}])('ol
   expect(screen.getByRole('button',{name:next.locale === 'fr' ? 'Actualiser' : 'Refresh'}).hasAttribute('disabled')).toBe(true);
   await act(async()=>{resolveNew(result('Current'));await newLoad;});
   expect(screen.getByText('Current')).toBeTruthy();
+});
+
+test('Steam session data changes refresh visible achievement progress and unsubscribe',async()=>{
+  let notify!:()=>void;const unsubscribe=vi.fn();
+  window.nexusDesktop={onSteamDataChanged:vi.fn(fn=>{notify=fn;return unsubscribe;}),getSteamAchievements:vi.fn().mockResolvedValueOnce({source:'Steam',state:'empty',cached:false,lastSynced:null,achievements:[]}).mockResolvedValue({source:'Steam',state:'ready',cached:false,lastSynced:null,achievements:[{id:'new',title:'Session unlock',description:'',unlocked:true,unlockTime:1234}]})} as unknown as NonNullable<Window['nexusDesktop']>;
+  const view=render(<SteamAchievements appId={10} locale="en"/>);await waitFor(()=>expect(window.nexusDesktop!.onSteamDataChanged).toHaveBeenCalled());
+  act(()=>notify());expect(await screen.findByText('Session unlock')).toBeTruthy();expect(window.nexusDesktop.getSteamAchievements).toHaveBeenLastCalledWith(10,'en',true);
+  view.unmount();expect(unsubscribe).toHaveBeenCalledOnce();
 });

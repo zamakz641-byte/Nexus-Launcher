@@ -83,3 +83,9 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 - Steam sign-in opens the installed Chrome profile through official OpenID, falling back to the default browser. Preserve the distinction between linked identity and Web API synchronization; SteamGridDB credentials do not grant account progress.
 - Account and customization dialogs must remain above their overlay with an opaque readable surface. Verify hit testing, Escape and focus restoration in Electron.
 - Keep Home actions clear of the game rail on short windows. At intermediate widths, detail, settings and downloads must adapt without clipping controls; every section remains scrollable.
+
+## Steam notifications (2026-10-05)
+
+- Distinguish linked Steam identity from API synchronization; show missing-key/private/offline states for historical playtime and achievements.
+- Optional installed Steam Achievement Notifier companion handles real-time Steam notifications without an API key. Detect or select the installed executable, persist opt-in, start before Steam launches and suppress duplicate Nexus notifications after successful SAN startup. SAN remains separate; do not bundle its assets/source without verified reuse terms.
+- Built-in Nexus fallback polls only during tracked sessions, ignores existing unlocks and late replies after exit/account changes. Show clearly labeled test previews and explain borderless/windowed display limits.

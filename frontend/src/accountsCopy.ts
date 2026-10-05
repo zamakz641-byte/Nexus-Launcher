@@ -2,7 +2,7 @@ export const accountsCopy = {
   fr: {
     title:'Comptes connectés', subtitle:'Retrouvez vos bibliothèques et votre progression.',
     steam:'Bibliothèque possédée, temps de jeu Steam et succès.', epic:'Bibliothèque possédée Epic. Les succès et les sauvegardes ne sont pas synchronisés.', gog:'Bibliothèque possédée GOG. Les succès et les sauvegardes ne sont pas synchronisés.',
-    connect:'Connecter', manage:'Gérer le compte', disconnect:'Déconnecter', sync:'Actualiser', busy:'Connexion en cours…', connected:'Connecté', notConnected:'Non connecté', desktop:'La connexion aux comptes est disponible dans l’application Windows.',
+    connect:'Connecter', manage:'Gérer le compte', disconnect:'Déconnecter', sync:'Actualiser', busy:'Connexion en cours…', linked:'Profil relié · synchronisation à activer', connected:'Connecté', notConnected:'Non connecté', desktop:'La connexion aux comptes est disponible dans l’application Windows.',
     owned:'jeux possédés', search:'Rechercher dans ce compte', installed:'Installé dans Nexus', notInstalled:'Non détecté sur cet appareil', open:'Ouvrir la fiche', lastSync:'Dernière synchronisation', cached:'Données enregistrées', library:'Bibliothèque du compte', empty:'Aucun jeu dans cette bibliothèque.',
     'key-required':'Profil Steam relié. Activez la synchronisation avec une clé Steam Web API ; SteamGridDB sert uniquement aux images.',
     unconfigured:'Connectez ce compte pour récupérer sa bibliothèque.', private:'Les détails des jeux Steam sont privés. Rendez-les publics pour les synchroniser.', offline:'Service inaccessible. Les dernières données restent disponibles.', error:'La synchronisation a échoué. Réessayez.',
@@ -12,7 +12,7 @@ export const accountsCopy = {
   en: {
     title:'Connected accounts', subtitle:'Find your libraries and your progress.',
     steam:'Owned library, Steam playtime and achievements.', epic:'Owned Epic library. Achievements and saves are not synchronized.', gog:'Owned GOG library. Achievements and saves are not synchronized.',
-    connect:'Connect', manage:'Manage account', disconnect:'Disconnect', sync:'Refresh', busy:'Connecting…', connected:'Connected', notConnected:'Not connected', desktop:'Account connections are available in the Windows application.',
+    connect:'Connect', manage:'Manage account', disconnect:'Disconnect', sync:'Refresh', busy:'Connecting…', linked:'Profile linked · synchronization required', connected:'Connected', notConnected:'Not connected', desktop:'Account connections are available in the Windows application.',
     owned:'owned games', search:'Search this account', installed:'Installed in Nexus', notInstalled:'Not detected on this device', open:'Open game details', lastSync:'Last synchronized', cached:'Saved data', library:'Account library', empty:'No games in this library.',
     'key-required':'Steam profile linked. Enable sync with a Steam Web API key; SteamGridDB only provides artwork.',
     unconfigured:'Connect this account to retrieve its library.', private:'Steam game details are private. Make them public to synchronize.', offline:'Service unreachable. Previous data remains available.', error:'Synchronization failed. Try again.',

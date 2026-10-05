@@ -1,3 +1,35 @@
+# Nexus Launcher V2.2.1 — Steam progress & achievement notifications
+
+## Français
+
+- Intégration optionnelle de Steam Achievement Notifier (SAN) installé : détection, choix natif du .exe et lancement avant les jeux Steam. SAN gère ses notifications en direct sans clé API ; Nexus évite ses propres notifications en doublon. SAN se télécharge séparément depuis sa page officielle.
+
+- Profil Steam relié : indication claire que la synchronisation nécessite encore une clé Steam Web API distincte de SteamGridDB.
+- Temps Steam réel, y compris zéro, ou explication des données indisponibles avec actualisation manuelle.
+- Notifications des nouveaux succès Steam pendant les jeux lancés depuis Nexus, réglage et aperçu de test. Les anciens succès ne sont pas rejoués.
+- Vérification toutes les 30 secondes pendant la session, sous réserve du délai Steam. Arrêt à la fermeture du jeu et protection lors du changement de compte.
+- Actualisation des succès et du temps Steam au retour du jeu.
+
+### Installation et limites
+
+Windows x64 : Setup ou Portable. Exécutables non signés. Activez la synchronisation dans Paramètres / Comptes / Steam et rendez les détails des jeux accessibles. Notifications prévues en mode fenêtré ou sans bordures ; le plein écran exclusif peut les masquer. Succès Epic/GOG non synchronisés. La connexion seule ne fournit pas les heures et succès. Tests avec fournisseurs contrôlés : validation sur votre compte réel encore nécessaire.
+
+## English
+
+- Optional installed Steam Achievement Notifier (SAN) companion: detection, native executable picker and startup before Steam games. SAN provides live notifications without an API key; Nexus suppresses duplicate notifications. Download SAN separately from its official release page.
+
+- Linked Steam profiles clearly show that synchronization still needs a separate Steam Web API key.
+- Real Steam playtime, including zero, or an actionable explanation with manual refresh.
+- New Steam achievement notifications during games launched through Nexus, with a preference and labeled test preview. Existing unlocks are not replayed.
+- Checks every 30 seconds during tracked sessions, subject to Steam reporting delays; stops on game exit and discards results after account changes.
+- Refreshes Steam playtime and achievements on returning from a game.
+
+### Installation and limitations
+
+Windows x64: Setup or Portable. Unsigned builds. Enable synchronization in Settings / Accounts / Steam and allow access to game details. Notifications target windowed and borderless games; exclusive fullscreen may hide them. Epic/GOG achievements are not synchronized. Sign-in alone does not provide progress. Controlled-provider tests passed; real-account validation remains necessary.
+
+---
+
 # Nexus Launcher V2.2.0 — Connected accounts & clearer navigation
 
 ## Français

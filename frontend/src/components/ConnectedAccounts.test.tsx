@@ -46,3 +46,9 @@ test('changing language during a pending login does not lock account buttons',as
   await act(async()=>{resolve({configured:false,storageAvailable:true,error:'cancelled'});await pending;});
   expect(screen.getByRole('button',{name:'Connecter GOG'}).hasAttribute('disabled')).toBe(false);
 });
+
+test('linked Steam identity is not presented as synchronized account data',async()=>{
+  fixture();vi.mocked(window.nexusDesktop!.getSteamAccountStatus).mockResolvedValue({linked:true,configured:false,storageAvailable:true});
+  render(<MemoryRouter><ConnectedAccounts locale="en"/></MemoryRouter>);
+  expect(await screen.findByText('Profile linked · synchronization required')).toBeTruthy();
+});
