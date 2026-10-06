@@ -9,6 +9,7 @@
 - Sauvegarde automatique après la fermeture d’un jeu lancé par Nexus, sur activation volontaire.
 - Plugins en verre, français/anglais, tailles vérifiées, activation et désinstallation indépendantes. Les sauvegardes et médias sont conservés.
 - Verrou entre lancement du jeu et opérations de sauvegarde, annulation du téléchargement et arrêt propre du moteur.
+- Les erreurs de sauvegarde automatique sont visibles dans la fiche du plugin.
 
 Un dossier synchronisé par votre client cloud peut servir de destination. Nexus confirme la copie locale, pas l’envoi au cloud. Les jeux doivent être reconnus dans le catalogue Ludusavi ; les jeux lancés hors de Nexus ne sont pas détectés comme sessions actives. Fermez-les avant de sauvegarder ou restaurer. Pas de connexion directe aux fournisseurs cloud ni de suspension en mémoire dans cette version.
 
@@ -21,6 +22,7 @@ Un dossier synchronisé par votre client cloud peut servir de destination. Nexus
 - Opt-in automatic backup after a game launched through Nexus closes.
 - Console glass plugin controls, English/French, verified sizes and independent activation/uninstall. Backups and media are preserved.
 - Save operations and game launch are mutually excluded; downloading can be cancelled and owned engine processes drain before shutdown.
+- Automatic backup errors are visible in the plugin card.
 
 An existing cloud client folder can be a destination. Nexus confirms local copies, not cloud uploads. Games need a matching Ludusavi catalog entry. Games started outside Nexus are not detected as active sessions; close them before save operations. Direct cloud-provider sign-in and RAM suspend are not included.
 

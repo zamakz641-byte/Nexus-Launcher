@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtemp, rm, readFile, mkdir} from 'node:fs/promises';
+import {mkdtemp, rm, readFile, mkdir, realpath} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {SavesModule} from '../backend/modules/saves.mjs';
@@ -26,7 +26,7 @@ test('known plugin policies keep Replay preferences separate and reject arbitrar
 });
 test('destination is a dedicated child, unknown games never call the native engine',async()=>{
  let calls=0;await fixture(async()=>{calls++;return {};},async(saves,dir)=>{
-  assert.equal((await saves.status()).destination,join(dir,'Nexus Saves'));
+  assert.equal((await saves.status()).destination,join(await realpath(dir),'Nexus Saves'));
   await assert.rejects(saves.inspect('unknown'),/invalid-game/);assert.equal(calls,0);
   assert.equal(JSON.parse(await readFile(join(dir,'nexus-saves.json'))).automatic,false);
  });
