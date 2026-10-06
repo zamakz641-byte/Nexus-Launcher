@@ -30,6 +30,7 @@ fn engine(command: &Command, recovery: bool) -> Result<Ludusavi, &'static str> {
     config.backup.filter.exclude_store_screenshots = true;
     config.cloud.synchronize = false;
     config.release.check = false;
+    config.add_common_roots();
     if let Some(root) = &command.root { config.roots.push(Root::new(StrictPath::new(root.clone()), Store::OtherWindows)); }
     Ok(Ludusavi::new(config, manifest))
 }
@@ -101,6 +102,12 @@ mod tests {
   std::fs::write(&file,b"new progress").unwrap();
   execute(cmd("protect",None)).unwrap();
   execute(cmd("restore-preview",Some(id.clone()))).unwrap();
+  execute(cmd("restore",Some(id))).unwrap();
+  assert_eq!(std::fs::read(&file).unwrap(),b"original progress");
+  let versions=execute(cmd("list",None)).unwrap();
+  let id=versions["versions"][0]["id"].as_str().unwrap().to_owned();
+  std::fs::remove_file(&file).unwrap();
+  assert_eq!(execute(cmd("protect",None)).unwrap()["files"],0);
   execute(cmd("restore",Some(id))).unwrap();
   assert_eq!(std::fs::read(&file).unwrap(),b"original progress");
   let mut unknown=cmd("scan",None);unknown.title="Unknown game".into();unknown.steam_id=None;
