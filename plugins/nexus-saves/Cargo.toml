@@ -1,0 +1,20 @@
+[package]
+name = "nexus-saves"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+
+[[bin]]
+name = "NexusSaves"
+path = "src/main.rs"
+
+[dependencies]
+ludusavi = { git = "https://github.com/mtkennerly/ludusavi.git", rev = "70f4abb31497fa5ed9b0d24098200f3662d6fda9", default-features = false }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[profile.release]
+opt-level = "s"
+lto = "thin"
+codegen-units = 1
+strip = true

@@ -1,0 +1,52 @@
+name: Nexus Saves plugin
+on:
+  workflow_call:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['plugins/nexus-saves/**', '.github/workflows/nexus-saves.yml']
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Test real fixture backup and restore
+        working-directory: plugins/nexus-saves
+        run: cargo test
+      - name: Build library without upstream GUI
+        working-directory: plugins/nexus-saves
+        run: cargo build --release --locked
+      - name: Collect dependency licenses
+        working-directory: plugins/nexus-saves
+        run: |
+          cargo install cargo-about --locked
+          cargo about generate about.hbs --output-file target/DEPENDENCY_LICENSES.html
+      - name: Package native engine and source
+        shell: pwsh
+        run: ./plugins/nexus-saves/package.ps1 -OutputRoot "$PWD/out/saves"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nexus-saves-package
+          path: out/saves/*
+      - name: Publish optional plugin
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $tag = 'plugin-nexus-saves-v0.1.0'
+          gh release view $tag --repo $env:GITHUB_REPOSITORY 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            $publishedTree = git rev-parse "$tag`:plugins/nexus-saves"
+            $currentTree = git rev-parse 'HEAD:plugins/nexus-saves'
+            if ($publishedTree -ne $currentTree) { throw 'Bump plugin version before publishing modified source.' }
+            exit 0
+          }
+          $assets = @(Get-ChildItem -LiteralPath out/saves -File | ForEach-Object FullName)
+          gh release create $tag @assets --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title 'Nexus Saves 0.1.0' --notes-file plugins/nexus-saves/README.md --latest=false
