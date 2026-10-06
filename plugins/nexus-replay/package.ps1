@@ -24,10 +24,11 @@ while($queue.Count){
 Copy-Item -LiteralPath (Join-Path $pluginSource 'LICENSE') -Destination $payload
 Copy-Item -LiteralPath (Join-Path $pluginSource 'THIRD_PARTY_NOTICES.md') -Destination $payload
 Copy-Item -LiteralPath (Join-Path $pluginSource 'README.md') -Destination $payload
-# Keep dependency license text with replaceable Qt DLLs, not only a link.
-$qtLicenses=Join-Path $QtRoot 'licenses'
-if(-not(Test-Path -LiteralPath $qtLicenses)){throw 'Qt license texts missing from toolchain'}
-Copy-Item -LiteralPath $qtLicenses -Destination (Join-Path $payload 'qt-licenses') -Recurse
+# Keep the reviewed license texts with replaceable runtime DLLs. Minimal AQT
+# archives do not include Qt's documentation/license directory consistently.
+$runtimeLicenses=Join-Path $pluginSource 'licenses'
+if(-not(Test-Path -LiteralPath (Join-Path $runtimeLicenses 'LGPL-3.0-only.txt'))){throw 'Bundled Qt license text missing'}
+Copy-Item -LiteralPath $runtimeLicenses -Destination (Join-Path $payload 'licenses') -Recurse
 $originalPath=$env:PATH
 try {$env:PATH=Join-Path $env:SystemRoot 'System32'; & (Join-Path $payload 'NexusReplay.exe') --self-test; if($LASTEXITCODE -ne 0){throw 'Standalone package self-test failed'}}finally{$env:PATH=$originalPath}
 if($LASTEXITCODE -ne 0){throw 'Packaged engine self-test failed'}
