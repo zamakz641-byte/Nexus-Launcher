@@ -8,8 +8,10 @@ on:
       - 'frontend/package.json'
       - 'frontend/RELEASE_NOTES.md'
       - 'plugins/nexus-replay/**'
+      - 'plugins/nexus-saves/**'
       - 'plugins/catalog.json'
       - '.github/workflows/nexus-replay.yml'
+      - '.github/workflows/nexus-saves.yml'
       - '.github/workflows/windows-release.yml'
   workflow_dispatch:
 
@@ -23,8 +25,10 @@ concurrency:
 jobs:
   replay:
     uses: ./.github/workflows/nexus-replay.yml
+  saves:
+    uses: ./.github/workflows/nexus-saves.yml
   windows:
-    needs: replay
+    needs: [replay, saves]
     runs-on: windows-latest
     timeout-minutes: 45
     defaults:

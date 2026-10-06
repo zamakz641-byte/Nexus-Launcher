@@ -2,6 +2,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { accountsCopy } from "../accountsCopy";
 import { SteamPlaytime } from "../components/SteamPlaytime";
 import { GameActivity } from '../components/GameActivity';
+import { GameSaves } from '../components/GameSaves';
 import { X, SlidersHorizontal, Link, ArrowLeft, CheckCircle, Clock, FilmSlate, GameController, HardDrives, Play, Star, Trophy } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
@@ -65,7 +66,7 @@ export function GameDetailScreen({ onLaunch }: GameDetailScreenProps) {
           <NexusButton data-sfx={game.installed ? "launch" : undefined} onClick={game.installed ? onLaunch : () => navigate("/settings?section=play")} icon={game.installed ? <Play size={18} weight="fill" /> : <GameController size={18} />}>{t(game.installed ? "action.play" : "action.configure")}</NexusButton>
           {game.trailer.url ? <NexusButton variant="ghost" onClick={() => setTrailerOpen(true)} icon={<FilmSlate size={20} />}>{t("detail.trailer")}</NexusButton> : null}
         </div>
-        <div className="game-detail__utilities">{game.discovered?<button className="screen-tool" type="button" ref={customizeTrigger} onClick={()=>setCustomizeOpen(true)}><SlidersHorizontal size={16}/>{accountsCopy[locale].customize}</button>:null}<button className="screen-tool" type="button" onClick={()=>navigate("/settings?section=accounts")}><Link size={16}/>{accountsCopy[locale].settings}</button></div>
+        <div className="game-detail__utilities">{game.discovered?<><button className="screen-tool" type="button" ref={customizeTrigger} onClick={()=>setCustomizeOpen(true)}><SlidersHorizontal size={16}/>{accountsCopy[locale].customize}</button><GameSaves key={game.id} gameId={game.id} title={game.title} locale={locale}/></>:null}<button className="screen-tool" type="button" onClick={()=>navigate("/settings?section=accounts")}><Link size={16}/>{accountsCopy[locale].settings}</button></div>
       </div>
 
       <div className="game-detail__facts" aria-label={t("detail.quickInfo")}>

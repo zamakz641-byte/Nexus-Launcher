@@ -1,3 +1,31 @@
+# Nexus Launcher V2.5 · Saves & Continuity
+
+## Français
+
+- Nexus Saves : plugin natif optionnel basé sur la bibliothèque MIT Ludusavi, sans son interface et sans alourdir le launcher avec le moteur.
+- Destination au choix dans l’explorateur, jusqu’à cinq versions complètes, fichiers et entrées de registre pris en charge.
+- Sauvegarder, analyser et restaurer depuis la fiche du jeu. Restauration confirmée avec protection de l’état actuel dans Recovery.
+- Récupération possible lorsque les fichiers actuels ont disparu. Les échecs partiels bloquent la restauration.
+- Sauvegarde automatique après la fermeture d’un jeu lancé par Nexus, sur activation volontaire.
+- Plugins en verre, français/anglais, tailles vérifiées, activation et désinstallation indépendantes. Les sauvegardes et médias sont conservés.
+- Verrou entre lancement du jeu et opérations de sauvegarde, annulation du téléchargement et arrêt propre du moteur.
+
+Un dossier synchronisé par votre client cloud peut servir de destination. Nexus confirme la copie locale, pas l’envoi au cloud. Les jeux doivent être reconnus dans le catalogue Ludusavi ; les jeux lancés hors de Nexus ne sont pas détectés comme sessions actives. Fermez-les avant de sauvegarder ou restaurer. Pas de connexion directe aux fournisseurs cloud ni de suspension en mémoire dans cette version.
+
+## English
+
+- Nexus Saves: optional native plugin using Ludusavi's MIT library without its desktop UI or engine binaries in the base launcher.
+- Choose your destination with the file explorer; retain up to five full versions of supported files and registry data.
+- Scan, back up and restore from game details. Confirmed restore first protects current data in the separate Recovery layout.
+- Recover deleted live saves; partial protection errors prevent restoration.
+- Opt-in automatic backup after a game launched through Nexus closes.
+- Console glass plugin controls, English/French, verified sizes and independent activation/uninstall. Backups and media are preserved.
+- Save operations and game launch are mutually excluded; downloading can be cancelled and owned engine processes drain before shutdown.
+
+An existing cloud client folder can be a destination. Nexus confirms local copies, not cloud uploads. Games need a matching Ludusavi catalog entry. Games started outside Nexus are not detected as active sessions; close them before save operations. Direct cloud-provider sign-in and RAM suspend are not included.
+
+---
+
 # Nexus Launcher V2.4 · Capture & Plugins
 
 ## Français

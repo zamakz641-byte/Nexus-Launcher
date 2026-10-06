@@ -1,4 +1,7 @@
 {
   "schema": 1,
-  "plugins": [{ "id": "nexus-replay", "version": "0.1.0", "tag": "plugin-nexus-replay-v0.1.0", "manifest": "nexus-replay.json" }]
+  "plugins": [
+    { "id": "nexus-replay", "version": "0.1.0", "tag": "plugin-nexus-replay-v0.1.0", "manifest": "nexus-replay.json" },
+    { "id": "nexus-saves", "version": "0.1.1", "tag": "plugin-nexus-saves-v0.1.1", "manifest": "nexus-saves.json" }
+  ]
 }

@@ -2,6 +2,17 @@
 
 interface Window {
   nexusDesktop?: {
+    getSavesStatus: () => Promise<import('./savesTypes').SavesStatus>;
+    activateSaves: () => Promise<import('./savesTypes').SavesStatus>;
+    cancelSavesSetup: () => Promise<import('./savesTypes').SavesStatus>;
+    disableSaves: () => Promise<import('./savesTypes').SavesStatus>;
+    removeSaves: () => Promise<import('./savesTypes').SavesStatus>;
+    chooseSavesDestination: (locale:'fr'|'en') => Promise<import('./savesTypes').SavesStatus|null>;
+    setSavesAutomatic: (value:boolean) => Promise<import('./savesTypes').SavesStatus>;
+    inspectSaves: (id:string) => Promise<import('./savesTypes').SavesScan>;
+    backupSaves: (id:string) => Promise<import('./savesTypes').SavesScan>;
+    previewRestore: (id:string,version:string) => Promise<import('./savesTypes').SavesScan>;
+    restoreSaves: (token:string) => Promise<import('./savesTypes').SavesScan>;
     chooseLibraryFolder: () => Promise<unknown | null>;
     addGameFolder: () => Promise<unknown | null>;
     scanLibrary: (sourceId?: string, force?: boolean) => Promise<unknown>;

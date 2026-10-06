@@ -10,6 +10,7 @@ import { NotificationOverlayModule } from './overlay/notifications.mjs';
 import { CaptureModule } from './modules/capture.mjs';
 import { PluginManager } from './plugins/pluginManager.mjs';
 import { ReplayRuntime } from './plugins/replayRuntime.mjs';
+import { SavesModule } from './modules/saves.mjs';
 import { serveCapture } from './captureMedia.mjs';
 import { captureHtml } from './overlay/captureNotice.mjs';
 import { homedir } from "node:os";
@@ -40,10 +41,11 @@ function getAchievementMonitor(){return achievementMonitor ||= new AchievementMo
 function broadcastSteamData(){for(const window of BrowserWindow.getAllWindows())if(!window.isDestroyed()&&window.webContents.getURL().startsWith('nexus://app/'))window.webContents.send('nexus:steam-data-changed');}
 let artworkCache;
 const gameSessions = new Map();
+const gameLaunches = new Set();
 const moduleSessions = new Map();
 const eventBus = new EventBus();
 const modules = new ModuleHost(eventBus);
-let gameActivity, achievementsModule, captureModule, replay, pluginManager;
+let gameActivity, achievementsModule, captureModule, replay, pluginManager, savesModule, savesManager;
 function getReplay(){return replay ||= new ReplayRuntime(getPluginManager(),{capturesRoot:process.env.NEXUS_CAPTURE_ROOT||join(app.getPath('videos'),'Nexus'),onSaved:(message,context)=>captureModule.adoptSaved(message,context)});}
 function getPluginManager(){return pluginManager ||= new PluginManager(app.getPath('userData'),{fetch:(url,options)=>net.fetch(url,options)});}
 async function screenshotDisplay(){
@@ -66,6 +68,11 @@ async function startModules() {
   captureModule=new CaptureModule(app.getPath('userData'),{root:process.env.NEXUS_CAPTURE_ROOT||join(app.getPath('videos'),'Nexus'),
     screenshot:screenshotDisplay,companion:getReplay()});
   await modules.register(captureModule);
+  savesManager=new PluginManager(app.getPath('userData'),{id:'nexus-saves',fetch:(url,options)=>net.fetch(url,options)});
+  savesModule=new SavesModule(app.getPath('userData'),{manager:savesManager,
+    gameFor:async id=>(await getRegistry()).snapshot().games.find(game=>game.id===id),
+    running:id=>gameSessions.has(id)||gameLaunches.has(id),fetch:(url,options)=>net.fetch(url,options)});
+  await modules.register(savesModule);
   eventBus.subscribe('CaptureSaved',notice=>{
     getCaptureOverlay().show(notice);
     for(const window of BrowserWindow.getAllWindows())if(!window.isDestroyed()&&window.webContents.getURL().startsWith('nexus://app/'))window.webContents.send('nexus:capture-changed');
@@ -335,6 +342,20 @@ function registerIpc() {
   accountIpc('nexus:capture-engine-disable',()=>getReplay().enable(false));
   accountIpc('nexus:capture-engine-remove',()=>getReplay().remove());
   accountIpc('nexus:capture-replay',(_event,locale)=>captureModule.captureAction(true,locale));
+  accountIpc('nexus:saves-status',()=>savesModule.status(true));
+  accountIpc('nexus:saves-activate',()=>savesModule.activate());
+  accountIpc('nexus:saves-cancel',()=>{savesManager.cancel();return savesModule.status();});
+  accountIpc('nexus:saves-disable',()=>savesModule.enable(false));
+  accountIpc('nexus:saves-remove',()=>savesModule.remove());
+  accountIpc('nexus:saves-destination',async(event,locale)=>{
+    const result=await dialog.showOpenDialog(BrowserWindow.fromWebContents(event.sender),{properties:['openDirectory'],title:locale==='fr'?'Destination des sauvegardes':'Backup destination'});
+    return result.canceled?null:savesModule.chooseDestination(result.filePaths[0]);
+  });
+  accountIpc('nexus:saves-automatic',(_event,value)=>savesModule.setAutomatic(value));
+  accountIpc('nexus:saves-inspect',(_event,id)=>savesModule.inspect(id));
+  accountIpc('nexus:saves-backup',(_event,id)=>savesModule.backup(id));
+  accountIpc('nexus:saves-preview',(_event,id,version)=>savesModule.prepareRestore(id,version));
+  accountIpc('nexus:saves-restore',(_event,token)=>savesModule.restore(token));
   accountIpc('nexus:steam-library', async (_event, force) => getSteamAchievements().getLibrary(force === true));
   accountIpc('nexus:store-account-status', async (_event, provider) => getStoreAccounts().status(provider));
   accountIpc('nexus:store-account-connect', async (event, provider) => getStoreAccounts().connect(provider, BrowserWindow.fromWebContents(event.sender)));
@@ -378,13 +399,17 @@ function registerIpc() {
     return status;
   });
   ipcMain.handle("nexus:launch-game", async (event, gameId, locale) => {
-    if (gameSessions.has(String(gameId))) throw new Error("Ce jeu est déjà en cours d’exécution dans Nexus.");
+    if(savesModule.isBusy(String(gameId)))throw Error('Sauvegarde en cours / Save operation in progress');
+    if (gameSessions.has(String(gameId))||gameLaunches.has(String(gameId))) throw new Error("Ce jeu est déjà en cours d’exécution dans Nexus.");
+    gameLaunches.add(String(gameId));
+    try {
     const registry = await getRegistry();
     const file = await registry.authorizedExecutable(String(gameId));
     const game=registry.games.get(String(gameId));
     const companion=await achievementsModule.prepareLaunch(game);
     // Prepare the optional recorder before the game takes focus. Failure never blocks launch.
     await getReplay().ensureStarted().catch(()=>{});
+    if(savesModule.isBusy(String(gameId)))throw Error('Sauvegarde en cours / Save operation in progress');
     const child = spawn(file, [], { cwd: dirname(file), detached: true, stdio: "ignore", windowsHide: false });
     await new Promise((resolve, reject) => { child.once("spawn", resolve); child.once("error", reject); });
     const window = BrowserWindow.fromWebContents(event.sender);
@@ -403,6 +428,7 @@ function registerIpc() {
     if (window && !window.isDestroyed()) window.minimize();
     child.unref();
     return { ok: true, requestId: `local:${Date.now()}` };
+    } finally {gameLaunches.delete(String(gameId));}
   });
 }
 
@@ -432,6 +458,7 @@ async function createWindow() {
   window.once('closed',()=>{achievementMonitor?.stopAll();achievementOverlay?.dispose();if(mainWindow===window)mainWindow=null;});
   window.webContents.setWindowOpenHandler(({ url }) => {
     if (/^https:\/\/store\.steampowered\.com\//i.test(url)) void shell.openExternal(url);
+    if (/^https:\/\/github\.com\/zamakz641-byte\/Nexus-Launcher(?:\/|$)/.test(url)) void shell.openExternal(url);
     return { action: "deny" };
   });
   window.webContents.on("before-input-event", (event, input) => {

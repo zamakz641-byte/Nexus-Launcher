@@ -1,0 +1,21 @@
+import {CloudArrowUp,DownloadSimple,Power,Trash,X,FolderOpen} from '@phosphor-icons/react';
+import {useEffect,useRef,useState} from 'react';
+import {savesCopy} from '../savesCopy';
+import type {SavesStatus} from '../savesTypes';
+import {useNexusStore} from '../state/useNexusStore';
+
+export function SavesPluginCard({onChange}:{onChange?:(status:SavesStatus)=>void}){
+ const locale=useNexusStore(state=>state.locale),copy=savesCopy[locale],api=window.nexusDesktop;
+ const [status,setStatus]=useState<SavesStatus>(),[busy,setBusy]=useState(false),[error,setError]=useState(false);
+ const alive=useRef(false),revision=useRef(0),installation=useRef(false),callback=useRef(onChange);callback.current=onChange;
+ const progress=(busy&&installation.current)||status?.state==='downloading'||status?.state==='installing';
+ useEffect(()=>{alive.current=true;const load=async()=>{if(!api)return;const current=++revision.current;try{const next=await api.getSavesStatus();if(alive.current&&revision.current===current){setStatus(next);callback.current?.(next);}}catch{/* Installed backups remain intact offline. */}};void load();const timer=setInterval(()=>{if(!document.hidden)void load();},progress?1200:10000);return()=>{alive.current=false;revision.current++;clearInterval(timer);};},[api,progress]);
+ const action=async(task:()=>Promise<unknown>,install=false)=>{if(busy)return;revision.current++;installation.current=install;setBusy(true);setError(false);if(install)setStatus(value=>({...value,installed:false,enabled:false,supported:true,automatic:false,busy:true,state:'downloading'}));try{const result=await task() as SavesStatus|null;if(result?.state==='error')throw Error('plugin');const next=await api!.getSavesStatus();if(alive.current){revision.current++;setStatus(next);callback.current?.(next);}}catch{if(alive.current)setError(true);}finally{installation.current=false;if(alive.current)setBusy(false);}};
+ const size=(bytes:number)=>new Intl.NumberFormat(locale,{maximumFractionDigits:1}).format(bytes/1000000)+' MB';
+ return <article className="nexus-plugin-card saves-plugin-card"><div className="nexus-plugin-symbol"><CloudArrowUp weight="duotone"/></div><div className="nexus-plugin-heading"><h2>{copy.title}</h2><p>{progress?`${status?.state==='installing'?copy.installing:copy.downloading} ${status?.progress||0}%`:status?.enabled?copy.ready:copy.subtitle}</p><small>{status?.downloadBytes?`${size(status.downloadBytes)} · ${size(status.installedBytes||0)} ${copy.disk}`:copy.sizePending}</small></div><div className="capture-actions">
+ {progress?<button disabled={status?.state==='installing'} onClick={()=>api&&void api.cancelSavesSetup().catch(()=>setError(true))}><X/>{copy.cancel}</button>:<button disabled={!api||busy||status?.supported===false||(!status?.installed&&!status?.available)} onClick={()=>api&&void action(()=>status?.enabled?api.disableSaves():api.activateSaves(),!status?.installed)}>{status?.enabled?<Power/>:<DownloadSimple/>}{status?.enabled?copy.disable:status?.installed?copy.enable:status?.available?copy.install:copy.pending}</button>}
+ {status?.installed&&!progress&&<button disabled={busy} className="plugin-remove" title={copy.remove} aria-label={copy.remove} onClick={()=>api&&void action(()=>api.removeSaves())}><Trash/></button>}</div>
+ {progress&&<progress max="100" value={status?.progress||0} aria-label={copy.downloading}/>}
+ {status?.enabled&&<div className="saves-plugin-settings"><button className="screen-tool" disabled={busy||status.busy} onClick={()=>api&&void action(()=>api.chooseSavesDestination(locale))}><FolderOpen/>{copy.destination}</button>{status.destination&&<><p className="saves-destination" title={status.destination}>{status.destination}</p><label><input type="checkbox" checked={status.automatic} disabled={busy||status.busy} onChange={event=>api&&void action(()=>api.setSavesAutomatic(event.target.checked))}/>{copy.automatic}</label></>}<small>{copy.folderHint}</small></div>}
+ <details><summary>{copy.help}</summary><p>{copy.hint}. {copy.helpText}</p><a href="https://github.com/zamakz641-byte/Nexus-Launcher/tree/main/plugins/nexus-saves" target="_blank" rel="noreferrer">{copy.source}</a></details>{error&&<p className="plugin-error" role="alert">{copy.error}</p>}</article>;
+}

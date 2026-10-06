@@ -1121,3 +1121,22 @@ button:focus-visible { outline: none; box-shadow: var(--focus-shadow); }
   font-weight: 720;
 }
 .search-retry:hover, .search-retry:focus-visible { background: color-mix(in srgb, var(--color-focus) 18%, rgba(255,255,255,.04)); }
+
+.nexus-plugins-screen .nexus-plugin-card + .nexus-plugin-card { margin-top: 1.5rem; }
+.saves-plugin-settings { grid-column: 2 / -1; display: grid; gap: .8rem; min-width: 0; }
+.saves-plugin-settings label { display: flex; align-items: center; gap: .75rem; font-size: .9rem; }
+.saves-plugin-settings input { accent-color: var(--color-focus); width: 1.15rem; height: 1.15rem; }
+.saves-plugin-settings small, .saves-local { color: var(--color-muted); font-size: .8rem; }
+.saves-destination { overflow-wrap: anywhere; font-size: .8rem; color: var(--color-muted); margin: 0; }
+.saves-dialog { width: min(760px, calc(100vw - 2rem)); max-height: calc(100dvh - 3rem); overflow-y: auto; }
+.saves-dialog .nexus-plugin-card { margin: 1.5rem 0; }
+.saves-dialog .capture-actions { flex-wrap: wrap; }
+.saves-dialog .capture-actions button { display: inline-flex; align-items: center; justify-content: center; gap: .6rem; min-height: 44px; padding: .7rem 1.1rem; border: 1px solid rgba(184,217,237,.3); border-radius: 24px; color: var(--color-foreground); background: linear-gradient(145deg,rgba(180,219,239,.13),rgba(19,37,52,.13)); cursor: pointer; }
+.saves-dialog .capture-actions button:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; }
+.saves-dialog .capture-actions button:disabled { opacity: .45; cursor: default; }
+.saves-dialog .capture-actions svg { width: 18px; height: 18px; }
+.saves-dialog h3 { font-size: 1rem; }
+.saves-versions, .saves-confirm { margin-top: 1.4rem; border-top: 1px solid rgba(180,220,255,.16); padding-top: 1rem; }
+.saves-versions > div { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; padding: .75rem 0; }
+.saves-confirm { border-radius: .8rem; background: rgba(128,192,240,.06); padding: 1rem; }
+@media (max-width: 640px) { .saves-plugin-settings { grid-column: 1 / -1; } .saves-dialog .nexus-plugin-card { padding: 1rem; } }

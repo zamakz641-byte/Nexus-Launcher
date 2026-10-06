@@ -1,5 +1,21 @@
 # Prototype Instructions
 
+## Current Saves decisions (2026-10-06)
+
+- Nexus Saves is an independently downloadable native MIT plugin based on pinned
+  Ludusavi library code without its desktop UI. Keep binaries out of the base app.
+- Native folder selection writes backups into a dedicated `Nexus Saves` child.
+  Show local success only; existing cloud clients own upload/synchronization.
+- Use exact title or verified store IDs. Never infer success for unknown games,
+  empty saves, partial writes or unavailable manifests. Keep five full versions.
+- Restore requires an in-app preview and confirmation. Protect current data in
+  separate Recovery storage, preserve selected backups, and allow recovery when
+  live saves are absent. Launches and save writes must be mutually excluded.
+- Automatic backup after a Nexus game exits is opt-in. Serialize installation,
+  disable/uninstall and save operations; drain owned subprocesses before shutdown.
+- Preserve console glass, compact FR/EN copy, controller focus and backups after
+  uninstall. Save actions live in game details; no additional global nav item.
+
 ## Current Capture decisions (2026-10-06)
 
 - V2.4 adds the Capture module and a dedicated gallery: native explicit PNG capture,

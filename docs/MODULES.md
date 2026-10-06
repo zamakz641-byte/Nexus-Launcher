@@ -1,4 +1,4 @@
-# Nexus modules — V2.4 Capture Update
+# Nexus modules — V2.5 Saves Update
 
 ## Implemented architecture
 
@@ -8,12 +8,14 @@ frontend/backend/
 ├── modules/
 │   ├── achievements.mjs      Steam/SAN lifecycle adapter
 │   ├── gameActivity.mjs      Nexus session journal
-│   └── capture.mjs           Explicit PNG capture and read-only media index
+│   ├── capture.mjs           Explicit PNG capture and read-only media index
+│   └── saves.mjs             Versioned saves and protected restoration
 ├── overlay/notifications.mjs Notification presentation subscriber
 ├── steamLocal.mjs            Read-only Steam client cache provider
 ├── sanInstaller.mjs          Optional verified companion installer
-├── gamehqCompanion.mjs       Optional recorder lifecycle and installation detection
-├── gamehqPipe.mjs            Capability-negotiated local GameHQ protocol
+├── plugins/pluginManager.mjs Verified own-GitHub optional native packages
+├── plugins/replayRuntime.mjs Owned game-window capture engine lifecycle
+├── plugins/savesProcess.mjs  Bounded headless save engine subprocess
 ├── captureMedia.mjs          Authorized image/video streaming with Range support
 └── main.mjs                 Electron/IPC, authorized launches, lifecycle events
 ```
@@ -74,3 +76,28 @@ Scanning skips symlinks, visits at most 10,000 entries to depth four, and return
 500 newest images/videos. Clips stream from disk with byte-range support.
 
 Nexus Replay replaces the external companion in V2.4. The launcher hosts a bounded GitHub plugin installer, per-file SHA256 verification and a standalone JSON-line runtime. The optional GPL-3.0 engine lives in plugins/nexus-replay and publishes its own binary/source releases. Runtime states report actual capture readiness; pending exports drain before exit. No Qt or recording binaries belong in the base app. SAN remains an independent companion until its source and license are reviewed separately.
+
+## Saves
+
+Nexus Saves links Ludusavi's pinned MIT library with its app feature disabled.
+The separate Rust package ships no Iced window or upstream dialog framework.
+Only Replay and Saves are supported; each has independent preferences and
+owned installation folders. GitHub release digest, archive contents and per-file
+hashes are checked before execution. The base app contains only trusted UI/IPC.
+
+The folder picker creates Nexus Saves beneath the chosen folder. Up to five full
+versions include supported file saves and registry entries. Exact title/store-ID
+matching prevents broad guesses; unknown games never fall back to all games.
+The primary Ludusavi manifest is cached for offline use and updated at most daily.
+
+Restore previews issue a five-minute one-use token for a backend-selected version.
+An independent Recovery layout protects current saves before restoration, so
+retention cannot remove the selected version. Empty live locations can be
+recovered; partial protection errors prevent restore. Games launching or running
+through Nexus block writes, and pending writes block launch. All operations and
+plugin changes share a queue. Shutdown drains the owned process and queue.
+
+Automatic backup after tracked game exit is optional and off by default. A cloud
+client folder can be a destination, but Nexus reports only local success.
+Cloud provider authentication, cross-device conflicts and RAM suspend are later
+modules. Disabling/uninstalling preserves backups and destination preferences.
