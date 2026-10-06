@@ -1,0 +1,172 @@
+/* Shared console material. Large surfaces blur once; nested rows only tint. */
+:root {
+  --glass-tint: 12, 26, 39;
+  --glass-edge: rgba(222, 242, 255, .25);
+  --glass-highlight: rgba(239, 250, 255, .32);
+  --glass-surface: linear-gradient(135deg, rgba(236, 248, 255, .16), rgba(217, 239, 255, .025) 38%, rgba(198, 229, 255, .07)), rgba(var(--glass-tint), .42);
+  --glass-window: radial-gradient(ellipse at 0% 0%, rgba(207, 235, 255, .16), transparent 60%), linear-gradient(140deg, rgba(238, 249, 255, .12), rgba(232, 245, 255, .025) 45%, rgba(169, 210, 241, .08)), rgba(var(--glass-tint), .76);
+  --glass-shadow: inset 0 1px 0 var(--glass-highlight), inset 0 -1px 0 rgba(255, 255, 255, .05), 0 18px 48px rgba(0, 5, 12, .22);
+  --glass-command: linear-gradient(145deg, rgba(232, 247, 255, .16), rgba(226, 243, 255, .035)), rgba(var(--glass-tint), .3);
+}
+[data-theme="solaris"] {
+  --glass-tint: 39, 29, 20;
+  --glass-edge: rgba(255, 232, 191, .27);
+  --glass-highlight: rgba(255, 246, 222, .35);
+  --glass-surface: linear-gradient(135deg, rgba(255, 240, 210, .16), rgba(255, 238, 205, .025) 38%, rgba(245, 214, 164, .07)), rgba(var(--glass-tint), .42);
+  --glass-window: radial-gradient(ellipse at 0% 0%, rgba(255, 229, 186, .16), transparent 60%), linear-gradient(140deg, rgba(255, 247, 225, .12), rgba(255, 240, 210, .025) 45%, rgba(238, 204, 158, .08)), rgba(var(--glass-tint), .76);
+}
+
+/* Let the existing artwork and user brightness/dimming settings reach the glass. */
+.nexus-shell:not([data-route="home"]) .route-stage {
+  /* A permanent opacity backdrop root prevents panels from blurring the artwork. */
+  will-change: transform;
+}
+.nexus-shell[data-route="interior"] .media-backdrop__grade {
+  background: linear-gradient(90deg, rgba(3, 7, 11, .56), rgba(3, 7, 11, .22) 55%, rgba(3, 7, 11, .12)),
+    linear-gradient(0deg, rgba(3, 7, 11, .72), transparent 65%),
+    linear-gradient(rgba(3, 7, 11, var(--art-dimming, .35)), rgba(3, 7, 11, var(--art-dimming, .35)));
+}
+.nexus-shell:not([data-route="home"])::before {
+  background: radial-gradient(ellipse at 25% 24%, color-mix(in srgb, var(--game-accent) 24%, transparent), transparent 58%),
+    radial-gradient(ellipse at 85% 80%, color-mix(in srgb, var(--color-focus) 14%, transparent), transparent 55%);
+}
+
+/* Control center, plugin gallery and game information share one material. */
+.settings-content, .settings-nav, .nexus-plugin-card, .capture-engine,
+.game-detail__panel, .game-activity, .game-detail__customize,
+.downloads-overview article, .downloads-empty, .downloads-extensions article,
+.downloads-history article, .route-error {
+  border: 1px solid var(--glass-edge);
+  border-radius: 24px;
+  background: var(--glass-surface);
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(26px) saturate(150%);
+}
+.settings-nav { padding: .65rem; }
+.settings-content { padding: clamp(1.2rem, 2vw, 2rem); }
+.settings-content__header { padding-bottom: 1.4rem; }
+.settings-row {
+  border: 1px solid rgba(229, 245, 255, .09);
+  border-radius: 16px;
+  background: linear-gradient(115deg, rgba(235, 247, 255, .045), transparent);
+}
+.settings-row:hover { background: rgba(226, 244, 255, .075); border-color: var(--glass-edge); }
+.settings-nav button[data-active="true"] {
+  background: var(--glass-command);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), inset 0 0 0 1px var(--glass-edge), 0 6px 20px #0002;
+}
+.segmented-control { border: 1px solid var(--glass-edge); border-radius: 16px; background: rgba(var(--glass-tint), .32); }
+.segmented-control button { border-radius: 12px; }
+.segmented-control button[data-selected="true"] {
+  color: var(--color-foreground); background: var(--glass-command);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), inset 0 0 0 1px var(--glass-edge);
+}
+.nexus-switch { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16); }
+.account-card, .account-library, .game-detail__facts > div, .saves-confirm {
+  border: 1px solid var(--glass-edge);
+  border-radius: 18px;
+  background: linear-gradient(140deg, rgba(235, 247, 255, .085), rgba(218, 239, 255, .025));
+  box-shadow: inset 0 1px 0 rgba(239, 250, 255, .12);
+  backdrop-filter: none;
+}
+.account-library { padding: 1rem 1.2rem; }
+.settings-row__icon, .nexus-plugin-symbol, .console-feature-icon {
+  border-color: var(--glass-edge);
+  background: var(--glass-command);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), 0 6px 16px #0002;
+  border-radius: 16px;
+}
+
+/* Artwork keeps its original geometry; only the information strip is frosted. */
+.library-clean .library-entry, .search-card, .capture-screen .capture-card {
+  border: 1px solid var(--glass-edge);
+  border-radius: 18px;
+  box-shadow: inset 0 1px 0 var(--glass-highlight), 0 12px 32px #0003;
+}
+.library-clean .library-entry__copy {
+  left: 0; right: 0; bottom: 0;
+  padding: .8rem 1rem;
+  background: linear-gradient(135deg, rgba(223, 243, 255, .1), rgba(var(--glass-tint), .6));
+  border-top: 1px solid rgba(235, 247, 255, .16);
+  backdrop-filter: blur(16px) saturate(135%);
+}
+.search-card, .capture-screen .capture-card { background: var(--glass-surface); }
+.search-field, .library-search, .library-select select, .account-search,
+.capture-toolbar input, .capture-toolbar select {
+  border: 1px solid var(--glass-edge);
+  border-radius: 16px;
+  background: var(--glass-command);
+  box-shadow: inset 0 1px 0 rgba(239, 250, 255, .15);
+}
+.search-field { backdrop-filter: blur(20px); }
+.search-field input { background: transparent; }
+
+/* Portal windows inherit tokens from the document, including Solaris. */
+.dialog-overlay, .trailer-overlay, .capture-dialog-overlay {
+  background: rgba(2, 7, 14, .42);
+  backdrop-filter: blur(8px) saturate(85%);
+}
+.account-dialog, .launch-dialog, .trailer-dialog, .screenshot-dialog,
+.capture-dialog, .nexus-menu {
+  color: var(--color-foreground);
+  border: 1px solid var(--glass-edge);
+  border-radius: 28px;
+  background: var(--glass-window);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), inset 0 0 0 1px rgba(255, 255, 255, .045), 0 32px 100px rgba(0, 5, 12, .48);
+  backdrop-filter: blur(32px) saturate(155%);
+}
+.account-dialog { padding: clamp(1.5rem, 3vw, 2.2rem); }
+.account-dialog > h2 { font-weight: 500; letter-spacing: -.035em; }
+.nexus-menu { border-radius: 20px; }
+.game-customize-dialog .game-detail__customize { background: transparent; border: 0; box-shadow: none; backdrop-filter: none; }
+.saves-dialog .nexus-plugin-card { background: rgba(226, 244, 255, .035); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .1); backdrop-filter: none; }
+.account-dialog input:not([type="checkbox"]):not([type="range"]), .settings-manual-confirm input {
+  color: var(--color-foreground); border-color: var(--glass-edge); border-radius: 12px;
+  background: rgba(var(--glass-tint), .42); box-shadow: inset 0 1px 4px #0002;
+}
+.settings-manual-confirm { background: var(--glass-surface); border-radius: 20px; border-color: var(--glass-edge); }
+
+/* Compact glass commands; focus stays explicit for keyboard and controller. */
+.screen-tool, .console-pill, .settings-audio-toggle, .settings-inline-action, .provider-action,
+.nexus-plugin-card .capture-actions button, .saves-dialog .capture-actions button,
+.capture-screen .capture-actions button, .capture-dialog button,
+.library-focus__action, .library-focus__trailer, .trailer-dialog__close {
+  background: var(--glass-command);
+  color: var(--color-foreground);
+  border: 1px solid var(--glass-edge);
+  border-radius: 999px;
+  box-shadow: inset 0 1px 0 rgba(244, 252, 255, .2), 0 4px 12px #0001;
+  transition: background 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+.screen-tool:hover:not(:disabled), .console-pill:hover:not(:disabled), .settings-inline-action:hover:not(:disabled), .trailer-dialog__close:hover {
+  background: linear-gradient(135deg, rgba(242, 251, 255, .23), rgba(224, 244, 255, .09)), rgba(var(--glass-tint), .4);
+  border-color: var(--glass-highlight);
+}
+.screen-tool:focus-visible, .console-pill:focus-visible, .settings-inline-action:focus-visible, .provider-action:focus-visible, .trailer-dialog__close:focus-visible {
+  outline: 2px solid var(--color-focus); outline-offset: 4px;
+}
+
+@media (max-width: 820px) {
+  .settings-content { padding: 1rem; border-radius: 20px; }
+  .settings-nav { background: transparent; border: 0; box-shadow: none; backdrop-filter: none; padding: .3rem 0 .65rem; }
+  .account-dialog, .capture-dialog { border-radius: 24px; }
+  .library-clean .library-entry__copy { padding: .6rem .7rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .screen-tool, .console-pill, .settings-audio-toggle, .settings-inline-action, .provider-action, .capture-dialog button,
+  .nexus-plugin-card .capture-actions button, .saves-dialog .capture-actions button,
+  .library-focus__action, .library-focus__trailer, .trailer-dialog__close { transition: none; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  :root, [data-theme] {
+    --glass-surface: rgb(var(--glass-tint)); --glass-window: rgb(var(--glass-tint));
+    --glass-command: rgb(var(--glass-tint));
+  }
+  .settings-content, .settings-nav, .nexus-plugin-card, .capture-engine, .game-detail__panel,
+  .game-activity, .account-dialog, .launch-dialog, .trailer-dialog, .screenshot-dialog,
+  .capture-dialog, .nexus-menu, .search-field, .library-clean .library-entry__copy { backdrop-filter: none; }
+  .library-clean .library-entry__copy { background: rgb(var(--glass-tint)); }
+  .screen-tool:hover:not(:disabled), .console-pill:hover:not(:disabled),
+  .settings-inline-action:hover:not(:disabled), .trailer-dialog__close:hover { background: rgb(var(--glass-tint)); }
+  .dialog-overlay, .trailer-overlay, .capture-dialog-overlay { background: #020710b3; backdrop-filter: none; }
+}

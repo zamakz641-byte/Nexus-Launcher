@@ -1,5 +1,15 @@
 # Prototype Instructions
 
+## Interior material feedback (2026-10-06)
+
+- Home is the approved visual reference. Interior screens and all portal windows
+  must visibly share its console/liquid glass identity: translucent contextual
+  panels, soft edge reflections, depth and compact glass commands. Avoid opaque
+  flat dialog backgrounds. Keep localized text readable and focus explicit.
+- Shared material overrides live in `src/materials.css`, loaded after legacy
+  screen styles. Blur large surfaces once, tint nested rows, respect Solaris,
+  reduced motion/transparency and existing artwork brightness/dimming controls.
+
 ## Current Saves decisions (2026-10-06)
 
 - Nexus Saves is an independently downloadable native MIT plugin based on pinned
