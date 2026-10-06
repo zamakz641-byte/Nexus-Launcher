@@ -16,6 +16,14 @@ jobs:
         with:
           fetch-depth: 0
       - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            plugins/nexus-saves/target
+          key: nexus-saves-windows-${{ hashFiles('plugins/nexus-saves/Cargo.toml') }}
+          restore-keys: nexus-saves-windows-
       - name: Test real fixture backup and restore
         working-directory: plugins/nexus-saves
         run: cargo test
@@ -25,7 +33,7 @@ jobs:
       - name: Collect dependency licenses
         working-directory: plugins/nexus-saves
         run: |
-          cargo install cargo-about --locked
+          cargo install cargo-about --version 0.9.2 --features cli --locked
           cargo about generate about.hbs --output-file target/DEPENDENCY_LICENSES.html
       - name: Package native engine and source
         shell: pwsh
@@ -41,7 +49,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           $ErrorActionPreference = 'Stop'
-          $tag = 'plugin-nexus-saves-v0.1.0'
+          $tag = 'plugin-nexus-saves-v0.1.1'
           gh release view $tag --repo $env:GITHUB_REPOSITORY 2>$null
           if ($LASTEXITCODE -eq 0) {
             $publishedTree = git rev-parse "$tag`:plugins/nexus-saves"
@@ -50,4 +58,4 @@ jobs:
             exit 0
           }
           $assets = @(Get-ChildItem -LiteralPath out/saves -File | ForEach-Object FullName)
-          gh release create $tag @assets --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title 'Nexus Saves 0.1.0' --notes-file plugins/nexus-saves/README.md --latest=false
+          gh release create $tag @assets --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title 'Nexus Saves 0.1.1' --notes-file plugins/nexus-saves/README.md --latest=false

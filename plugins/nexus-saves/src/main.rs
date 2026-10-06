@@ -28,6 +28,9 @@ fn engine(command: &Command, recovery: bool) -> Result<Ludusavi, &'static str> {
     config.backup.retention.differential = 0;
     config.backup.retention.force_new_full = true;
     config.backup.filter.exclude_store_screenshots = true;
+    // A destination inside a save folder must never back up its own backup tree.
+    config.backup.filter.ignored_paths.push(StrictPath::new(command.destination.clone()));
+    config.backup.filter.ignored_paths.push(StrictPath::new(command.data.clone()));
     config.cloud.synchronize = false;
     config.release.check = false;
     config.add_common_roots();

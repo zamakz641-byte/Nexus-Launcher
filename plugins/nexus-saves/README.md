@@ -1,4 +1,4 @@
-# Nexus Saves · 0.1.0
+# Nexus Saves · 0.1.1
 
 An optional Windows save backup engine for Nexus Launcher. It uses Ludusavi's
 MIT library at commit `70f4abb31497fa5ed9b0d24098200f3662d6fda9`, with
