@@ -1,6 +1,10 @@
 name: Nexus Saves plugin
 on:
   workflow_call:
+    inputs:
+      publish:
+        type: boolean
+        default: false
   workflow_dispatch:
   push:
     branches: [main]
@@ -51,7 +55,7 @@ jobs:
           name: nexus-saves-package
           path: out/saves/*
       - name: Publish optional plugin
-        if: github.event_name == 'workflow_call'
+        if: inputs.publish == true
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}

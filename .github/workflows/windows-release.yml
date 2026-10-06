@@ -27,6 +27,8 @@ jobs:
     uses: ./.github/workflows/nexus-replay.yml
   saves:
     uses: ./.github/workflows/nexus-saves.yml
+    with:
+      publish: true
   windows:
     needs: [replay, saves]
     runs-on: windows-latest
