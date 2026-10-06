@@ -27,6 +27,14 @@ jobs:
       - name: Test real fixture backup and restore
         working-directory: plugins/nexus-saves
         run: cargo test
+      - name: Save verified Rust build cache
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            plugins/nexus-saves/target
+          key: nexus-saves-windows-${{ hashFiles('plugins/nexus-saves/Cargo.toml') }}
       - name: Build library without upstream GUI
         working-directory: plugins/nexus-saves
         run: cargo build --release --locked
