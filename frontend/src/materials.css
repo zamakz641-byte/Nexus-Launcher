@@ -45,7 +45,14 @@
 .settings-nav { padding: .65rem; }
 .settings-content { padding: clamp(1.2rem, 2vw, 2rem); }
 .settings-content__header { padding-bottom: 1.4rem; }
+.settings-list {
+  display: grid;
+  grid-auto-rows: max-content;
+  gap: .85rem;
+  padding: .85rem .5rem .75rem 0;
+}
 .settings-row {
+  padding: 1rem 1.1rem;
   border: 1px solid rgba(229, 245, 255, .09);
   border-radius: 16px;
   background: linear-gradient(115deg, rgba(235, 247, 255, .045), transparent);
@@ -148,6 +155,7 @@
 
 @media (max-width: 820px) {
   .settings-content { padding: 1rem; border-radius: 20px; }
+  .settings-row { padding: .85rem; }
   .settings-nav { background: transparent; border: 0; box-shadow: none; backdrop-filter: none; padding: .3rem 0 .65rem; }
   .account-dialog, .capture-dialog { border-radius: 24px; }
   .library-clean .library-entry__copy { padding: .6rem .7rem; }
