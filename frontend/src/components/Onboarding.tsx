@@ -1,10 +1,12 @@
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { FolderSimplePlus, GameController, GlobeHemisphereWest, Sparkle } from "@phosphor-icons/react";
+import { FolderSimplePlus, GameController, GlobeHemisphereWest, Sparkle, Trophy, Check } from "@phosphor-icons/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNexusStore } from "../state/useNexusStore";
 import type { Locale, ThemeId } from "../types";
 import { NexusLogo } from "./NexusLogo";
+import { useSteamNotifications } from "../hooks/useSteamNotifications";
+import { steamConsoleCopy } from "../steamConsoleCopy";
 
 interface OnboardingProps { open: boolean; onComplete: () => void; onAddFolder: () => Promise<{ folder: string; count: number } | null>; }
 
@@ -18,6 +20,10 @@ export function Onboarding({ open, onComplete, onAddFolder }: OnboardingProps) {
   const [importing, setImporting] = useState(false);
   const [folder, setFolder] = useState("");
   const [libraryChoice, setLibraryChoice] = useState(false);
+  const [notifyChoice,setNotifyChoice]=useState(false);
+  const notifications=useSteamNotifications(open),notifyCopy=steamConsoleCopy[useNexusStore(state=>state.locale)];
+  const notifyInitialized=useRef(false);
+  useEffect(()=>{if(open&&notifications.status&&!notifyInitialized.current){notifyInitialized.current=true;setNotifyChoice(notifications.status.enabled||['downloading','installing'].includes(notifications.status.state));}},[open,notifications.status]);
   const frame = useRef<HTMLDivElement>(null);
   const mounted = useRef(true);
   const locale = useNexusStore((state) => state.locale);
@@ -52,7 +58,11 @@ export function Onboarding({ open, onComplete, onAddFolder }: OnboardingProps) {
   };
 
   const next = () => {
-    if (step === steps.length - 1) onComplete();
+    if (step === steps.length - 1) {
+      if(notifyChoice&&!notifications.status?.enabled&&!notifications.busy)void notifications.activate();
+      else if(!notifyChoice){void notifications.desktop?.cancelSteamNotificationSetup();if(notifications.status?.enabled)void notifications.disable();}
+      onComplete();
+    }
     else setStep((current) => current + 1);
   };
 
@@ -121,6 +131,7 @@ export function Onboarding({ open, onComplete, onAddFolder }: OnboardingProps) {
                     <span className="onboarding__eyebrow">{t("onboarding.control")}</span>
                     <h1 style={{ whiteSpace: "pre-line" }}>{t("onboarding.controlHero")}</h1>
                     <p>{t("onboarding.controlDesc")}</p>
+                    {notifications.desktop?.activateSteamNotifications&&<button className="onboarding-notification-choice" type="button" role="checkbox" aria-checked={notifyChoice} onClick={()=>setNotifyChoice(value=>!value)}><Trophy size={27} weight="duotone"/><span><strong>{notifyCopy.onboarding}</strong><small>{notifications.busy?notifyCopy.downloading+' '+(notifications.status?.progress||0)+'%':notifyCopy.onboardingHint}</small></span><i>{notifyChoice&&<Check size={17} weight="bold"/>}</i></button>}
                     <div className="control-demo" aria-hidden="true"><kbd>↑</kbd><span><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd></span><i /><kbd className="control-demo__confirm">A</kbd></div>
                   </>
                 ) : null}

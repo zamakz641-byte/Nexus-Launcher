@@ -7,7 +7,7 @@
 **Your PC game library, in one cinematic space.**  
 **Tous vos jeux PC dans un espace cinématique.**
 
-[English](#english) · [Français](#français) · [Download V2.2.1](https://github.com/zamakz641-byte/Nexus-Launcher/releases/tag/v2.2.1)
+[English](#english) · [Français](#français) · [Download V2.3.0](https://github.com/zamakz641-byte/Nexus-Launcher/releases/tag/v2.3.0)
 
 <img src="frontend/docs/screenshots/home.png" alt="Nexus Launcher home screen" width="100%" />
 
@@ -23,13 +23,13 @@ Nexus Launcher is a Windows desktop app for browsing and launching games from a 
 - **Game details:** fetch available Steam metadata, artwork, and trailers; correct a game's title to search again.
 - **Personal controls:** choose covers and backgrounds, set a SteamGridDB API key in the desktop app, and switch between French and English.
 - **Made for the couch:** keyboard and controller navigation, a cinematic home screen, and the restrained “Minimal · tactile” sound set.
-- **Playtime:** tracks sessions launched through Nexus. Historical Steam playtime is displayed after account synchronization; Epic playtime is not imported.
+- **Playtime:** tracks sessions launched through Nexus. Available historical Steam playtime comes from the Steam client cache, without a Steam API key. Recent Nexus sessions show real dates and durations; Epic playtime is not imported.
 
 <table><tr><td width="50%"><img src="frontend/docs/screenshots/library.png" alt="Landscape game library" /></td><td width="50%"><img src="frontend/docs/screenshots/settings.png" alt="Library settings and game sources" /></td></tr></table>
 
 ### Download and install
 
-1. Open the [V2.2.1 release](https://github.com/zamakz641-byte/Nexus-Launcher/releases/tag/v2.2.1).
+1. Open the [V2.3.0 release](https://github.com/zamakz641-byte/Nexus-Launcher/releases/tag/v2.3.0).
 2. Choose **Setup.exe** for an installer or **Portable.exe** to run without installation. Both are for **Windows x64**.
 3. On first launch, choose your games folder in the native picker, use automatic Steam/Epic discovery, or explicitly set up later. Add more sources in **Settings → Libraries**.
 
@@ -70,9 +70,9 @@ The earlier Python/pywebview edition is preserved in [`archive/legacy-python-v1.
 
 ### Current source improvements / Améliorations des sources actuelles
 
-Artwork now persists offline, refresh is available throughout the app (button or F5), and holding a ready game launches it. The desktop app minimizes during tracked sessions and returns afterward. Steam achievements use real account data with explicit API and privacy requirements. See [reliability, verification and sync roadmap](docs/RELIABILITY-AND-SYNC.md) for behavior and limits. The V2.2 installers include these improvements.
+Artwork now persists offline, refresh is available throughout the app (button or F5), and holding a ready game launches it. The desktop app minimizes during tracked sessions and returns afterward. Steam progress uses available client cache data, with explicit cached/unavailable states. See [reliability, verification and sync roadmap](docs/RELIABILITY-AND-SYNC.md) for behavior and limits. The V2.2 installers include these improvements.
 
-Les images sont conservées hors ligne, l’actualisation est accessible partout (bouton ou F5) et un appui long lance le jeu choisi. Nexus se réduit pendant les sessions suivies et revient à leur fermeture. Les succès Steam utilisent les données réelles du compte après configuration. Voir [les détails et limites](docs/RELIABILITY-AND-SYNC.md). Les installateurs V2.2 incluent ces améliorations.
+Les images sont conservées hors ligne, l’actualisation est accessible partout (bouton ou F5) et un appui long lance le jeu choisi. Nexus se réduit pendant les sessions suivies et revient à leur fermeture. Les succès Steam disponibles utilisent le cache réel du client, qui peut être incomplet. Voir [les détails et limites](docs/RELIABILITY-AND-SYNC.md). Les installateurs V2.2 incluent ces améliorations.
 
 Nexus Launcher est une application Windows pour parcourir et lancer vos jeux dans une bibliothèque visuelle adaptée au clavier et à la manette. Elle détecte les jeux Steam et Epic installés et permet d’ajouter n’importe quel jeu Windows en sélectionnant son fichier `.exe`.
 
@@ -82,11 +82,11 @@ Nexus Launcher est une application Windows pour parcourir et lancer vos jeux dan
 - **Fiches de jeu :** métadonnées Steam disponibles, jaquettes et bandes-annonces ; un titre corrigé relance la recherche.
 - **Personnalisation :** choix des images, clé SteamGridDB dans l’application de bureau et interface en français ou en anglais.
 - **Navigation salon :** clavier, manette, accueil cinématique et sons discrets « Minimal · tactile ».
-- **Temps de jeu :** suivi des sessions lancées depuis Nexus. Les heures historiques Steam sont affichées après synchronisation du compte ; les heures Epic ne sont pas importées.
+- **Temps de jeu :** suivi des sessions lancées depuis Nexus. Les heures Steam disponibles proviennent du cache local du client, sans clé API Steam. Les dernières sessions Nexus affichent leurs dates et durées réelles ; les heures Epic ne sont pas importées.
 
 ### Télécharger
 
-1. Ouvrez la [release V2.2.1](https://github.com/zamakz641-byte/Nexus-Launcher/releases/tag/v2.2.1).
+1. Ouvrez la [release V2.3.0](https://github.com/zamakz641-byte/Nexus-Launcher/releases/tag/v2.3.0).
 2. Choisissez **Setup.exe** pour l’installation ou **Portable.exe** pour lancer Nexus sans installation. Les deux versions sont pour **Windows x64**.
 3. Au premier démarrage, choisissez le dossier de vos jeux dans l’explorateur. Vous pouvez aussi utiliser Steam/Epic ou configurer plus tard. Ajoutez ensuite des sources dans **Paramètres → Bibliothèques**.
 
@@ -102,35 +102,18 @@ L’ancienne édition Python/pywebview est conservée dans [`archive/legacy-pyth
 
 
 
-## V2.2: Media & achievements / Médias et succès
+## V2.3 Player Update
 
-Clearer artwork, a calm HD slideshow, multiple Steam trailers, screenshot galleries and real Steam achievements with encrypted credentials.
+**Settings → Accounts → Steam:** open Steam to use its local profile. Available hours and partial achievement progress are read from Steam’s cache; no Steam API key or technical ID is required. Cache data can be old or missing. Refresh after opening Steam’s game page. SteamGridDB remains an optional artwork provider with its own key.
 
-Des fonds plus clairs, un diaporama HD, plusieurs trailers Steam, une galerie de captures et des succès Steam réels avec identifiants chiffrés.
+**Achievement notifications:** enable the single notification control, or select the optional checkbox in Setup/onboarding. Nexus opens Steam and downloads the official [Steam Achievement Notifier](https://github.com/SteamAchievementNotifier/SteamAchievementNotifier) installer when needed, verifying its SHA256 digest before running it. SAN remains separate and handles its own live notifications and customization. Steam must be signed in; a real unlock still needs user verification. Borderless/windowed modes are recommended. Manage SAN started outside Nexus in SAN itself.
 
-[Behavior and limitations / Fonctionnement et limites](docs/MEDIA-AND-ACHIEVEMENTS.md)
+**Paramètres → Comptes → Steam :** ouvrez Steam pour retrouver son profil local. Les heures et succès disponibles proviennent de son cache, parfois ancien ou incomplet. Aucune clé API Steam ni identifiant technique à saisir. Le bouton de notifications, également proposé dans Setup et au premier démarrage, ouvre Steam et installe SAN si nécessaire après vérification SHA256. SAN conserve ses propres réglages.
 
-### Account connections in the development source / Comptes dans la version de développement
+**Recent sessions / Dernières sessions :** game details show actual sessions launched through Nexus. Interrupted sessions have no invented duration. Steam totals stay separate. No fabricated FPS, temperatures or achievement counts are shown.
 
-**Settings → Accounts** provides Steam, Epic Games and GOG connection buttons and owned-library browsing. Steam supplies playtime and achievements when game details are accessible. Epic/GOG owned-library connections use the community desktop protocols implemented by Legendary/GOGDL; achievements and cloud saves are not synchronized. Live authenticated Epic/GOG sign-in still needs user verification. The browser preview cannot connect accounts: use the desktop app. These latest source changes are not yet in the published V2.2 executable.
+Epic/GOG account sign-in uses isolated desktop windows. Their owned libraries are separate from detected installations. Their achievements/cloud saves are not synchronized; authenticated sign-in still needs verification with real user accounts.
 
-**Paramètres → Comptes** regroupe les boutons Steam, Epic Games et GOG et les bibliothèques possédées. Steam fournit aussi le temps de jeu et les succès accessibles. Les connexions Epic/GOG restent à vérifier avec des comptes réels ; leurs succès et sauvegardes ne sont pas synchronisés. Ces changements du code source ne sont pas encore inclus dans l’exécutable V2.2 publié.
+The new internal module system separates Core events, Achievements, GameActivity and the notification overlay. Capture/replay, cloud saves, suspension and the Quick Menu are planned future modules, not included features.
 
-See [account behavior and verification](docs/MEDIA-AND-ACHIEVEMENTS.md).
-
-### Steam browser connection
-
-The current source opens Steam sign-in in Chrome using your existing session. After confirming the official Steam page, Nexus links your profile. Library, Steam playtime and achievements require a Steam Web API key; SteamGridDB only supplies artwork. See the [UX audit and improvement priorities](docs/UX-AUDIT-2026-10-04.md). Included in the V2.2.0 release.
-
-### V2.2 connected accounts / Comptes reliés
-
-Steam, Epic and GOG account controls live in **Settings → Accounts**. Steam opens Chrome; Epic and GOG use an isolated sign-in window. Owned libraries stay separate from locally detected installation status. [Release notes](frontend/RELEASE_NOTES.md) · [Launch kit / Kit de lancement](docs/LAUNCH-KIT.md).
-
-
-### Steam Achievement Notifier companion (V2.2.1)
-
-Settings / Accounts / Steam includes an optional [Steam Achievement Notifier](https://github.com/SteamAchievementNotifier/SteamAchievementNotifier) companion. Download and install SAN from its official releases, click Detect (or choose the installed SAN executable), then enable startup before Steam games. SAN provides its own live notifications without an API key, with animations, themes and sounds configured in SAN. Steam must be running and signed in. Nexus avoids duplicate notifications when SAN launches successfully; its built-in fallback checks Steam every 30 seconds during tracked sessions. Windowed/borderless modes are recommended; exclusive fullscreen may hide notifications.
-
-SAN remains separate and is not bundled. Historical playtime and achievement lists inside Nexus still require Steam Web API synchronization. Linking a profile alone does not activate that synchronization.
-
-Dans Paramètres / Comptes / Steam, téléchargez et installez SAN depuis sa page officielle, puis Détecter ou Choisir SAN (.exe). Activez son lancement avant les jeux Steam. Les thèmes, animations et sons se règlent dans SAN. Ses notifications en direct ne demandent pas de clé API ; les heures et l'historique dans Nexus nécessitent toujours la synchronisation Steam. SAN reste une application séparée.
+[Architecture and roadmap](docs/MODULES.md) · [Release notes](frontend/RELEASE_NOTES.md) · [Launch kit](docs/LAUNCH-KIT.md)

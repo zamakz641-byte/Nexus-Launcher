@@ -1,6 +1,7 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { accountsCopy } from "../accountsCopy";
 import { SteamPlaytime } from "../components/SteamPlaytime";
+import { GameActivity } from '../components/GameActivity';
 import { X, SlidersHorizontal, Link, ArrowLeft, CheckCircle, Clock, FilmSlate, GameController, HardDrives, Play, Star, Trophy } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
@@ -83,6 +84,7 @@ export function GameDetailScreen({ onLaunch }: GameDetailScreenProps) {
       <AnimatePresence mode="wait" initial={false}>
         <motion.div className="game-detail__panel" key={tab} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -3 }} transition={{ duration: .18 }}>
           {tab === "overview" ? <>
+            {game.discovered?<GameActivity gameId={game.id} locale={locale}/>:null}
             <div className="game-detail__summary"><span className="screen-kicker">{t("detail.about")}</span><p>{game.description[locale]}</p></div>
             <dl className="game-detail__specs"><div><dt>{t("detail.developer")}</dt><dd>{game.developer}</dd></div><div><dt>{t("detail.publisher")}</dt><dd>{game.publisher}</dd></div><div><dt>{t("detail.release")}</dt><dd>{game.releaseDate}</dd></div>{game.ageRating !== "Non renseigné" ? <div><dt>{t("detail.rating")}</dt><dd>{game.ageRating}</dd></div> : null}<div><dt>{t("detail.metadata")}</dt><dd>{game.metadataProvider}</dd></div>{game.executablePath ? <div><dt>{t("detail.executable")}</dt><dd>{game.executablePath.split(/[\\/]/).pop()}</dd></div> : null}</dl>
           </> : null}

@@ -50,5 +50,5 @@ test('changing language during a pending login does not lock account buttons',as
 test('linked Steam identity is not presented as synchronized account data',async()=>{
   fixture();vi.mocked(window.nexusDesktop!.getSteamAccountStatus).mockResolvedValue({linked:true,configured:false,storageAvailable:true});
   render(<MemoryRouter><ConnectedAccounts locale="en"/></MemoryRouter>);
-  expect(await screen.findByText('Profile linked · synchronization required')).toBeTruthy();
+  expect(await screen.findByText('Local profile available')).toBeTruthy();
 });

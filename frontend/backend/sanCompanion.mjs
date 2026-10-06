@@ -15,7 +15,7 @@ export class SanCompanion {
   constructor(root,{platform=process.platform,programRoots=[join(process.env.LOCALAPPDATA||root,'Programs'),process.env.ProgramFiles,process.env['ProgramFiles(x86)']].filter(Boolean),spawn:spawnProcess=spawn,isRunning=running}={}){
     Object.assign(this,{root,platform,programRoots,spawn:spawnProcess,isRunning});this.file=join(root,'san-companion.json');this.writes=Promise.resolve();
   }
-  async preferences(){try{const value=JSON.parse(await readFile(this.file,'utf8'));return {enabled:value.enabled===true,executable:typeof value.executable==='string'?value.executable:''};}catch{return {enabled:false,executable:''};}}
+  async preferences(){try{const value=JSON.parse(await readFile(this.file,'utf8'));return {enabled:value.enabled===true,executable:typeof value.executable==='string'?value.executable:'',installerRequestHandled:value.installerRequestHandled===true};}catch{return {enabled:false,executable:''};}}
   async valid(exe){return typeof exe==='string'&&isAbsolute(exe)&&executableName.test(basename(exe))&&(await stat(exe).catch(()=>null))?.isFile();}
   async detect(preferred){
     if(this.platform!=='win32')return '';
@@ -28,7 +28,8 @@ export class SanCompanion {
   async status(){const prefs=await this.preferences(),exe=await this.detect(prefs.executable);return {enabled:prefs.enabled,installed:!!exe,executable:exe,supported:this.platform==='win32'};}
   save(value){const task=this.writes.then(async()=>{await mkdir(this.root,{recursive:true});await writeFile(this.file+'.tmp',JSON.stringify(value),'utf8');await rename(this.file+'.tmp',this.file);});this.writes=task.catch(()=>{});return task;}
   async choose(executable){if(this.platform!=='win32'||!await this.valid(executable))throw new Error('invalid-san-executable');const prefs=await this.preferences();await this.save({...prefs,executable});return this.status();}
-  async enable(enabled){if(typeof enabled!=='boolean')throw new Error('invalid-preference');const value=await this.status();if(enabled&&!value.installed)throw new Error('san-not-installed');await this.save({enabled,executable:value.executable});return this.status();}
+  async enable(enabled){if(typeof enabled!=='boolean')throw new Error('invalid-preference');const value=await this.status();if(enabled&&!value.installed)throw new Error('san-not-installed');await this.save({...await this.preferences(),enabled,executable:value.executable});return this.status();}
+  async stopOwned(){if(this.child){this.child.kill();this.child=null;return true;}return false;}
   ensureStarted(){if(this.pending)return this.pending;this.pending=this.start().finally(()=>{this.pending=null;});return this.pending;}
   async start(){
     const value=await this.status();if(!value.enabled)return {state:'disabled'};if(!value.installed)return {state:'missing'};

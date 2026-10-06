@@ -1,5 +1,25 @@
 # Prototype Instructions
 
+## Current Player Update decisions (2026-10-06)
+
+- Current Steam UX supersedes the historical OpenID/API-key instructions below:
+  open the installed Steam client, use its local profile/cache for available hours
+  and partial achievement progress, label cached/unavailable data honestly. Do not
+  request Steam API keys or SteamIDs in the normal user flow.
+- Steam Achievement Notifier is an optional separate companion. A single localized
+  notification control opens Steam and, if needed, downloads the official SAN
+  installer with SHA256 verification. Offer the same opt-in in Setup/onboarding.
+  Keep the console glass identity, short copy, controller focus and FR/EN parity.
+- Build internal modules before Capture/CloudSaves/QuickResume. Core publishes
+  lifecycle events, modules own subscriptions/state, overlays own presentation.
+  Optional-module failures must not block game launches. No arbitrary renderer
+  event publishing or third-party code loading in V2.3.
+- GameActivity records only actual launches through Nexus. Persist session dates
+  and measured durations, keep Steam time separate, and mark interrupted sessions
+  without inventing their duration. FPS/temperatures require a real future provider.
+- Planned stages: V2.3 Player; V2.4 Capture/Quick Menu; V2.5 Cloud Saves/Continuity;
+  V3 Platform. Evaluate project APIs/CLIs and licenses before integrating code.
+
 ## Current desktop direction (2026-09-24)
 
 - Nexus Launcher remains an Electron desktop app using `nexus://app/`, isolated preload IPC, sandboxing, native game launch, local library discovery, controller navigation, and F11 fullscreen. The older root `ARCHITECTURE.md` Tauri proposal is historical.

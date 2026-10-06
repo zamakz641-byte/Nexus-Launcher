@@ -68,7 +68,11 @@ export function ConnectedAccounts({locale}:{locale:'fr'|'en'}) {
     finally{if(revision===generation.current)setBusy(null);}
   };
   const active=results[selected];
-  const filtered=active?.games.filter(game=>game.title.toLocaleLowerCase(locale).includes(query.toLocaleLowerCase(locale)))||[];
+  const visibleGames=active?.games.map(game=>{
+    const local=selected==='steam'?localGames.find(item=>String(item.steamAppId)===game.id):undefined;
+    return local?{...game,title:local.title}:game;
+  }).filter(game=>active.scope!=='local'||game.title!==`Steam ${game.id}`)||[];
+  const filtered=visibleGames.filter(game=>game.title.toLocaleLowerCase(locale).includes(query.toLocaleLowerCase(locale)));
   return <div className="connected-accounts">
     <p className="accounts-intro">{copy.subtitle}</p>
     {!desktop?<p role="status">{copy.desktop}</p>:null}
@@ -80,10 +84,10 @@ export function ConnectedAccounts({locale}:{locale:'fr'|'en'}) {
     </article>)}</div>
     <p className="accounts-security">{copy.credentials}</p><p role="status">{message}</p>
     <section className="account-library" aria-label={copy.library}>
-      <header><h3>{names[selected]} <span>{active?.state==='ready'||active?.lastSynced?active.games.length:'—'} {copy.owned}</span></h3><button className="screen-tool" disabled={!desktop||busy!==null||!statuses[selected]?.configured} onClick={()=>void load(selected,true)} type="button">{copy.sync}</button></header>
+      <header><h3>{names[selected]} <span>{active?.state==='ready'||active?.lastSynced?visibleGames.length:'—'} {active?.scope==='local'?copy.localGames:copy.owned}</span></h3><button className="screen-tool" disabled={!desktop||busy!==null||!statuses[selected]?.configured} onClick={()=>void load(selected,true)} type="button">{copy.sync}</button></header>
       {busy?<p role="status">{copy.loading}</p>:active?.state!=='ready'?<p>{copy[active?.state||'unconfigured']}</p>:null}
       {active?.lastSynced?<p className="account-library__sync">{copy.lastSync}: {new Date(active.lastSynced).toLocaleString(locale)}{active.cached?` · ${copy.cached}`:''}</p>:null}
-      {active?.games.length?<><input className="account-search" aria-label={copy.search} placeholder={copy.search} value={query} onChange={event=>setQuery(event.target.value)}/><ul>{filtered.map(game=>{
+      {visibleGames.length?<><input className="account-search" aria-label={copy.search} placeholder={copy.search} value={query} onChange={event=>setQuery(event.target.value)}/><ul>{filtered.map(game=>{
         const local=localGames.find(item=>selected==='steam'?String(item.steamAppId)===game.id:item.source===(selected==='epic'?'Epic Games':'GOG')&&item.title.toLocaleLowerCase()===game.title.toLocaleLowerCase());
         return <li key={game.id}><div><strong>{game.title}</strong><small>{local?.installed?copy.installed:copy.notInstalled}{game.playtimeMinutes!==undefined?` · ${Math.floor(game.playtimeMinutes/60)} h ${Math.floor(game.playtimeMinutes%60)} ${copy.minutes}`:''}</small></div>{local?<button className="screen-tool" type="button" onClick={()=>navigate(`/game/${local.id}`)}>{copy.open}</button>:null}</li>;
       })}</ul>{!filtered.length?<p>{copy.noResults}</p>:null}</>:active?.state==='ready'?<p>{copy.empty}</p>:null}

@@ -2,6 +2,11 @@ import { app, BrowserWindow, dialog, ipcMain, net, protocol, safeStorage, shell,
 import { readFile, stat } from "node:fs/promises";
 import { extname, isAbsolute, join, normalize, relative, resolve, dirname } from "node:path";
 import { spawn } from "node:child_process";
+import { randomUUID } from 'node:crypto';
+import { EventBus, ModuleHost } from './core/moduleHost.mjs';
+import { GameActivity } from './modules/gameActivity.mjs';
+import { AchievementsModule } from './modules/achievements.mjs';
+import { NotificationOverlayModule } from './overlay/notifications.mjs';
 import { homedir } from "node:os";
 import { pathToFileURL } from "node:url";
 import { LibraryRegistry } from "./libraryRegistry.mjs";
@@ -14,8 +19,9 @@ import { AchievementOverlay } from './achievementOverlay.mjs';
 import { SanCompanion } from './sanCompanion.mjs';
 let sanCompanion;
 function getSanCompanion(){return sanCompanion ||= new SanCompanion(app.getPath('userData'));}
-import { SteamAchievements } from "./steamAchievements.mjs";
-import { SteamOpenId, createSteamBrowserLauncher } from './steamOpenId.mjs';
+import { LocalSteamProgress } from "./steamLocal.mjs";
+import { SanInstaller } from "./sanInstaller.mjs";
+
 import { StoreAccounts } from './storeAccounts.mjs';
 import { createStoreLogin } from './storeLogin.mjs';
 
@@ -24,10 +30,28 @@ function getAchievementOverlay() {
   if(!achievementOverlay||achievementOverlay.disposed)achievementOverlay=new AchievementOverlay(BrowserWindow,()=>mainWindow&&!mainWindow.isDestroyed()?screen.getDisplayMatching(mainWindow.getBounds()):screen.getDisplayNearestPoint(screen.getCursorScreenPoint()));
   return achievementOverlay;
 }
-function getAchievementMonitor(){return achievementMonitor ||= new AchievementMonitor(getSteamAchievements(),notice=>getAchievementOverlay().show(notice),{settings:()=>getSteamAchievements().notificationSettings()});}
+function getAchievementMonitor(){return achievementMonitor ||= new AchievementMonitor(getSteamAchievements(),notice=>void eventBus.publish('AchievementUnlocked',notice),{settings:()=>getSteamAchievements().notificationSettings()});}
 function broadcastSteamData(){for(const window of BrowserWindow.getAllWindows())if(!window.isDestroyed()&&window.webContents.getURL().startsWith('nexus://app/'))window.webContents.send('nexus:steam-data-changed');}
 let artworkCache;
 const gameSessions = new Map();
+const moduleSessions = new Map();
+const eventBus = new EventBus();
+const modules = new ModuleHost(eventBus);
+let gameActivity, achievementsModule;
+async function startModules() {
+  gameActivity = new GameActivity(app.getPath('userData'), {recordPlaytime:async (id,seconds)=>{
+    const registry=await getRegistry();await registry.recordPlaytime(id,seconds);
+    for(const window of BrowserWindow.getAllWindows())if(!window.isDestroyed()&&window.webContents.getURL().startsWith('nexus://app/'))window.webContents.send('nexus:library-changed',registry.snapshot());
+  }});
+  achievementsModule = new AchievementsModule({companion:getSanCompanion,monitor:getAchievementMonitor,
+    progress:getSteamAchievements,sessionFor:id=>moduleSessions.get(id),broadcast:broadcastSteamData});
+  await modules.register(gameActivity);
+  await modules.register(achievementsModule);
+  await modules.register(new NotificationOverlayModule(getAchievementOverlay));
+  eventBus.subscribe('ActivityChanged',({gameId})=>{
+    for(const window of BrowserWindow.getAllWindows())if(!window.isDestroyed()&&window.webContents.getURL().startsWith('nexus://app/'))window.webContents.send('nexus:activity-changed',gameId);
+  });
+}
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -64,10 +88,16 @@ let backendPromise;
 let registryPromise;
 let secretStore;
 let steamAchievements;
-const steamOpenId = new SteamOpenId({openExternal: createSteamBrowserLauncher({openExternal: url => shell.openExternal(url)}), fetch: (url, options) => net.fetch(url, options)});
+let sanInstaller;
+function openSteam(){return shell.openExternal('steam://open/main');}
+function getSanInstaller(){return sanInstaller ||= new SanInstaller(app.getPath('userData'),getSanCompanion(),{fetch:(url,options)=>net.fetch(url,options),openSteam,runInstaller:async(file)=>{
+  await new Promise((resolve,reject)=>{const child=spawn(file,[],{shell:false,stdio:'ignore',windowsHide:false});child.once('error',reject);child.once('exit',code=>code===0?resolve():reject(new Error('install-cancelled')));});
+  for(let i=0;i<15;i++){if((await getSanCompanion().status()).installed)return;await new Promise(resolve=>setTimeout(resolve,2000));}
+}});}
+
 let storeAccounts;
 function getStoreAccounts() { return storeAccounts ||= new StoreAccounts(app.getPath('userData'), safeStorage, { fetch: (url, options) => net.fetch(url, options), login: createStoreLogin(BrowserWindow) }); }
-function getSteamAchievements() { return steamAchievements ||= new SteamAchievements(app.getPath("userData"), safeStorage, { fetch: (url, options) => net.fetch(url, options) }); }
+function getSteamAchievements() { return steamAchievements ||= new LocalSteamProgress(app.getPath("userData")); }
 let discoveryFingerprint = "";
 let discoveryBusy = false;
 function getSecretStore() { return secretStore ||= new SecretStore(app.getPath("userData"), safeStorage); }
@@ -252,15 +282,14 @@ function registerIpc() {
   });
   ipcMain.handle("nexus:steamgrid-status", async () => getSecretStore().status());
   ipcMain.handle("nexus:steam-account-status", async () => getSteamAchievements().status());
-  accountIpc('nexus:steam-account-connect', async () => {
-    const service = getSteamAchievements();
-    if (!service.available()) return {...await service.status(),error:'storage-unavailable'};
-    const generation = service.generation;
-    const result = await steamOpenId.connect();
-    if(result.steamId)achievementOverlay?.dispose();
-    return result.steamId ? service.linkAccount(result.steamId,generation) : {...await service.status(),error:result.error};
-  });
-  accountIpc('nexus:steam-account-cancel', async () => { steamOpenId.cancel(); return getSteamAchievements().status(); });
+  accountIpc('nexus:steam-account-connect',async()=>{await openSteam();const result=await getSteamAchievements().connect();broadcastSteamData();return result;});
+  accountIpc('nexus:steam-account-cancel',()=>getSteamAchievements().status());
+  accountIpc('nexus:steam-notification-status',()=>getSanInstaller().status());
+  accountIpc('nexus:steam-notification-activate',async()=>{await getSteamAchievements().connect();const result=await getSanInstaller().activate();broadcastSteamData();return result;});
+  accountIpc('nexus:steam-notification-cancel',async()=>{getSanInstaller().cancel();return getSanInstaller().status();});
+  accountIpc('nexus:steam-open',async()=>{await openSteam();return {ok:true};});
+  accountIpc('nexus:game-activity',(_event,gameId)=>gameActivity.history(gameId));
+  accountIpc('nexus:module-status',()=>modules.status());
   accountIpc('nexus:steam-library', async (_event, force) => getSteamAchievements().getLibrary(force === true));
   accountIpc('nexus:store-account-status', async (_event, provider) => getStoreAccounts().status(provider));
   accountIpc('nexus:store-account-connect', async (event, provider) => getStoreAccounts().connect(provider, BrowserWindow.fromWebContents(event.sender)));
@@ -272,8 +301,12 @@ function registerIpc() {
     const result=await dialog.showOpenDialog(BrowserWindow.fromWebContents(event.sender),{properties:['openFile'],filters:[{name:'Steam Achievement Notifier',extensions:['exe']}],title:'Steam Achievement Notifier'});
     return result.canceled?getSanCompanion().status():getSanCompanion().choose(result.filePaths[0]);
   });
-  accountIpc('nexus:san-enable',async(_event,enabled)=>{const status=await getSanCompanion().enable(enabled);return status;});
-  accountIpc('nexus:san-launch',()=>getSanCompanion().ensureStarted());
+  accountIpc('nexus:san-enable',async(_event,enabled)=>{const status=await getSanCompanion().enable(enabled);if(!enabled)await getSanCompanion().stopOwned();return status;});
+  accountIpc('nexus:san-launch',async()=>{
+    const status=await getSanCompanion().status();if(!status.installed)throw Error('san-not-installed');
+    const error=await shell.openPath(status.executable);if(error)throw Error('san-open-failed');
+    return {state:'running'};
+  });
   accountIpc('nexus:achievement-notification-settings',async()=>getSteamAchievements().notificationSettings());
   accountIpc('nexus:achievement-notification-save',async(_event,value)=>{
     const prefs=await getSteamAchievements().saveNotificationSettings(value);if(!prefs.enabled)achievementOverlay?.dispose();return prefs;
@@ -281,8 +314,7 @@ function registerIpc() {
   accountIpc('nexus:achievement-notification-test',async(_event,locale)=>{
     const fr=locale!=='en';getAchievementOverlay().show({test:true,locale:fr?'fr':'en',gameTitle:'Nexus Launcher · '+(fr?'Aperçu uniquement':'Preview only'),achievement:{title:fr?'Prêt pour votre prochain succès':'Ready for your next achievement'}});return {ok:true};
   });
-  ipcMain.handle("nexus:steam-account-save", async (_event, value) => {const result=await getSteamAchievements().saveAccount(value);achievementOverlay?.dispose();broadcastSteamData();return result;});
-  ipcMain.handle("nexus:steam-account-clear", async () => { steamOpenId.cancel(); achievementOverlay?.dispose(); return getSteamAchievements().clearAccount().then(result=>{broadcastSteamData();return result;}); });
+  ipcMain.handle("nexus:steam-account-clear", async () => { achievementOverlay?.dispose(); return getSteamAchievements().clearAccount().then(result=>{broadcastSteamData();return result;}); });
   ipcMain.handle("nexus:steam-achievements", async (_event, appId, locale, force) => getSteamAchievements().getAchievements(appId, locale === 'fr' ? 'fr' : 'en', force === true));
   ipcMain.handle("nexus:steamgrid-save", async (_event, value) => {
     const validate = async (key) => {
@@ -305,21 +337,21 @@ function registerIpc() {
     const registry = await getRegistry();
     const file = await registry.authorizedExecutable(String(gameId));
     const game=registry.games.get(String(gameId));
-    const isSteam=game?.platform==='Steam'||!!game?.steamMetadata?.appId||!!game?.metadata?.steamAppId;
-    const companion=isSteam?await getSanCompanion().ensureStarted():{state:'disabled'};
+    const companion=await achievementsModule.prepareLaunch(game);
     const child = spawn(file, [], { cwd: dirname(file), detached: true, stdio: "ignore", windowsHide: false });
     await new Promise((resolve, reject) => { child.once("spawn", resolve); child.once("error", reject); });
     const window = BrowserWindow.fromWebContents(event.sender);
     const session = trackGameSession(child);
+    const sessionId=randomUUID(),startedAt=new Date().toISOString(),startedTick=performance.now();
+    moduleSessions.set(sessionId,session);
     gameSessions.set(String(gameId), session);
-    if(companion.state!=='running')getAchievementMonitor().start(game,session,locale==='en'?'en':'fr');
+    void eventBus.publish('GameStarted',{sessionId,gameId:String(gameId),title:game?.title||String(gameId),game,
+      startedAt,locale:locale==='en'?'en':'fr',notificationProvider:companion.state==='running'?'san':'nexus'});
     session.once("exit", () => {
       gameSessions.delete(String(gameId));
-      void getSteamAchievements().getLibrary(true).then(broadcastSteamData).catch(()=>{});
+      moduleSessions.delete(sessionId);
+      void eventBus.publish('GameStopped',{sessionId,stoppedAt:new Date().toISOString(),durationSeconds:Math.max(0,Math.floor((performance.now()-startedTick)/1000))});
       if (!gameSessions.size && window && !window.isDestroyed()) { window.restore(); window.show(); window.focus(); }
-    });
-    registry.trackLaunchedProcess(String(gameId), session, (snapshot) => {
-      for (const window of BrowserWindow.getAllWindows()) window.webContents.send("nexus:library-changed", snapshot);
     });
     if (window && !window.isDestroyed()) window.minimize();
     child.unref();
@@ -352,7 +384,7 @@ async function createWindow() {
   mainWindow=window;
   window.once('closed',()=>{achievementMonitor?.stopAll();achievementOverlay?.dispose();if(mainWindow===window)mainWindow=null;});
   window.webContents.setWindowOpenHandler(({ url }) => {
-    if (/^https:\/\/store\.steampowered\.com\//i.test(url) || /^https:\/\/steamcommunity\.com\/dev\/apikey(?:[?#]|$)/i.test(url)) void shell.openExternal(url);
+    if (/^https:\/\/store\.steampowered\.com\//i.test(url)) void shell.openExternal(url);
     return { action: "deny" };
   });
   window.webContents.on("before-input-event", (event, input) => {
@@ -371,14 +403,25 @@ async function createWindow() {
 
 app.whenReady().then(async () => {
   await registerDesktopProtocol();
+  await startModules();
   registerIpc();
   watchLibraryVolumes();
   await createWindow();
+  const marker=join(process.resourcesPath,'nexus-install-san');
+  if(await stat(marker).catch(()=>null)){
+    const helper=getSanCompanion(),prefs=await helper.preferences();
+    if(!prefs.installerRequestHandled){await helper.save({...prefs,installerRequestHandled:true});void getSanInstaller().activate();}
+  }
 });
 
 app.on("window-all-closed", () => {
-  steamOpenId.cancel();
   if (process.platform !== "darwin") app.quit();
+});
+// Finish queued journal writes before exiting; running games remain interrupted on restart.
+let moduleShutdown=false;
+app.on('before-quit',event=>{
+  if(moduleShutdown)return;event.preventDefault();moduleShutdown=true;
+  void modules.dispose().finally(()=>app.quit());
 });
 app.on("activate", () => {
   if (BrowserWindow.getAllWindows().length === 0) void createWindow();
