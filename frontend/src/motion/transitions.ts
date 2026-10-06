@@ -1,4 +1,4 @@
-export const primaryRoutes = ["/", "/library", "/search", "/settings", "/downloads"] as const;
+export const primaryRoutes = ["/", "/library", "/search", "/captures", "/settings", "/downloads"] as const;
 
 export const premiumEase = [0.22, 1, 0.36, 1] as const;
 

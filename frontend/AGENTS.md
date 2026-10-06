@@ -1,5 +1,18 @@
 # Prototype Instructions
 
+## Current Capture decisions (2026-10-06)
+
+- V2.4 adds the Capture module and a dedicated gallery: native explicit PNG capture,
+  read-only approved media folders, filters, favorites and a real video player.
+  Capture shortcuts must never start rolling recording without opt-in. Drain
+  in-flight screenshots before shutdown. Keep metadata and errors honest.
+- Nexus Replay supersedes the separate GameHQ companion. It is an optional GPL-3.0-only native plugin, downloaded from Nexus GitHub releases after archive and per-file SHA256 checks. Keep corresponding source, upstream credits and replaceable Qt DLLs. No upstream logos or claims of official support.
+- Plugin opt-in enables a rolling game-window buffer only for games launched by Nexus; never start recording just because a user opens the gallery. Ctrl+Shift+F8 captures, Ctrl+Shift+F9 saves a real clip. Disable/uninstall stop the owned process and drain pending exports. Media survive uninstall. First release: 30 s / 720p / 30 fps, no audio or controller Share/Guide binding.
+- Show measured download/on-disk sizes from the signed-by-digest release metadata, not guesses. Keep optional binaries outside the launcher package. Plugin UI is compact console/liquid glass, minimal FR/EN copy, honest recording state.
+- Preserve console glass, FR/EN, six-section navigation and accessible controller
+  playback. Up/down must leave the video; synthetic controller input explicitly
+  seeks or toggles playback. Quick Menu/audio and cloud saves are later work.
+
 ## Current Player Update decisions (2026-10-06)
 
 - Current Steam UX supersedes the historical OpenID/API-key instructions below:

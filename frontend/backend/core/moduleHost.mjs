@@ -1,6 +1,7 @@
 export const NEXUS_EVENTS = Object.freeze([
   'GameStarted', 'GameStopped', 'AchievementUnlocked', 'ActivityChanged',
   'ControllerConnected', 'ScreenshotRequested', 'GameSuspended', 'GameResumed',
+  'CaptureSaved',
 ]);
 
 function freeze(value) {

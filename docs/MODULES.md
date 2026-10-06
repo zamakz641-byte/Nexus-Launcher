@@ -1,4 +1,4 @@
-# Nexus modules — V2.3 Player Update
+# Nexus modules — V2.4 Capture Update
 
 ## Implemented architecture
 
@@ -7,10 +7,14 @@ frontend/backend/
 ├── core/moduleHost.mjs       EventBus + ModuleHost
 ├── modules/
 │   ├── achievements.mjs      Steam/SAN lifecycle adapter
-│   └── gameActivity.mjs      Nexus session journal
+│   ├── gameActivity.mjs      Nexus session journal
+│   └── capture.mjs           Explicit PNG capture and read-only media index
 ├── overlay/notifications.mjs Notification presentation subscriber
 ├── steamLocal.mjs            Read-only Steam client cache provider
 ├── sanInstaller.mjs          Optional verified companion installer
+├── gamehqCompanion.mjs       Optional recorder lifecycle and installation detection
+├── gamehqPipe.mjs            Capability-negotiated local GameHQ protocol
+├── captureMedia.mjs          Authorized image/video streaming with Range support
 └── main.mjs                 Electron/IPC, authorized launches, lifecycle events
 ```
 
@@ -29,11 +33,13 @@ publish core events. Native operations remain behind validated main-process IPC.
 
 | Event | Producer / payload | Current consumers |
 |---|---|---|
-| GameStarted | Core after successful spawn: sessionId, gameId, title, game, startedAt, locale, notificationProvider | GameActivity, Achievements |
-| GameStopped | Core after process tree ends: sessionId, stoppedAt, monotonic durationSeconds | GameActivity, Achievements |
+| GameStarted | Core after successful spawn: sessionId, gameId, title, game, startedAt, locale, notificationProvider | GameActivity, Achievements, Capture |
+| GameStopped | Core after process tree ends: sessionId, stoppedAt, monotonic durationSeconds | GameActivity, Achievements, Capture |
 | AchievementUnlocked | Verified achievement adapter: achievement and game context | Notification overlay |
 | ActivityChanged | Journal write completed: gameId | Read-only UI refresh |
-| ControllerConnected, ScreenshotRequested | Reserved; no producer yet | Future controller/capture adapters |
+| ScreenshotRequested | Internal capture hook; current trusted IPC/shortcut invokes Capture directly | Capture |
+| CaptureSaved | Capture after a successful PNG write: id, kind, gameId, gameTitle, locale | Native notification and gallery refresh |
+| ControllerConnected | Reserved; no producer yet | Future controller adapters |
 | GameSuspended, GameResumed | Reserved; no producer yet | Future compatibility-gated suspension |
 
 SAN presents its own notifications. The built-in monitor rejects cached Steam
@@ -57,21 +63,14 @@ separate and must never be added together.
 
 ## Roadmap and research
 
-These are planned integrations, not shipped controls:
+### Capture shipped in V2.4
 
-| Stage | Deliverables | Approach |
-|---|---|---|
-| V2.3 Player | Module foundation, sessions, cached Steam progress, optional SAN setup | Own implementation; real SAN/game unlock validation still needed |
-| V2.4 Console | Capture, screenshots, replay, gallery, Quick Menu and audio | [GameHQ](https://github.com/UnderFusion/GameHQ) offers controller capture/replay and a borderless overlay. GPL-3.0; evaluate a separate companion/API or original implementation before reuse |
-| V2.5 Continuity | Versioned backups, cloud sync, controller profiles, limited suspension | [Ludusavi](https://github.com/mtkennerly/ludusavi), MIT, is a CLI candidate. Preview backups before writes; confirm destructive restores; keep cloud credentials outside renderer |
-| V3 Platform | Plugins, phone remote, Discord, HLTB, compatibility, mods and additional store achievements | Separate capabilities, authentication and compatibility tests per provider |
+Native capture is explicitly invoked and writes PNGs under Videos/Nexus, grouped by
+the current Nexus session. Ctrl+Shift+F8 works while Nexus runs; registration status
+is available through IPC. Capture drains pending image writes before shutdown.
+Imported media is read-only, favorites live in Nexus preferences, and the gallery
+never uploads files. Media requests authorize only indexed IDs and recheck realpaths.
+Scanning skips symlinks, visits at most 10,000 entries to depth four, and returns the
+500 newest images/videos. Clips stream from disk with byte-range support.
 
-[GameActivity](https://github.com/Lacro59/playnite-gameactivity-plugin) and
-[SuccessStory](https://github.com/Lacro59/playnite-successstory-plugin) are research
-references. No source or assets from these projects were copied. FPS, temperatures,
-rarity, completion estimates and save state require real providers.
-
-Quick Resume Lite would retain supported games in RAM. It must not promise SSD
-restoration or support for online/anti-cheat games. Replay recording must be opt-in
-and bounded in memory/disk use. A future remote API needs explicit authenticated
-pairing, not an unauthenticated launch endpoint.
+Nexus Replay replaces the external companion in V2.4. The launcher hosts a bounded GitHub plugin installer, per-file SHA256 verification and a standalone JSON-line runtime. The optional GPL-3.0 engine lives in plugins/nexus-replay and publishes its own binary/source releases. Runtime states report actual capture readiness; pending exports drain before exit. No Qt or recording binaries belong in the base app. SAN remains an independent companion until its source and license are reviewed separately.

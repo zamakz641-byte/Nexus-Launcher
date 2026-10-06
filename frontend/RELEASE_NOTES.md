@@ -1,27 +1,25 @@
-# Nexus Launcher V2.3.0 — Player Update
+# Nexus Launcher V2.4 · Capture & Plugins
 
 ## Français
 
-- Steam simplifié : ouvrir le client Steam et retrouver les heures et succès disponibles dans son cache local. Aucun SteamID ni clé API Steam à saisir.
-- Panneau Steam compact en verre sombre, commandes lisibles et traductions FR/EN.
-- Notifications optionnelles : un bouton ouvre Steam et installe SAN si nécessaire depuis sa release officielle, après vérification SHA256. Setup et le premier démarrage proposent aussi cette option. SAN conserve son installateur officiel et reste une application séparée avec ses propres réglages.
-- Architecture Core / Modules / Overlay, bus d’événements, erreurs isolées et arrêt ordonné.
-- Dernières sessions Nexus dans les fiches : dates et durées réelles, sessions interrompues sans durée inventée.
+- Galerie console en verre : captures, clips, favoris, dossiers personnels et lecteur vidéo à la manette.
+- Capture explicite Ctrl + Maj + F8 intégrée, même sans plugin.
+- Nexus Replay est un plugin indépendant téléchargé depuis notre GitHub. Installation vérifiée par SHA256, activation, désactivation et désinstallation dans Nexus. Les médias restent sur disque.
+- Moteur natif dérivé de GameHQ sous GPL-3.0, sans galerie Qt, thèmes, updater ni interface séparée. Sources et notices disponibles avec le plugin.
+- Premier profil : buffer 30 secondes, 720p, 30 fps, sans audio. Ctrl + Maj + F9 sauvegarde un clip réel pendant un jeu lancé par Nexus.
+- Backend de bureau séparé de Vite ; les outils de développement ne sont plus distribués avec l’application.
 
-### Limites
-
-Windows x64, Setup ou Portable, exécutables non signés. Le cache Steam peut être ancien et incomplet : la connexion ne garantit pas une liste complète de tous les succès. SAN assure ses notifications en direct avec Steam connecté ; validation sur un vrai déblocage encore nécessaire. Le plein écran exclusif peut masquer les overlays. Gérez les notifications SAN démarrées en dehors de Nexus dans SAN. Pas de succès Epic/GOG, capture/replay, cloud saves ou télémétrie matérielle dans cette version. Les temps Steam et Nexus restent distincts.
+La capture d’un jeu exige Windows et un GPU/encodeur compatibles. Plein écran exclusif, protections ou lanceurs intermédiaires peuvent limiter la détection et les notifications. Aucun enregistrement sans activation volontaire. Les bindings Share/Guide, l’audio, Quick Menu et les sauvegardes cloud sont à venir. Les EXE ne sont pas signés.
 
 ## English
 
-- Simpler Steam setup: open Steam and read available playtime and achievement progress from its local cache. No SteamID or Steam API key entry.
-- Compact dark glass Steam panel, readable controls and French/English translations.
-- Optional notifications: one button opens Steam and, when needed, downloads the official SAN installer with SHA256 verification. Nexus Setup and first-run onboarding offer the same opt-in. SAN keeps its official installer and remains a separate app with its own customization.
-- Core / Modules / Overlay architecture, isolated event listeners and orderly shutdown.
-- Recent Nexus sessions in game details with actual dates/durations and explicit interrupted sessions.
+- Console glass gallery: screenshots, clips, favorites, approved media folders and controller video playback.
+- Explicit Ctrl + Shift + F8 screenshots work without a plugin.
+- Nexus Replay is a separate optional GitHub download, with SHA256 checks, integrated enable/disable/uninstall and preserved media.
+- GPL-3.0 native engine based on GameHQ, without a Qt gallery, themes, updater or separate UI. Corresponding source and notices accompany the plugin.
+- Initial preset: 30 seconds / 720p / 30 fps, without audio. Ctrl + Shift + F9 saves a real replay during games launched through Nexus.
+- Desktop backend no longer imports Vite; development tools are excluded from installed builds.
 
-### Limitations
+Windows capture needs a compatible GPU/encoder. Exclusive fullscreen, protected games and intermediate launchers can limit targeting or notifications. Recording requires opt-in. Share/Guide bindings, audio, Quick Menu and cloud saves remain future work. EXEs are unsigned.
 
-Windows x64, unsigned Setup/Portable binaries. Steam cache may be old or incomplete; connecting does not guarantee a complete achievement list. SAN handles its own live notifications while Steam is signed in; a real unlock still needs user validation. Exclusive fullscreen may hide overlays. Manage SAN notifications started outside Nexus in SAN itself. No Epic/GOG achievements, capture/replay, cloud saves or hardware telemetry in this release. Steam and Nexus time stay separate.
-
-[Module architecture and roadmap](../docs/MODULES.md)
+[Plugin source](../plugins/nexus-replay) · [Upstream GameHQ](https://github.com/UnderFusion/GameHQ)

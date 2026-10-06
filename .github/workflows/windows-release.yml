@@ -18,7 +18,10 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  replay:
+    uses: ./.github/workflows/nexus-replay.yml
   windows:
+    needs: replay
     runs-on: windows-latest
     timeout-minutes: 45
     defaults:

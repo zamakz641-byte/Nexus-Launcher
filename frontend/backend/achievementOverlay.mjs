@@ -9,7 +9,7 @@ export function achievementHtml(notice){
 }
 // A separate sandboxed, click-through window never steals the game's focus.
 export class AchievementOverlay {
-  constructor(BrowserWindow,display,{duration=6500,schedule=setTimeout,cancel=clearTimeout}={}){Object.assign(this,{BrowserWindow,display,duration,schedule,cancel});this.queue=[];this.disposed=false;}
+  constructor(BrowserWindow,display,{duration=6500,schedule=setTimeout,cancel=clearTimeout,render=achievementHtml}={}){Object.assign(this,{BrowserWindow,display,duration,schedule,cancel,render});this.queue=[];this.disposed=false;}
   show(notice){if(this.disposed||this.queue.length>=8)return;this.queue.push(notice);if(!this.window)this.next();}
   next(){
     if(this.disposed||!this.queue.length)return;
@@ -18,7 +18,7 @@ export class AchievementOverlay {
     this.window=window;window.setIgnoreMouseEvents(true);window.setAlwaysOnTop(true,'screen-saver');window.webContents.setWindowOpenHandler(()=>({action:'deny'}));window.webContents.on('will-navigate',event=>event.preventDefault());
     const finish=()=>{this.cancel(this.timer);if(this.window===window){this.window=null;this.next();}};
     window.once('closed',finish);
-    void window.loadURL('data:text/html;charset=utf-8,'+encodeURIComponent(achievementHtml(notice))).then(()=>{
+    void window.loadURL('data:text/html;charset=utf-8,'+encodeURIComponent(this.render(notice))).then(()=>{
       if(this.disposed||window.isDestroyed())return;
       window.showInactive();this.timer=this.schedule(()=>{if(!window.isDestroyed())window.close();},this.duration);
     }).catch(()=>{if(!window.isDestroyed())window.close();});

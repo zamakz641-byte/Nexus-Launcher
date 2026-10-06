@@ -32,6 +32,18 @@ interface Window {
     getSteamLibrary: (force?: boolean) => Promise<import('./storeAccountsTypes').StoreLibraryResult>;
     getGameActivity: (gameId:string) => Promise<import('./activityTypes').GameActivityResult>;
     getModuleStatus: () => Promise<Array<{id:string;state:string}>>;
+    listCaptures: () => Promise<import('./captureTypes').CaptureLibrary>;
+    captureScreenshot: (locale?:'fr'|'en') => Promise<{ok:true;id:string}>;
+    addCaptureFolder: () => Promise<import('./captureTypes').CaptureLibrary|null>;
+    favoriteCapture: (id:string,value:boolean) => Promise<import('./captureTypes').CaptureLibrary>;
+    revealCapture: (id:string) => Promise<{ok:true}>;
+    getCaptureEngineStatus: () => Promise<import('./captureTypes').CaptureEngineStatus>;
+    activateCaptureEngine: () => Promise<import('./captureTypes').CaptureEngineStatus>;
+    cancelCaptureEngineSetup: () => Promise<import('./captureTypes').CaptureEngineStatus>;
+    disableCaptureEngine: () => Promise<import('./captureTypes').CaptureEngineStatus>;
+    removeCaptureEngine: () => Promise<import('./captureTypes').CaptureEngineStatus>;
+    saveReplay: (locale?: string) => Promise<{ok:true}>;
+    onCaptureChanged: (callback:()=>void) => ()=>void;
     onActivityChanged: (callback:(gameId:string)=>void) => ()=>void;
     getStoreAccountStatus: (provider: import('./storeAccountsTypes').StoreProvider) => Promise<import('./storeAccountsTypes').StoreAccountStatus>;
     connectStoreAccount: (provider: import('./storeAccountsTypes').StoreProvider) => Promise<import('./storeAccountsTypes').StoreAccountStatus>;

@@ -1,0 +1,3 @@
+export interface CaptureItem {id:string;kind:'image'|'clip';name:string;game:string;source:string;createdAt:string;bytes:number;favorite:boolean;url:string;poster?:string}
+export interface CaptureLibrary {items:CaptureItem[];roots:string[];truncated:boolean;errors:string[]}
+export interface CaptureEngineStatus {enabled:boolean;installed:boolean;available?:boolean;version?:string;availableVersion?:string;downloadBytes?:number;installedBytes?:number;recording?:boolean;canSave?:boolean;bufferState?:number;supported:boolean;connected?:boolean;shortcut?:boolean;state?:'idle'|'downloading'|'installing'|'ready'|'error'|'cancelled';progress?:number;error?:string}

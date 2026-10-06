@@ -1,0 +1,33 @@
+import {_electron as electron} from 'playwright-core';
+import {mkdir,mkdtemp,copyFile,readdir} from 'node:fs/promises';
+import {resolve,join} from 'node:path';
+import assert from 'node:assert/strict';
+const root=resolve(import.meta.dirname,'..'),out=join(root,'artifacts/qa/capture');await mkdir(out,{recursive:true});
+const profile=await mkdtemp(join(out,'profile-')),captures=join(profile,'captures');await mkdir(join(captures,'Nexus Demo'),{recursive:true});
+await copyFile(join(root,'public/assets/startup/nexus-startup-en-v1.mp4'),join(captures,'Nexus Demo','demo.mp4'));
+const {ELECTRON_RUN_AS_NODE:_,...env}=process.env;env.NEXUS_CAPTURE_ROOT=captures;env.NEXUS_STEAM_ROOT=join(profile,'empty-steam');
+const app=await electron.launch({executablePath:process.env.NEXUS_QA_PACKAGED?join(root,'release/win-unpacked/Nexus Launcher.exe'):join(root,'node_modules/electron/dist/electron.exe'),args:[...(process.env.NEXUS_QA_PACKAGED?[]:[root]),`--user-data-dir=${profile}`],cwd:root,env});
+try{
+ const page=await app.firstWindow(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.locator('.startup-sequence').waitFor();await page.keyboard.press('Escape');
+ await page.evaluate(()=>{localStorage.setItem('nexus.onboarding.complete.v1','true');localStorage.setItem('nexus.locale.v1','en');});await page.reload();await page.locator('.startup-sequence').waitFor();await page.keyboard.press('Escape');
+ await page.locator('.top-navigation__route[href="/captures"]').click();await page.getByRole('button',{name:'Nexus Demo · demo.mp4'}).waitFor();
+ const modules=await page.evaluate(()=>window.nexusDesktop.getModuleStatus());assert.equal(modules.find(x=>x.id==='capture').state,'ready');
+ await (await app.browserWindow(page)).evaluate(window=>{window.show();window.focus();});
+ await page.getByRole('button',{name:'Capture screen',exact:true}).click();await page.getByRole('status').filter({hasText:'Media saved'}).waitFor();
+ const library=await page.evaluate(()=>window.nexusDesktop.listCaptures());assert.equal(library.items.filter(x=>x.kind==='image').length,1);
+ await page.locator('.capture-card').filter({has:page.locator('img')}).first().click();await page.locator('.capture-dialog img').waitFor();await page.waitForFunction(()=>document.querySelector('.capture-dialog img')?.naturalWidth>0);
+ await page.getByRole('button',{name:'Add to favorites'}).click();await page.getByRole('button',{name:'Remove from favorites'}).waitFor();await page.keyboard.press('Escape');
+ await page.getByRole('button',{name:'Clips',exact:true}).click();await page.getByRole('button',{name:'Nexus Demo · demo.mp4'}).click();const video=page.locator('.capture-dialog video');await video.waitFor();
+ await page.waitForFunction(()=>document.querySelector('video')?.readyState>=1);await video.evaluate(v=>v.play());await page.waitForFunction(()=>document.querySelector('video')?.currentTime>.1);
+ const duration=await video.evaluate(v=>v.duration);assert.ok(duration>0);await video.focus();
+ await video.evaluate(v=>v.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true,cancelable:true})));assert.ok(await video.evaluate(v=>v.currentTime)>=5);
+ await video.evaluate(v=>v.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true,cancelable:true})));assert.equal(await video.evaluate(v=>document.activeElement===v),false);
+ await page.screenshot({path:join(out,'viewer-en.png')});await page.keyboard.press('Escape');assert.equal(await page.locator('video').count(),0);
+ await page.getByRole('button',{name:'All',exact:true}).click();await page.evaluate(()=>window.scrollTo(0,0));await page.screenshot({path:join(out,'gallery-en.png')});
+ await page.setViewportSize({width:640,height:720});await page.screenshot({path:join(out,'gallery-compact-en.png')});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+ await page.evaluate(()=>localStorage.setItem('nexus.locale.v1','fr'));await page.reload();await page.locator('.startup-sequence').waitFor();await page.keyboard.press('Escape');await page.locator('.top-navigation__route[href="/captures"]').click();await page.getByRole('heading',{name:'Captures',exact:true}).waitFor();assert.equal(await page.getByRole('button',{name:'Bientôt disponible',exact:true}).count(),1);
+ await page.screenshot({path:join(out,'gallery-fr.png')});
+ assert.deepEqual(errors,[]);assert.ok((await readdir(join(captures,'Desktop'))).some(x=>x.endsWith('.png')));
+ console.log(JSON.stringify({nativeScreenshot:true,authorizedImage:true,realClipPlayback:true,controllerSeekAndExit:true,favorites:true,frEn:true,compactNoOverflow:true,errors}));
+}finally{await app.close();}

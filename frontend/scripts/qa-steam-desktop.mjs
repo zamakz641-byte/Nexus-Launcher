@@ -7,6 +7,7 @@ await mkdir(resolve(root, 'artifacts/qa/steam'), { recursive: true });
 const profile = await mkdtemp(resolve(root, 'artifacts/qa/steam/profile-'));
 const { ELECTRON_RUN_AS_NODE: _, ...env } = process.env;
 env.NEXUS_STEAM_ROOT=join(profile,'empty-steam');
+env.NEXUS_CAPTURE_ROOT=join(profile,'captures');
 const app = await electron.launch({ executablePath: resolve(root, 'node_modules/electron/dist/electron.exe'), args: [root, `--user-data-dir=${profile}`], cwd: root, env });
 try {
   const page = await app.firstWindow();
@@ -28,7 +29,7 @@ try {
   assert.equal(achievements.state, 'unconfigured'); assert.deepEqual(achievements.achievements, []);
   assert.equal((await page.evaluate(()=>window.nexusDesktop.getSteamLibrary())).state,'unconfigured');
   const modules=await page.evaluate(()=>window.nexusDesktop.getModuleStatus());
-  assert.deepEqual(modules.map(module=>module.id),['game-activity','achievements','notification-overlay']);
+  assert.deepEqual(modules.map(module=>module.id),['game-activity','achievements','notification-overlay','capture']);
   assert.ok(modules.every(module=>module.state==='ready'));
   assert.deepEqual((await page.evaluate(()=>window.nexusDesktop.getGameActivity('not-launched'))).sessions,[]);
   for(const provider of ['epic','gog']) {

@@ -1,0 +1,4 @@
+{
+  "schema": 1,
+  "plugins": [{ "id": "nexus-replay", "version": "0.1.0", "tag": "plugin-nexus-replay-v0.1.0", "manifest": "nexus-replay.json" }]
+}

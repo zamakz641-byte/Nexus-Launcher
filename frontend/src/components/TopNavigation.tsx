@@ -1,5 +1,5 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { ArrowClockwise, CaretDown, DownloadSimple, GameController, GearSix, House, MagnifyingGlass } from "@phosphor-icons/react";
+import { ArrowClockwise, Camera, CaretDown, DownloadSimple, GameController, GearSix, House, MagnifyingGlass } from "@phosphor-icons/react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
@@ -13,6 +13,7 @@ const routes = [
   { id: "home", path: "/", icon: House },
   { id: "library", path: "/library", icon: GameController },
   { id: "search", path: "/search", icon: MagnifyingGlass },
+  { id: "captures", path: "/captures", icon: Camera },
   { id: "settings", path: "/settings", icon: GearSix },
   { id: "downloads", path: "/downloads", icon: DownloadSimple },
 ] as const;

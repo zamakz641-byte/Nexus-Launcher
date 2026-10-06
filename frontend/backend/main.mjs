@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, net, protocol, safeStorage, shell, screen } from "electron";
+import { app, BrowserWindow, dialog, ipcMain, net, protocol, safeStorage, shell, screen, desktopCapturer, globalShortcut } from "electron";
 import { readFile, stat } from "node:fs/promises";
 import { extname, isAbsolute, join, normalize, relative, resolve, dirname } from "node:path";
 import { spawn } from "node:child_process";
@@ -7,6 +7,11 @@ import { EventBus, ModuleHost } from './core/moduleHost.mjs';
 import { GameActivity } from './modules/gameActivity.mjs';
 import { AchievementsModule } from './modules/achievements.mjs';
 import { NotificationOverlayModule } from './overlay/notifications.mjs';
+import { CaptureModule } from './modules/capture.mjs';
+import { PluginManager } from './plugins/pluginManager.mjs';
+import { ReplayRuntime } from './plugins/replayRuntime.mjs';
+import { serveCapture } from './captureMedia.mjs';
+import { captureHtml } from './overlay/captureNotice.mjs';
 import { homedir } from "node:os";
 import { pathToFileURL } from "node:url";
 import { LibraryRegistry } from "./libraryRegistry.mjs";
@@ -25,7 +30,8 @@ import { SanInstaller } from "./sanInstaller.mjs";
 import { StoreAccounts } from './storeAccounts.mjs';
 import { createStoreLogin } from './storeLogin.mjs';
 
-let achievementOverlay, achievementMonitor, mainWindow;
+let achievementOverlay, achievementMonitor, mainWindow, captureOverlay;
+function getCaptureOverlay(){return captureOverlay ||= new AchievementOverlay(BrowserWindow,()=>screen.getDisplayNearestPoint(screen.getCursorScreenPoint()),{duration:3500,render:captureHtml});}
 function getAchievementOverlay() {
   if(!achievementOverlay||achievementOverlay.disposed)achievementOverlay=new AchievementOverlay(BrowserWindow,()=>mainWindow&&!mainWindow.isDestroyed()?screen.getDisplayMatching(mainWindow.getBounds()):screen.getDisplayNearestPoint(screen.getCursorScreenPoint()));
   return achievementOverlay;
@@ -37,7 +43,16 @@ const gameSessions = new Map();
 const moduleSessions = new Map();
 const eventBus = new EventBus();
 const modules = new ModuleHost(eventBus);
-let gameActivity, achievementsModule;
+let gameActivity, achievementsModule, captureModule, replay, pluginManager;
+function getReplay(){return replay ||= new ReplayRuntime(getPluginManager(),{capturesRoot:process.env.NEXUS_CAPTURE_ROOT||join(app.getPath('videos'),'Nexus'),onSaved:(message,context)=>captureModule.adoptSaved(message,context)});}
+function getPluginManager(){return pluginManager ||= new PluginManager(app.getPath('userData'),{fetch:(url,options)=>net.fetch(url,options)});}
+async function screenshotDisplay(){
+  const display=mainWindow&&!mainWindow.isDestroyed()&&mainWindow.isFocused()?screen.getDisplayMatching(mainWindow.getBounds()):screen.getDisplayNearestPoint(screen.getCursorScreenPoint());
+  const width=Math.min(4096,Math.round(display.size.width*display.scaleFactor)),height=Math.min(4096,Math.round(display.size.height*display.scaleFactor));
+  const sources=await desktopCapturer.getSources({types:['screen'],thumbnailSize:{width,height},fetchWindowIcons:false});
+  const source=sources.find(item=>item.display_id===String(display.id));
+  if(!source||source.thumbnail.isEmpty())throw Error('capture-failed');return source.thumbnail.toPNG();
+}
 async function startModules() {
   gameActivity = new GameActivity(app.getPath('userData'), {recordPlaytime:async (id,seconds)=>{
     const registry=await getRegistry();await registry.recordPlaytime(id,seconds);
@@ -48,6 +63,21 @@ async function startModules() {
   await modules.register(gameActivity);
   await modules.register(achievementsModule);
   await modules.register(new NotificationOverlayModule(getAchievementOverlay));
+  captureModule=new CaptureModule(app.getPath('userData'),{root:process.env.NEXUS_CAPTURE_ROOT||join(app.getPath('videos'),'Nexus'),
+    screenshot:screenshotDisplay,companion:getReplay()});
+  await modules.register(captureModule);
+  eventBus.subscribe('CaptureSaved',notice=>{
+    getCaptureOverlay().show(notice);
+    for(const window of BrowserWindow.getAllWindows())if(!window.isDestroyed()&&window.webContents.getURL().startsWith('nexus://app/'))window.webContents.send('nexus:capture-changed');
+  });
+  const captureAction=async(replayClip=false,locale)=>{if(locale==='fr'||locale==='en')captureModule.locale=locale;if(replayClip)return getReplay().request('save-replay');if((await getReplay().status()).canSave)return getReplay().request('screenshot');return captureModule.screenshot(locale);};
+  captureModule.captureAction=captureAction;
+  const shortcut=(key,clip)=>globalShortcut.register(key,()=>{void captureAction(clip).catch(()=>{
+    getCaptureOverlay().show({error:true,locale:captureModule.locale});
+    for(const window of BrowserWindow.getAllWindows())if(!window.isDestroyed()&&window.webContents.getURL().startsWith('nexus://app/'))window.webContents.send('nexus:capture-error');
+  });});
+  shortcut('CommandOrControl+Shift+F8',false);
+  shortcut('CommandOrControl+Shift+F9',true);
   eventBus.subscribe('ActivityChanged',({gameId})=>{
     for(const window of BrowserWindow.getAllWindows())if(!window.isDestroyed()&&window.webContents.getURL().startsWith('nexus://app/'))window.webContents.send('nexus:activity-changed',gameId);
   });
@@ -123,7 +153,7 @@ async function getBackend() {
   if (!backendPromise) {
     process.env.NEXUS_GAMES_ROOT ||= process.platform === "win32" ? "F:\\Games" : join(homedir(), "Games");
     process.env.NEXUS_CACHE_DIR ||= app.getPath("userData");
-    const configUrl = pathToFileURL(join(app.getAppPath(), "vite.config.mjs")).href;
+    const configUrl = pathToFileURL(join(app.getAppPath(), "backend/libraryRuntime.mjs")).href;
     backendPromise = import(configUrl).then((module) => {
       module.configureDesktopRuntime?.({ libraryRoot: process.env.NEXUS_GAMES_ROOT });
       return module;
@@ -225,6 +255,7 @@ async function registerDesktopProtocol() {
     try {
       const url = new URL(request.url);
       if (url.hostname === "app") return await serveApp(url);
+      if (url.hostname === 'media'&&url.pathname==='/capture') return await serveCapture(captureModule,request);
       if (url.hostname === "media") return await serveMedia(url);
       return new Response("Not found", { status: 404 });
     } catch (error) {
@@ -290,6 +321,20 @@ function registerIpc() {
   accountIpc('nexus:steam-open',async()=>{await openSteam();return {ok:true};});
   accountIpc('nexus:game-activity',(_event,gameId)=>gameActivity.history(gameId));
   accountIpc('nexus:module-status',()=>modules.status());
+  accountIpc('nexus:capture-list',()=>captureModule.list());
+  accountIpc('nexus:capture-screenshot',(_event,locale)=>captureModule.captureAction(false,locale));
+  accountIpc('nexus:capture-favorite',(_event,id,value)=>captureModule.favorite(id,value));
+  accountIpc('nexus:capture-folder',async event=>{
+    const result=await dialog.showOpenDialog(BrowserWindow.fromWebContents(event.sender),{properties:['openDirectory']});
+    return result.canceled?null:captureModule.addFolder(result.filePaths[0]);
+  });
+  accountIpc('nexus:capture-reveal',async(_event,id)=>{const item=await captureModule.authorize(id);if(!item)throw Error('invalid-media');shell.showItemInFolder(item.file);return {ok:true};});
+  accountIpc('nexus:capture-engine-status',async()=>({...await getReplay().status({refresh:true}),shortcut:globalShortcut.isRegistered('CommandOrControl+Shift+F8')}));
+  accountIpc('nexus:capture-engine-activate',async()=>{const status=await getReplay().status();return status.installed?getReplay().enable(true):getReplay().activate();});
+  accountIpc('nexus:capture-engine-cancel',async()=>{getPluginManager().cancel();return getReplay().status();});
+  accountIpc('nexus:capture-engine-disable',()=>getReplay().enable(false));
+  accountIpc('nexus:capture-engine-remove',()=>getReplay().remove());
+  accountIpc('nexus:capture-replay',(_event,locale)=>captureModule.captureAction(true,locale));
   accountIpc('nexus:steam-library', async (_event, force) => getSteamAchievements().getLibrary(force === true));
   accountIpc('nexus:store-account-status', async (_event, provider) => getStoreAccounts().status(provider));
   accountIpc('nexus:store-account-connect', async (event, provider) => getStoreAccounts().connect(provider, BrowserWindow.fromWebContents(event.sender)));
@@ -338,6 +383,8 @@ function registerIpc() {
     const file = await registry.authorizedExecutable(String(gameId));
     const game=registry.games.get(String(gameId));
     const companion=await achievementsModule.prepareLaunch(game);
+    // Prepare the optional recorder before the game takes focus. Failure never blocks launch.
+    await getReplay().ensureStarted().catch(()=>{});
     const child = spawn(file, [], { cwd: dirname(file), detached: true, stdio: "ignore", windowsHide: false });
     await new Promise((resolve, reject) => { child.once("spawn", resolve); child.once("error", reject); });
     const window = BrowserWindow.fromWebContents(event.sender);
@@ -345,7 +392,7 @@ function registerIpc() {
     const sessionId=randomUUID(),startedAt=new Date().toISOString(),startedTick=performance.now();
     moduleSessions.set(sessionId,session);
     gameSessions.set(String(gameId), session);
-    void eventBus.publish('GameStarted',{sessionId,gameId:String(gameId),title:game?.title||String(gameId),game,
+    void eventBus.publish('GameStarted',{sessionId,gameId:String(gameId),title:game?.title||String(gameId),game,pid:child.pid,
       startedAt,locale:locale==='en'?'en':'fr',notificationProvider:companion.state==='running'?'san':'nexus'});
     session.once("exit", () => {
       gameSessions.delete(String(gameId));
@@ -421,7 +468,8 @@ app.on("window-all-closed", () => {
 let moduleShutdown=false;
 app.on('before-quit',event=>{
   if(moduleShutdown)return;event.preventDefault();moduleShutdown=true;
-  void modules.dispose().finally(()=>app.quit());
+  globalShortcut.unregisterAll();
+  void modules.dispose().finally(()=>{captureOverlay?.dispose();app.quit();});
 });
 app.on("activate", () => {
   if (BrowserWindow.getAllWindows().length === 0) void createWindow();

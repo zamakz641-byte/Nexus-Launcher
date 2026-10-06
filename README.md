@@ -7,7 +7,7 @@
 **Your PC game library, in one cinematic space.**  
 **Tous vos jeux PC dans un espace cinématique.**
 
-[English](#english) · [Français](#français) · [Download V2.3.0](https://github.com/zamakz641-byte/Nexus-Launcher/releases/tag/v2.3.0)
+[English](#english) · [Français](#français) · [Download V2.4.0](https://github.com/zamakz641-byte/Nexus-Launcher/releases/tag/v2.4.0)
 
 <img src="frontend/docs/screenshots/home.png" alt="Nexus Launcher home screen" width="100%" />
 
@@ -16,6 +16,10 @@
 ## English
 
 Nexus Launcher is a Windows desktop app for browsing and launching games from a visual, controller-friendly library. It finds installed Steam and Epic games, and lets you add any other Windows game by choosing its `.exe` file.
+
+### Capture Update
+
+Take screenshots, browse read-only media folders, keep favorites and play clips in a controller-friendly gallery. Nexus Replay is a separate optional GPL-3.0 plugin, based on GameHQ, downloaded from our GitHub. The launcher includes no recorder binaries. [Release details](frontend/RELEASE_NOTES.md).
 
 ### Highlights
 
@@ -29,7 +33,7 @@ Nexus Launcher is a Windows desktop app for browsing and launching games from a 
 
 ### Download and install
 
-1. Open the [V2.3.0 release](https://github.com/zamakz641-byte/Nexus-Launcher/releases/tag/v2.3.0).
+1. Open the [V2.4.0 release](https://github.com/zamakz641-byte/Nexus-Launcher/releases/tag/v2.4.0).
 2. Choose **Setup.exe** for an installer or **Portable.exe** to run without installation. Both are for **Windows x64**.
 3. On first launch, choose your games folder in the native picker, use automatic Steam/Epic discovery, or explicitly set up later. Add more sources in **Settings → Libraries**.
 
@@ -68,6 +72,8 @@ The earlier Python/pywebview edition is preserved in [`archive/legacy-python-v1.
 
 ## Français
 
+**Mise à jour Capture :** captures d’écran, galerie de médias en lecture seule, favoris et lecteur vidéo à la manette. Nexus Replay est un plugin GPL-3.0 optionnel dérivé de GameHQ, téléchargé depuis notre GitHub. Aucun binaire du recorder n’alourdit le launcher. [Détails de la version](frontend/RELEASE_NOTES.md).
+
 ### Current source improvements / Améliorations des sources actuelles
 
 Artwork now persists offline, refresh is available throughout the app (button or F5), and holding a ready game launches it. The desktop app minimizes during tracked sessions and returns afterward. Steam progress uses available client cache data, with explicit cached/unavailable states. See [reliability, verification and sync roadmap](docs/RELIABILITY-AND-SYNC.md) for behavior and limits. The V2.2 installers include these improvements.
@@ -86,7 +92,7 @@ Nexus Launcher est une application Windows pour parcourir et lancer vos jeux dan
 
 ### Télécharger
 
-1. Ouvrez la [release V2.3.0](https://github.com/zamakz641-byte/Nexus-Launcher/releases/tag/v2.3.0).
+1. Ouvrez la [release V2.4.0](https://github.com/zamakz641-byte/Nexus-Launcher/releases/tag/v2.4.0).
 2. Choisissez **Setup.exe** pour l’installation ou **Portable.exe** pour lancer Nexus sans installation. Les deux versions sont pour **Windows x64**.
 3. Au premier démarrage, choisissez le dossier de vos jeux dans l’explorateur. Vous pouvez aussi utiliser Steam/Epic ou configurer plus tard. Ajoutez ensuite des sources dans **Paramètres → Bibliothèques**.
 

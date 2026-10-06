@@ -10,12 +10,14 @@ const focusableSelector = [
   "a[href]", "button:not([disabled])", "input:not([disabled])",
   "select:not([disabled])", "textarea:not([disabled])",
   '[tabindex]:not([tabindex="-1"])',
+  'video[controls]',
 ].join(",");
 
 type Direction = "ArrowLeft" | "ArrowRight" | "ArrowUp" | "ArrowDown";
 
 function keepsDirectionalKey(element: Element | null, direction: Direction) {
   if (!(element instanceof HTMLElement)) return false;
+  if (element.matches('video[controls]')) return direction === 'ArrowLeft' || direction === 'ArrowRight';
   if (element.matches("textarea, [contenteditable='true']")) return true;
   if (element.matches('input[type="range"], input[type="number"]')) return true;
   if (element.matches("input")) return direction === "ArrowLeft" || direction === "ArrowRight";
@@ -153,6 +155,19 @@ export function useGamepadNavigation() {
       if (document.querySelector(".launch-sequence")) { event.preventDefault(); return; }
       if (event.isTrusted) setInputMode("keyboard");
       if (event.defaultPrevented) return;
+      const video = event.target instanceof HTMLVideoElement ? event.target : null;
+      if (video && !event.isTrusted) {
+        if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+          event.preventDefault();
+          if (Number.isFinite(video.duration)) video.currentTime = Math.max(0, Math.min(video.duration, video.currentTime + (event.key === 'ArrowLeft' ? -5 : 5)));
+          return;
+        }
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          if (video.paused) void video.play().catch(() => {}); else video.pause();
+          return;
+        }
+      }
       if ((event.target as Element | null)?.closest?.('[role="menu"], [role="listbox"]:not(.game-rail__track)')) return;
 
       if (event.key === "GamepadLB" || event.key === "GamepadRB") {

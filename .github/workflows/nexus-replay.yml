@@ -1,0 +1,57 @@
+name: Nexus Replay plugin
+on:
+  workflow_call:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install minimum Qt toolchain
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          python -m pip install aqtinstall==3.3.0
+          python -m aqt install-qt windows desktop 6.8.3 win64_mingw -O "$PWD/tools/Qt" --archives qtbase
+          python -m aqt install-tool windows desktop tools_mingw1310 -O "$PWD/tools/Qt"
+      - name: Compile headless capture engine
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          $qt = "$PWD/tools/Qt/6.8.3/mingw_64"
+          $mingw = "$PWD/tools/Qt/Tools/mingw1310_64/bin"
+          $env:PATH = "$mingw;$qt/bin;$env:PATH"
+          cmake -S plugins/nexus-replay -B out/replay -G Ninja -DCMAKE_BUILD_TYPE=Release "-DCMAKE_PREFIX_PATH=$qt" "-DCMAKE_CXX_COMPILER=$mingw/g++.exe"
+          cmake --build out/replay --parallel 4
+          ./out/replay/NexusReplay.exe --self-test
+      - name: Package only required DLLs and corresponding source
+        shell: pwsh
+        run: |
+          ./plugins/nexus-replay/package.ps1 -QtRoot "$PWD/tools/Qt/6.8.3/mingw_64" -CompilerRoot "$PWD/tools/Qt/Tools/mingw1310_64/bin" -BuildRoot "$PWD/out/replay" -OutputRoot "$PWD/out/plugin"
+      - name: Publish plugin separately from launcher
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $tag = 'plugin-nexus-replay-v0.1.0'
+          gh release view $tag --repo $env:GITHUB_REPOSITORY 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            $publishedTree = git rev-parse "$tag`:plugins/nexus-replay"
+            $currentTree = git rev-parse 'HEAD:plugins/nexus-replay'
+            if ($publishedTree -ne $currentTree) { throw 'Bump the plugin version before publishing modified engine source.' }
+            Write-Output 'Identical plugin version already published; preserving existing assets.'
+            exit 0
+          }
+          $assets = @(Get-ChildItem -LiteralPath out/plugin -File | ForEach-Object FullName)
+          gh release create $tag @assets --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title 'Nexus Replay 0.1.0' --notes-file plugins/nexus-replay/README.md --latest=false

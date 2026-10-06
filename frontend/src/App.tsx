@@ -27,6 +27,7 @@ const SearchScreen = lazy(() => import("./screens/SearchScreen").then((module) =
 const SettingsScreen = lazy(() => import("./screens/SettingsScreen").then((module) => ({ default: module.SettingsScreen })));
 const GameDetailScreen = lazy(() => import("./screens/GameDetailScreen").then((module) => ({ default: module.GameDetailScreen })));
 const DownloadsScreen = lazy(() => import("./screens/DownloadsScreen").then((module) => ({ default: module.DownloadsScreen })));
+const CapturesScreen = lazy(() => import("./screens/CapturesScreen").then((module) => ({ default: module.CapturesScreen })));
 
 export function App() {
   const { t, i18n } = useTranslation();
@@ -220,6 +221,7 @@ export function App() {
                 <Route path="/game/:gameId" element={<GameDetailScreen onLaunch={() => void launch()} />} />
                 <Route path="/settings" element={<SettingsScreen onReplayOnboarding={replayOnboarding} />} />
                 <Route path="/downloads" element={<DownloadsScreen />} />
+                <Route path="/captures" element={<CapturesScreen />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </Suspense>
