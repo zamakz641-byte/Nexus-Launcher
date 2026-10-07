@@ -9,6 +9,9 @@
 - Shared material overrides live in `src/materials.css`, loaded after legacy
   screen styles. Blur large surfaces once, tint nested rows, respect Solaris,
   reduced motion/transparency and existing artwork brightness/dimming controls.
+- Steam, Epic and GOG cards always open their localized glass account window,
+  including in the browser preview. Only actual sign-in needs desktop IPC; never
+  fabricate a connected account in preview or block windows on library loading.
 
 ## Current Saves decisions (2026-10-06)
 

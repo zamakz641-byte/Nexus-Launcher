@@ -124,6 +124,7 @@
 }
 .account-dialog { padding: clamp(1.5rem, 3vw, 2.2rem); }
 .account-dialog > h2 { font-weight: 500; letter-spacing: -.035em; }
+.account-dialog__actions { display: flex; justify-content: flex-end; margin-top: 1.5rem; }
 .nexus-menu { border-radius: 20px; }
 .game-customize-dialog .game-detail__customize { background: transparent; border: 0; box-shadow: none; backdrop-filter: none; }
 .saves-dialog .nexus-plugin-card { background: rgba(226, 244, 255, .035); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .1); backdrop-filter: none; }

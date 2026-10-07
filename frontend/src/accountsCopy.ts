@@ -2,7 +2,7 @@ export const accountsCopy = {
   fr: {
     title:'Comptes connectés', subtitle:'Retrouvez vos bibliothèques et votre progression.',
     steam:'Vos jeux et votre progression Steam.', epic:'Bibliothèque possédée Epic. Les succès et les sauvegardes ne sont pas synchronisés.', gog:'Bibliothèque possédée GOG. Les succès et les sauvegardes ne sont pas synchronisés.',
-    connect:'Connecter', manage:'Gérer le compte', disconnect:'Déconnecter', sync:'Actualiser', busy:'Connexion en cours…', linked:'Profil local disponible', connected:'Connecté', notConnected:'Non connecté', desktop:'La connexion aux comptes est disponible dans l’application Windows.',
+    connect:'Connecter', manage:'Gérer le compte', disconnect:'Déconnecter', sync:'Actualiser', busy:'Connexion en cours…', linked:'Profil local disponible', connected:'Connecté', notConnected:'Non connecté', desktop:'La connexion aux comptes est disponible dans l’application Windows.', signIn:'Ouvrir la connexion', signInHint:'Connectez-vous dans la fenêtre sécurisée du service.',
     owned:'jeux possédés', search:'Rechercher dans ce compte', installed:'Installé dans Nexus', notInstalled:'Non détecté sur cet appareil', open:'Ouvrir la fiche', lastSync:'Dernière synchronisation', cached:'Données enregistrées', library:'Bibliothèque du compte', empty:'Aucun jeu dans cette bibliothèque.',
     'key-required':'Ouvrez Steam pour actualiser votre profil.', unavailable:'Ouvrez Steam, puis actualisez.', localGames:'jeux disponibles sur cet appareil',
     unconfigured:'Connectez ce compte pour récupérer sa bibliothèque.', private:'Les détails des jeux Steam sont privés. Rendez-les publics pour les synchroniser.', offline:'Service inaccessible. Les dernières données restent disponibles.', error:'La synchronisation a échoué. Réessayez.',
@@ -12,7 +12,7 @@ export const accountsCopy = {
   en: {
     title:'Connected accounts', subtitle:'Find your libraries and your progress.',
     steam:'Your Steam games and progress.', epic:'Owned Epic library. Achievements and saves are not synchronized.', gog:'Owned GOG library. Achievements and saves are not synchronized.',
-    connect:'Connect', manage:'Manage account', disconnect:'Disconnect', sync:'Refresh', busy:'Connecting…', linked:'Local profile available', connected:'Connected', notConnected:'Not connected', desktop:'Account connections are available in the Windows application.',
+    connect:'Connect', manage:'Manage account', disconnect:'Disconnect', sync:'Refresh', busy:'Connecting…', linked:'Local profile available', connected:'Connected', notConnected:'Not connected', desktop:'Account connections are available in the Windows application.', signIn:'Open sign-in', signInHint:'Sign in through the service’s secure window.',
     owned:'owned games', search:'Search this account', installed:'Installed in Nexus', notInstalled:'Not detected on this device', open:'Open game details', lastSync:'Last synchronized', cached:'Saved data', library:'Account library', empty:'No games in this library.',
     'key-required':'Open Steam to refresh your profile.', unavailable:'Open Steam, then refresh.', localGames:'games available on this device',
     unconfigured:'Connect this account to retrieve its library.', private:'Steam game details are private. Make them public to synchronize.', offline:'Service unreachable. Previous data remains available.', error:'Synchronization failed. Try again.',
